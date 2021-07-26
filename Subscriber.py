@@ -32,38 +32,34 @@ class MQTT_Decoder:
         # Connect to the mate tree
         client.subscribe("mate/#")
 
-    def _decoder(self, topic="", msg=b""):
-        """ENTER COMMENT
-        arg1: String
-        return: Tuple of decoded data"""
-        fx_packet, dc_packet, mx_packet = None, None, None
-        if(topic in 'mate/fx-1/stat/raw'):
-            fx_packet = mate_fx.from_buffer(msg)
+    def _fx_decoder(self, msg=b""):
+        """ENTER COMMENT"""
+        obj_properties = ["buy_power", "chg_power", "input_voltage", "inv_power", "output_voltage", "sell_power", "error_mode", "warnings", "operational_mode"]
+        fx_packet = mate_fx.from_buffer(msg)
+        for key, value in fx_packet.__dict__.items():
+            if key in obj_properties:
+                print(key, value)
+        self._database_add(fx_packet)
 
-        #TODO: elif(topic == 'mate/dc-1/stat/raw'):
-        #     print("%s, %s, %s" % (dc_packet, topic, msg))
-        #     dc_packet = .from_buffer(msg)
-
-        elif(topic == 'mate/mx-1/stat/raw'):
-            mx_packet = mate_mx.from_buffer(msg)
-        #TODO: return (fx_packet, dc_packet, mx_packet)
-        return (fx_packet, mx_packet)
+    def _mx_decoder(self, msg=b""):
+        """ENTER COMMENT"""
+        obj_properties = ["bat_voltage", "kilowatt_hours", "pv_voltage", "bat_current", "pb_current", "errors", "status"]
+        mx_packet = mate_mx.from_buffer(msg)
+        for key, value in mx_packet.__dict__.items():
+            if key in obj_properties:
+                print(key, value)
+        self._database_add(mx_packet)
 
     def _on_message(self, client, userdata, msg):
         """Prints the message recieved from the broker"""
-        dec_msg = self._decoder(msg.topic, msg.payload)
-        if(dec_msg[0]):
-            #fx_packet -> buy_power, chg_power, input_voltage, inv_power, output_voltage, sell_power, error_mode, warnings, operational_mode
-            self._database_add(dec_msg[0])
-            pass
-        elif(dec_msg[1]):
-            #mx_packet -> bat_voltage, kilowatt_hours, pv_voltage, bat_current, pb_current, errors, status
-            self._database_add(dec_msg[1])
-            pass
+        dec_msg = None
+        if(msg.topic == "mate/fx-1/stat/raw"):
+            dec_msg = self._fx_decoder(msg.payload)
+        # elif(msg.topic == "mate/mx-1/stat/raw"):
+        #     dec_msg = self._mx_decoder(msg.payload)
         #TODO: Include DC Packets
 
     def _database_add(self, msg):
-
         print()
         pass
 
