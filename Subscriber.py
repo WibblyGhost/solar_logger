@@ -6,6 +6,7 @@ from pymate.matenet.mx import MXStatusPacket as mate_mx
 import secrets
 import logging
 import ssl
+from datetime import datetime
 
 logger = logging.getLogger("mqtt")
 logger.setLevel(logging.DEBUG)
@@ -21,7 +22,9 @@ class MQTT_Decoder:
     """ENTER COMMENT"""
 
     def __init__(self) -> None:
-        pass
+        self.fx_time = None
+        self.mx_time = None
+        self.dec_msg = None
 
     def main(self):
         self._main_client()
@@ -34,34 +37,52 @@ class MQTT_Decoder:
 
     def _fx_decoder(self, msg=b""):
         """ENTER COMMENT"""
+        key_list = []
         obj_properties = ["buy_power", "chg_power", "input_voltage", "inv_power", "output_voltage", "sell_power", "error_mode", "warnings", "operational_mode"]
         fx_packet = mate_fx.from_buffer(msg)
         for key, value in fx_packet.__dict__.items():
             if key in obj_properties:
-                print(key, value)
-        self._database_add(fx_packet)
+                key_list.append((key, value))
+        return key_list
 
     def _mx_decoder(self, msg=b""):
         """ENTER COMMENT"""
+        key_list = []
         obj_properties = ["bat_voltage", "kilowatt_hours", "pv_voltage", "bat_current", "pb_current", "errors", "status"]
         mx_packet = mate_mx.from_buffer(msg)
         for key, value in mx_packet.__dict__.items():
             if key in obj_properties:
-                print(key, value)
-        self._database_add(mx_packet)
+                key_list.append((key, value))
+        return key_list
+
+    def _database_add(self, msg):
+        # Graphite DB, Promethius DB, Influx DB
+        print(msg)
+        pass
 
     def _on_message(self, client, userdata, msg):
         """Prints the message recieved from the broker"""
-        dec_msg = None
-        if(msg.topic == "mate/fx-1/stat/raw"):
+        if(msg.topic == "mate/fx-1/stat/ts") :
+            self.fx_time = int(msg.payload.decode("ascii"))
+            self.fx_time = datetime.fromtimestamp(self.fx_time).strftime('%Y-%m-%d %H:%M:%S')
+        elif(msg.topic == "mate/fx-1/stat/raw"):
+            if(self.fx_time == None): 
+                return
             dec_msg = self._fx_decoder(msg.payload)
-        # elif(msg.topic == "mate/mx-1/stat/raw"):
-        #     dec_msg = self._mx_decoder(msg.payload)
-        #TODO: Include DC Packets
+            dec_msg.insert(0, self.fx_time)
+            self._database_add(dec_msg)
 
-    def _database_add(self, msg):
-        print()
-        pass
+        elif(msg.topic == "mate/mx-1/stat/ts"):
+            self.mx_time = int(msg.payload.decode("ascii"))
+            self.mx_time = datetime.fromtimestamp(self.mx_time).strftime('%Y-%m-%d %H:%M:%S')
+        elif(msg.topic == "mate/mx-1/stat/raw"):
+            if(self.mx_time == None): 
+                return
+            dec_msg = self._mx_decoder(msg.payload)
+            dec_msg.insert(0, self.mx_time)
+            self._database_add(dec_msg)
+
+        #TODO: Include DC Packets
 
 
     def _main_client(self):
