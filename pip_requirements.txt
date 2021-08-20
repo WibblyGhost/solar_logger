@@ -1,2 +1,3 @@
 paho-mqtt
+influxdb_client
 git+https://github.com/jorticus/pymate.git@feature/python3-take2

@@ -4,15 +4,17 @@ from pymate.matenet.fx import FXStatusPacket as mate_fx
 from pymate.matenet.mx import MXStatusPacket as mate_mx
 # TODO: from pymate.matenet.dc import DCStatusPacket as mate_dc
 from secrets import MQTT
-import logging
-import ssl
 from datetime import datetime
+import ssl
+# import logging
 
-logger = logging.getLogger("mqtt")
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-logger.addHandler(ch)
+
+# def enable_logging():
+#     logger = logging.getLogger("mqtt")
+#     logger.setLevel(logging.DEBUG)
+#     ch = logging.StreamHandler()
+#     ch.setLevel(logging.DEBUG)
+#     logger.addHandler(ch)
 
 
 class MQTTDecoder:
@@ -67,6 +69,7 @@ class MQTTDecoder:
             self.fx_time = datetime.fromtimestamp(self.fx_time).strftime('%Y-%m-%d %H:%M:%S')
         elif msg.topic == "mate/fx-1/stat/raw":
             if self.fx_time is None:
+                # TODO: Does this need to apply to ts as well
                 return
             dec_msg = self._fx_decoder(msg.payload)
             dec_msg.insert(0, self.fx_time)
@@ -89,7 +92,7 @@ class MQTTDecoder:
         client = mqtt.Client()
         client.on_connect = self._on_connect
         client.on_message = self._on_message
-        client.enable_logger(logger=logger)
+        # client.enable_logger(logger=logger)
         # Setting user info & connect to MQTT
         client.username_pw_set(MQTT.USER, MQTT.PASSWORD)
         client.tls_set(cert_reqs=ssl.CERT_NONE)
