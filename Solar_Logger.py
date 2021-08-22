@@ -3,7 +3,7 @@ Main program which initialises and runs both the MQTT and InfluxDB controllers
 """
 
 import Secrets
-from SolarClasses import MQTTDecoder, InfluxController
+from Solar_Classes import MQTTDecoder, InfluxController
 import paho.mqtt.client as mqtt
 
 
@@ -22,11 +22,13 @@ def influx_runtime(influx_secret):
     :param influx_secret: Secret passwords nad logins for Influx database
     :return: A database object which can be used to write/read data points
     """
+    # token, org, bucket, url
     database = InfluxController(influx_secret.token,
                                 influx_secret.org,
                                 influx_secret.bucket,
-                                influx_secret.bucket_id,
-                                influx_secret.host)
+                                influx_secret.url,
+                                influx_secret.port)
+    database.connect_db()
     return database
 
 
@@ -53,7 +55,6 @@ def main():
     Main function which calls both the Influx database controller and the MQTT controller
     """
     influx_database = influx_runtime(Secrets.InfluxSecret)
-    # influx_database = None
     mqtt_runtime(Secrets.MQTTSecret, influx_database)
 
 
