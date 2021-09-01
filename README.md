@@ -1,5 +1,5 @@
 # Solar-Logger
-Created by: WibblyGhost & Jorticus
+Created by: WibblyGhost
  
 ### Purpose
-This project was made to subscribe to a solar MQTT provider which reports several battery and input details received from an Outback controller system. This particular MQTT provider and libraries required to decode the raw byte streams were provided by Jorticus. After deciphering the raw packets this program will unload the categories into a time series database for Jorticus to relay to his web portal. 
+This project is a multi-step program which relies on a MQTT backend to read information from an Outback solar controller which sends statistics of current battery status, input voltages and etc. This program subscribes to the MQTT broker to retrieve the information broadcasted and deciphers the raw byte streams into a readable form. It then converts the data into points to allow insertion into a time series database (InfluxDB) where the data can be stored, modeled and queried. The database will link to a Grafana website which will graph, model and compare the data on a privately accessible site.
