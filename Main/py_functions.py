@@ -6,6 +6,7 @@ import logging
 import configparser
 import sys
 import csv
+import os
 
 CONFIG_FILENAME = 'config.ini'
 
@@ -29,11 +30,15 @@ def create_logger(program_name):
     if sys.gettrace() and not file_logging:
         logging.basicConfig(stream=sys.stdout, level=debug_level)
     elif sys.gettrace() and file_logging:
-        file_name = config_p.get(program_name, 'filename')
+        file_location = config_p.get(program_name, 'file_location')
+        if not os.path.exists(file_location):
+            os.makedirs(file_location)
+        filename = config_p.get(program_name, 'filename')
+        full_path = file_location + filename
         file_mode = config_p.get(program_name, 'filemode')
         file_format = config_p.get(program_name, 'format')
         date_format = config_p.get(program_name, 'dateformat')
-        logging.basicConfig(filename=file_name, filemode=file_mode, format=file_format,
+        logging.basicConfig(filename=full_path, filemode=file_mode, format=file_format,
                             datefmt=date_format, level=debug_level)
     logging.info('Created logger')
     return logging
@@ -47,11 +52,16 @@ def csv_writer(program_name, table):
     """
     config_p = configparser.ConfigParser()
     config_p.read(CONFIG_FILENAME)
-    csv_location = config_p.get(program_name, 'csv_name')
+    file_location = config_p.get(program_name, 'file_location')
+    if not os.path.exists(file_location):
+        print(file_location)
+        os.makedirs(file_location)
+    filename = config_p.get(program_name, 'filename')
+    full_path = file_location + filename
     filemode = config_p.get(program_name, 'filemode')
-    with open(csv_location, filemode) as file_instance:
+    with open(full_path, filemode) as file_instance:
         writer = csv.writer(file_instance)
         for row in table:
             writer.writerow(row)
-    logging.info(f'Wrote rows into CSV file at: {csv_location}')
+    logging.info(f'Wrote rows into CSV file at: {full_path}')
 
