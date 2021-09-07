@@ -42,7 +42,7 @@ class InfluxController:
         """
         Defines the initialization of the InfluxController, invoking the connection to the InfluxDB and write API
         """
-        logging.info("Connecting to InfluxDB")
+        logging.info('Connecting to InfluxDB')
         self._create_client()
         # self._create_write_api()
 
@@ -54,9 +54,9 @@ class InfluxController:
         client = None
         try:
             client = InfluxDBClient(url=self.influx_url, token=self.influx_token, org=self.influx_org)
-            logging.debug(f"Connected to bucket: {self.influx_bucket}")
+            logging.debug(f'Connected to bucket: {self.influx_bucket}')
         except Exception as err:
-            logging.error(f"Failed to connect to bucket: {self.influx_bucket}", err)
+            logging.error(f'Failed to connect to bucket: {self.influx_bucket}', err)
             sys.exit()
         finally:
             self.influx_client = client
@@ -93,7 +93,7 @@ class MQTTDecoder:
         """
         Initial setup for the MQTT connector, connects to MQTT broker and failing to connect will exit the program
         """
-        logging.info("Connecting to MQTT broker")
+        logging.info('Connecting to MQTT broker')
         self.mqtt_client.on_connect = self._on_connect
         self.mqtt_client.on_message = self._on_message
         self.mqtt_client.username_pw_set(self.mqtt_user, self.mqtt_password)
@@ -108,7 +108,7 @@ class MQTTDecoder:
         try:
             self.mqtt_client.connect(self.mqtt_host, self.mqtt_port)
         except Exception as err:
-            logging.error(f"Failed to connect to MQTT broker", err)
+            logging.error(f'Failed to connect to MQTT broker', err)
             sys.exit()
 
     def _on_connect(self, _client, _userdata, _flags, rc):
@@ -121,9 +121,9 @@ class MQTTDecoder:
         """
         if rc == 0:
             self.mqtt_client.subscribe(self.mqtt_topic)
-            logging.info(f"Connected to MQTT broker, returned code: {rc}")
+            logging.info(f'Connected to MQTT broker, returned code: {rc}')
         else:
-            logging.error(f"Connection to MQTT broker refused, returned code: {rc}")
+            logging.error(f'Connection to MQTT broker refused, returned code: {rc}')
 
     def mqtt_runtime(self):
         """
@@ -138,14 +138,12 @@ class MQTTDecoder:
         :param msg_type: Type of header the msg carries, either FX, MX or DX
         # point_template = {'measurement': None, 'fields': {None, None}, 'time': None}
         """
-        # TODO: Re-create database add function
-        logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
+        logging.debug(f'Creating database points from ({msg_time}, {msg_type})')
         write_client = self.influx_database.influx_client.write_api(write_options=SYNCHRONOUS)
         for key, value in msg_dict.items():
             point_template = {'measurement': msg_type, 'fields': {key: float(value)}, 'time': msg_time}
-            logging.debug(f"Wrote point: {point_template}")
+            logging.debug(f'Wrote point: {point_template}')
             write_client.write(self.influx_bucket, self.influx_org, point_template)
-            # logging.debug(f"{point_template}")
 
     @staticmethod
     def _fx_decoder(msg=b''):
@@ -187,29 +185,29 @@ class MQTTDecoder:
         if msg.topic == 'mate/fx-1/stat/ts':
             self.fx_time = int(msg.payload.decode('ascii'))
             self.fx_time = datetime.fromtimestamp(self.fx_time)
-            logging.debug(f"Received fx_time packet: {self.fx_time}")
+            logging.debug(f'Received fx_time packet: {self.fx_time}')
         elif msg.topic == 'mate/mx-1/stat/ts':
             self.mx_time = int(msg.payload.decode('ascii'))
             self.mx_time = datetime.fromtimestamp(self.mx_time)
-            logging.debug(f"Received mx_time packet: {self.mx_time}")
+            logging.debug(f'Received mx_time packet: {self.mx_time}')
         elif msg.topic == 'mate/dc-1/stat/ts':
             self.dc_time = int(msg.payload.decode('ascii'))
             self.dc_time = datetime.fromtimestamp(self.dc_time)
-            logging.debug(f"Received dc_time packet: {self.dc_time}")
+            logging.debug(f'Received dc_time packet: {self.dc_time}')
         # Data Packets
         elif msg.topic == 'mate/fx-1/stat/raw':
             if self.fx_time:
                 fx_payload = self._fx_decoder(msg.payload)
-                logging.debug(f"Received fx_payload packet: {fx_payload}")
+                logging.debug(f'Received fx_payload packet: {fx_payload}')
                 self._database_add(self.fx_time, fx_payload, 'fx-1')
         elif msg.topic == 'mate/mx-1/stat/raw':
             if self.mx_time:
                 mx_payload = self._mx_decoder(msg.payload)
-                logging.debug(f"Received mx_payload packet: {mx_payload}")
+                logging.debug(f'Received mx_payload packet: {mx_payload}')
                 self._database_add(self.mx_time, mx_payload, 'mx-1')
         # TODO: Include DC packets
         # elif msg.topic == 'mate/dc-1/stat/raw':
         #     if self.dc_time:
         #         dc_payload = self._dc_decoder(msg.payload)
-        #         logging.debug(f"Received dc_payload packet: {dc_payload}")
+        #         logging.debug(f'Received dc_payload packet: {dc_payload}')
         #         self._database_add(self.dc_time, dc_payload, 'dc-1')

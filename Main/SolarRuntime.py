@@ -3,12 +3,7 @@ Main program which initialises and runs both the MQTT and InfluxDB controllers
 """
 from SolarClasses import MQTTDecoder, InfluxController
 from SecretStore import Secrets
-import logging
-import sys
-
-FILE_LOGGING = False
-DEBUG_LEVEL = logging.DEBUG
-# Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+from PyLogger import create_logger
 
 
 def influx_runtime(influx_secret):
@@ -46,17 +41,10 @@ def main():
     """
     Main function which calls both the Influx database controller and the MQTT controller
     """
-    if sys.gettrace() and not FILE_LOGGING:
-        logging.basicConfig(stream=sys.stdout, level=DEBUG_LEVEL)
-    elif sys.gettrace() and FILE_LOGGING:
-        logging.basicConfig(filename='../SolarLogs.log',
-                            filemode='a',
-                            format='%(asctime)s, %(name)s, %(levelname)s, %(message)s',
-                            datefmt='%H:%M:%S',
-                            level=DEBUG_LEVEL)
     influx_database = influx_runtime(Secrets.InfluxSecret)
     mqtt_runtime(Secrets.MQTTSecret, influx_database)
 
 
 if __name__ == '__main__':
+    logging = create_logger('solar_debugger')
     main()

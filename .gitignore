@@ -2,8 +2,10 @@ __pycache__/
 .idea/
 .vscode/
 /SecretStore/
+/venv/
 /StartInfluxDB.cmd
 /SecretStore/DatabaseLogin.txt
 *Secrets.py
 *.py[cod]
 *.log
+
