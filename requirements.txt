@@ -1,5 +1,5 @@
-paho-mqtt~=1.5.1
-influxdb_client
-git+https://github.com/jorticus/pymate.git@feature/python3-take2
-Rx~=3.2.0
-pytz~=2021.1
+influxdb_client==1.20.0
+pymate==2.1
+paho_mqtt==1.5.1
+SecretStore==0.0.2
+git+git://github.com/jorticus/pymate.git@feature/python3-take2
