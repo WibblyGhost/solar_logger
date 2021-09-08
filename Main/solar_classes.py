@@ -5,16 +5,16 @@ Check the Influx query documentation for write syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 # Imports for Influx
-from influx_classes import InfluxController, SYNCHRONOUS
+from influx_classes import InfluxController
+from influxdb_client.client.write_api import SYNCHRONOUS
 # Imports for MQTT
 import paho.mqtt.client as mqtt
 from pymate.matenet.fx import FXStatusPacket as MateFX
 from pymate.matenet.mx import MXStatusPacket as MateMX
-# TODO: from pymate.matenet.dc import DCStatusPacket as mate_dc
+# TODO: from pymate.matenet.dc import DCStatusPacket as MateDC
 from datetime import datetime
-import ssl
-# Imports for logging
 import logging
+import ssl
 
 
 class MQTTDecoder:

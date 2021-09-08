@@ -3,7 +3,6 @@ Classes file, contains methods for the Influx database controller to do writes a
 """
 # Imports for Influx
 from influxdb_client import InfluxDBClient
-from influxdb_client.client.write_api import SYNCHRONOUS
 import logging
 
 
@@ -64,6 +63,8 @@ class QueryBuilder:
         :param end_range: The latest time to include in results, defaults to now()
         """
         self._filter_field = ''
+        self._aggregate_field = ''
+        self._sort_field = ''
         self._bucket = bucket
         self._start_range = start_range
         self._end_range = end_range
@@ -88,6 +89,8 @@ class QueryBuilder:
         self.query_string = self._append_from
         self.query_string += self._append_time_range
         self.query_string += self._filter_field
+        self.query_string += self._aggregate_field
+        self.query_string += self._sort_field
         return self.query_string
 
     @property
@@ -113,17 +116,36 @@ class QueryBuilder:
         else:
             return f'\n\t|> range(start: {self._start_range})'
 
-    def append_filter(self, field_1, value_1, joiner=None):
+    def append_filter(self, field_1, value_1, joiner=None, new_band=False):
         """
-        Adds filter fields to the query, function is repeatable and cna therefore add  multiple filters
+        Adds filter fields to the query, function is repeatable and can therefore add  multiple filters
+        :param new_band: If true, creates a new filter field instead of appending the filter field
         :param field_1: Takes _measurement, _tag or _field
         :param value_1: Value you want the field to equal
         :param joiner: Optional join operator, can be 'And' / 'Or'
         """
         logging.debug('Created query filter field')
-        if not self._filter_field:
-            self._filter_field = '\n\t|> filter(fn: (r) => '
+        if not self._filter_field or new_band:
+            self._filter_field += '\n\t|> filter(fn: (r) => '
         self._filter_field += f'r["{field_1}"] == "{value_1}")'
         if joiner:
             self._filter_field = self._filter_field[:-1]
             self._filter_field += f' {joiner} '
+
+    def append_aggregate(self, collection_window, aggregate_function):
+        """
+        Adds an aggregation field to the query
+        :param collection_window: Time frame for the data to aggregate
+        :param aggregate_function: What function to apply to the window
+        """
+        logging.debug('Created query aggregate field')
+        self._aggregate_field = f'\n\t|> aggregateWindow(every: {collection_window}, fn: {aggregate_function}'
+
+    def append_sort(self, field, desc=False):
+        """
+        Adds a sort field to a query
+        :param field: Field to sort results by
+        :param desc: Ascending or descending
+        """
+        logging.debug('Created query sort field')
+        self._sort_field = f'\n\t|> sort(columns: ["{field}"], desc: {desc}'

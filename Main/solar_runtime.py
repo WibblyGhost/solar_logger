@@ -6,8 +6,10 @@ from influx_classes import InfluxController
 from SecretStore import secrets
 from py_functions import create_logger
 
+DEBUG_CONFIG_TITLE = 'solar_debugger'
 
-def influx_runtime(influx_secret):
+
+def create_influx_controller(influx_secret):
     """
     Main function that creates a InfluxController for use
     :param influx_secret: Secret passwords nad logins for Influx database
@@ -42,10 +44,10 @@ def main():
     """
     Main function which calls both the Influx database controller and the MQTT controller
     """
-    influx_database = influx_runtime(secrets.InfluxSecret)
+    influx_database = create_influx_controller(secrets.InfluxSecret)
     mqtt_runtime(secrets.MQTTSecret, influx_database)
 
 
 if __name__ == '__main__':
-    logging = create_logger('solar_debugger')
+    logging = create_logger(DEBUG_CONFIG_TITLE)
     main()
