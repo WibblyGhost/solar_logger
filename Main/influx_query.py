@@ -92,7 +92,6 @@ def main():
     """
     Main runtime which creates a query to an Influx database to view the tables
     """
-
     influx_secret = secrets.InfluxSecret
     influx_db = create_influx_controller(influx_secret)
     # Creating query for Influx, see example:
