@@ -53,7 +53,7 @@ Firstly create an Influx controller instance to manage and write to the Influx d
 ```python
 def create_influx_controller(influx_secret):
     """
-    Main function that creates a InfluxController for use
+    classes function that creates a InfluxController for use
     :param influx_secret: Secret passwords nad logins for Influx database
     :return: A database object which can be used to write/read data points
     """
@@ -70,7 +70,7 @@ Afterwards create a MQTT listening service that runs indefinitely to retrieve da
 ```python
 def mqtt_runtime(mqtt_secret, influx_database):
     """
-    Main function that creates a MQTT client
+    classes function that creates a MQTT client
     :param mqtt_secret: Secret passwords nad logins for MQTT subscriber
     :param influx_database: An Influx database object for the MQTTDecoder to write to
     :return: Never returns (see mq.mqtt_runtime())

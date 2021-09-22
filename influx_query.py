@@ -3,9 +3,9 @@ Program which creates and runs Influx database queries
 Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
-from influx_classes import InfluxController, QueryBuilder
-from SecretStore import secrets
-from py_functions import create_logger, csv_writer, read_query_settings
+from classes.influx_classes import InfluxController, QueryBuilder
+from classes.py_functions import create_logger, csv_writer, read_query_settings
+import private
 
 QUERY_CONFIG_TITLE = 'query_settings'
 DEBUG_CONFIG_TITLE = 'influx_debugger'
@@ -17,7 +17,7 @@ def parse_csv(csv_file):
     :param csv_file: Input csv string to write to file
     """
 
-    logging.info('Creating csv file')
+    logging.info('Creating CSV file')
     try:
         csv_writer(config_name='query_settings', table=csv_file)
     except IOError:
@@ -90,9 +90,9 @@ def create_influx_controller(influx_secret) -> InfluxController:
 
 def main():
     """
-    Main runtime which creates a query to an Influx database to view the tables
+    classes runtime which creates a query to an Influx database to view the tables
     """
-    influx_secret = secrets.InfluxSecret
+    influx_secret = private.InfluxSecret
     influx_db = create_influx_controller(influx_secret)
     # Creating query for Influx, see example:
     # query = 'from(bucket:"bucket_name") \

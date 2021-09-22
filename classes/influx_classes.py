@@ -96,7 +96,7 @@ class QueryBuilder:
     @property
     def _append_from(self):
         """
-        Adds from field to query, takes bucket attribute and appends to main string
+        Adds from field to query, takes bucket attribute and appends to classes string
         :param self.bucket: Influx database bucket to query
         """
         logging.debug('Created query from field')

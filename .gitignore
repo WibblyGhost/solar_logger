@@ -1,9 +1,12 @@
+# Enviroment
 __pycache__/
 .idea/
 .vscode/
-/SecretStore/
-/Output/
 /venv/
+*.py[cod]
+# Secret files
+/private/
 *secrets.py
 *database_login.txt
-*.py[cod]
+#Output log files
+/output/

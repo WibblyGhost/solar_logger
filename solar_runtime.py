@@ -1,17 +1,17 @@
 """
-Main program which initialises and runs both the MQTT and InfluxDB controllers
+classes program which initialises and runs both the MQTT and InfluxDB controllers
 """
-from solar_classes import MQTTDecoder
-from influx_classes import InfluxController
-from SecretStore import secrets
-from py_functions import create_logger
+from classes.solar_classes import MQTTDecoder
+from classes.influx_classes import InfluxController
+from classes.py_functions import create_logger
+import private
 
 DEBUG_CONFIG_TITLE = 'solar_debugger'
 
 
 def create_influx_controller(influx_secret):
     """
-    Main function that creates a InfluxController for use
+    classes function that creates a InfluxController for use
     :param influx_secret: Secret passwords nad logins for Influx database
     :return: A database object which can be used to write/read data points
     """
@@ -25,7 +25,7 @@ def create_influx_controller(influx_secret):
 
 def mqtt_runtime(mqtt_secret, influx_database):
     """
-    Main function that creates a MQTT client
+    classes function that creates a MQTT client
     :param mqtt_secret: Secret passwords nad logins for MQTT subscriber
     :param influx_database: An Influx database object for the MQTTDecoder to write to
     :return: Never returns (see mq.mqtt_runtime())
@@ -42,10 +42,10 @@ def mqtt_runtime(mqtt_secret, influx_database):
 
 def main():
     """
-    Main function which calls both the Influx database controller and the MQTT controller
+    classes function which calls both the Influx database controller and the MQTT controller
     """
-    influx_database = create_influx_controller(secrets.InfluxSecret)
-    mqtt_runtime(secrets.MQTTSecret, influx_database)
+    influx_database = create_influx_controller(private.InfluxSecret)
+    mqtt_runtime(private.MQTTSecret, influx_database)
 
 
 if __name__ == '__main__':

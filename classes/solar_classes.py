@@ -5,13 +5,13 @@ Check the Influx query documentation for write syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 # Imports for Influx
-from influx_classes import InfluxController
+from classes import InfluxController
 from influxdb_client.client.write_api import SYNCHRONOUS
 # Imports for MQTT
 import paho.mqtt.client as mqtt
 from pymate.matenet.fx import FXStatusPacket as MateFX
 from pymate.matenet.mx import MXStatusPacket as MateMX
-# TODO: from pymate.matenet.dc import DCStatusPacket as MateDC
+# from pymate.matenet.dc import DCStatusPacket as MateDC
 from datetime import datetime
 import logging
 import ssl
@@ -58,7 +58,7 @@ class MQTTDecoder:
 
     def mqtt_runtime(self):
         """
-        Continuous even loop which never returns, runs the main MQTT program
+        Continuous even loop which never returns, runs the classes MQTT program
         """
         self._mqtt_client.loop_forever()
 
