@@ -96,9 +96,13 @@ class MQTTDecoder:
         logging.debug(f'Creating database points from ({msg_time}, {msg_type})')
         write_client = self._influx_database.influx_client.write_api(write_options=SYNCHRONOUS)
         for key, value in msg_dict.items():
-            point_template = {'measurement': msg_type, 'fields': {key: float(value)}, 'time': msg_time}
-            logging.debug(f'Wrote point: {point_template}')
-            write_client.write(self._influx_bucket, self._influx_org, point_template)
+            # point_template = {'measurement': msg_type, 'fields': {key: float(value)}, 'time': msg_time}
+            # logging.debug(f'Wrote point: {point_template}')
+            # write_client.write(self._influx_bucket, self._influx_org, point_template)
+            # Some strange error with inserting time from Points instead of the write_api
+            point_template = {'measurement': msg_type, 'fields': {key: float(value)}}
+            logging.debug(f'Wrote point: {point_template} at {msg_time}')
+            write_client.write(self._influx_bucket, self._influx_org, point_template, time=msg_time)
 
     @staticmethod
     def _fx_decoder(msg=b''):
