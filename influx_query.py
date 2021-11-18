@@ -92,7 +92,7 @@ def main():
     """
     classes runtime which creates a query to an Influx database to view the tables
     """
-    influx_secret = private.InfluxSecret
+    influx_secret = private.influx_codenames.InfluxSecret
     influx_db = create_influx_controller(influx_secret)
     # Creating query for Influx, see example:
     # query = 'from(bucket:"bucket_name") \

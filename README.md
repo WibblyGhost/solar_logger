@@ -140,4 +140,4 @@ When querying the Influx database you can use three data types to assign the res
 * Flux file *(returns a Python dictionary)*
 * Stream file *(returns a FluxRecord object)*
 
-*Currently, the program doesn't support parsing of stream files but will handle writing CSV files and printing FluxRecords.*
+*Currently, the program doesn't support parsing of stream files but will handle writing CSV files and printing Flux files.*

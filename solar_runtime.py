@@ -44,8 +44,8 @@ def main():
     """
     classes function which calls both the Influx database controller and the MQTT controller
     """
-    influx_database = create_influx_controller(private.InfluxSecret)
-    mqtt_runtime(private.MQTTSecret, influx_database)
+    influx_database = create_influx_controller(private.influx_codenames.InfluxSecret)
+    mqtt_runtime(private.mqtt_codenames.MQTTSecret, influx_database)
 
 
 if __name__ == '__main__':

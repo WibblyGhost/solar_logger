@@ -1,0 +1,19 @@
+version: '2'
+services:
+  Solar-Logger:
+    container_name: solar_logger
+    build:
+      dockerfile: solar.dockerfile
+    image: python:3.9
+    ports:
+      - "8086"
+      - "8088"
+      - "8883"
+  Influx-Query:
+    container_name: influx_query
+    build:
+      dockerfile: query.dockerfile
+    image: python:3.9
+    ports:
+      - "8086"
+      - "8088"

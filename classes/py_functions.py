@@ -8,7 +8,7 @@ import sys
 import csv
 import os
 
-CONFIG_FILENAME = 'config.ini'
+CONFIG_FILENAME = 'app/config.ini'
 
 
 def create_logger(config_name):
