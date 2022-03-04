@@ -1,5 +1,6 @@
 """
-Classes file, contains methods for the Influx database controller to do writes and queries to the database
+Classes file, contains methods for the Influx database controller
+to do writes and queries to the database
 """
 # Imports for Influx
 from influxdb_client import InfluxDBClient
@@ -29,7 +30,8 @@ class InfluxController:
 
     def startup(self):
         """
-        Defines the initialization of the InfluxController, invoking the connection to the InfluxDB and write API
+        Defines the initialization of the InfluxController, 
+        invoking the connection to the InfluxDB and write API
         """
         logging.info('Connecting to InfluxDB')
         self._create_client()
@@ -41,7 +43,8 @@ class InfluxController:
         """
         client = None
         try:
-            client = InfluxDBClient(url=self._influx_url, token=self._influx_token, org=self.influx_org)
+            client = InfluxDBClient(url=self._influx_url,
+                                    token=self._influx_token, org=self.influx_org)
             logging.info(f'Connected to bucket: {self.influx_bucket}')
         except Exception as err:
             logging.error(f'Failed to connect to bucket: {self.influx_bucket}', err)
@@ -118,7 +121,8 @@ class QueryBuilder:
 
     def append_filter(self, field_1, value_1, joiner=None, new_band=False):
         """
-        Adds filter fields to the query, function is repeatable and can therefore add  multiple filters
+        Adds filter fields to the query, function is repeatable and 
+        can therefore add  multiple filters
         :param new_band: If true, creates a new filter field instead of appending the filter field
         :param field_1: Takes _measurement, _tag or _field
         :param value_1: Value you want the field to equal

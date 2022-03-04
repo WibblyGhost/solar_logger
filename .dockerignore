@@ -3,9 +3,6 @@ __pycache__/
 .idea/
 .vscode/
 /venv/
-# Secret files
-#private/database_login.txt
-#private/LinuxAccess.cmd
 
 #Output log files
 /output/

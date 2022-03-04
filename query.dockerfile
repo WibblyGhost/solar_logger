@@ -1,23 +1,21 @@
-#syntax=docker/query.dockerfile:1
-FROM python:3.9 AS build
+FROM python:3.9
 
 RUN pip install --upgrade pip
 RUN apt-get update
 
-RUN mkdir "app"
-WORKDIR "app"
-
 ADD influx_query.py app/
-ADD /classes/influx_classes.py app/classes/influx_classes.py
-ADD /classes/py_functions.py app/classes/py_functions.py
+ADD solar_runtime.py app/
+ADD /classes/ app/classes/
 ADD /private/ app/private/
-ADD requirements.txt app/
-ADD config.ini app/
+ADD /config/ app/config/
 
+ADD requirements.txt app/
 RUN pip install -r app/requirements.txt
+
+WORKDIR "/app"
 
 #INFLUX PORTS
 EXPOSE 8086
 EXPOSE 8088
 
-CMD ["python", "app/influx_query.py"]
+CMD ["python", "influx_query.py"]

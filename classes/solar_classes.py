@@ -1,6 +1,6 @@
 """
-Classes file, contains methods for the MQTT subscriber which will receive packets from the broker and input them into
-an Influx database.
+Classes file, contains methods for the MQTT subscriber which will receive packets
+from the broker and input them into an Influx database.
 Check the Influx query documentation for write syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
@@ -46,7 +46,8 @@ class MQTTDecoder:
 
     def startup(self):
         """
-        Initial setup for the MQTT connector, connects to MQTT broker and failing to connect will exit the program
+        Initial setup for the MQTT connector, connects to MQTT broker
+        and failing to connect will exit the program
         """
         logging.info('Connecting to MQTT broker')
         self._mqtt_client.on_connect = self._on_connect
@@ -69,7 +70,7 @@ class MQTTDecoder:
         try:
             self._mqtt_client.connect(self._mqtt_host, self._mqtt_port)
         except Exception as err:
-            logging.error(f'Failed to connect to MQTT broker', err)
+            logging.error('Failed to connect to MQTT broker', err)
             raise ConnectionError
 
     def _on_connect(self, _client, _userdata, _flags, rc):
@@ -89,13 +90,14 @@ class MQTTDecoder:
     def _database_add(self, msg_time, msg_dict, msg_type):
         """
         Adds message to Influx database
-        :param msg_dict: Message for MQTTDecoder to input into the Influx Database in dictionary form
+        :param msg_dict: Message for MQTTDecoder to input into the Influx Database in dictionary
         :param msg_type: Type of header the msg carries, either FX, MX or DX
         # point_template = {'measurement': None, 'fields': {None, None}, 'time': None}
         """
         logging.debug(f'Creating database points from ({msg_time}, {msg_type})')
         write_client = self._influx_database.influx_client.write_api(write_options=SYNCHRONOUS)
         for key, value in msg_dict.items():
+            # noqa
             # point_template = {'measurement': msg_type, 'fields': {key: float(value)}, 'time': msg_time}
             # logging.debug(f'Wrote point: {point_template}')
             # write_client.write(self._influx_bucket, self._influx_org, point_template)

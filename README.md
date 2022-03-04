@@ -1,13 +1,18 @@
 # Solar-Logger
+
 This project is a multi-step program which relies on a MQTT backend to read information from an Outback solar controller which sends statistics of current battery status, input voltages etc. This program subscribes to the MQTT broker to retrieve the information broadcast and deciphers the raw byte streams into a readable form. It then converts the data into points to allow insertion into a time series database (InfluxDB) where the data can be stored, modeled and queried. The database will link to a Grafana website which will graph, model and compare the data on a privately accessible site.
 
-
 ___
+
 ### Logging
+
 All programs below are implemented with a file logger which can be configured through the config.ini file, this can be used for program info or debugging purposes.
-___ 
+___
+
 ### config.ini
+
 All debugging and querying options can be changed through the config file. If file logging is set to false then the generated output will be set by default to the debug console. There is also additional options for querying modes *(more detail in **influx_query.py**)*.
+
 ```ini
 [influx_debugger]
 file_logging    = True
@@ -41,15 +46,17 @@ csv_mode        = w
 ```
 
 ## Program Files
+
 ___
+
 ### solar_runtime.py
+
 Defines the program that deals with subscribing to the solar controller's broker using MQTT, decodes the raw packets, and inputs the data points into a time series database *(Influx DB)*.
 
-**Usage**
-<br>
-To use this program you must set up an Influx controller which connects to the Influx database and also set up a MQTT subscriber. The MQTT subscriber requires an Influx controller instance for it to run since it uses the controller to write data as it receives the data points.
+**Usage:** To use this program you must set up an Influx controller which connects to the Influx database and also set up a MQTT subscriber. The MQTT subscriber requires an Influx controller instance for it to run since it uses the controller to write data as it receives the data points.
 
 Firstly create an Influx controller instance to manage and write to the Influx database.
+
 ```python
 def create_influx_controller(influx_secret):
     """
@@ -92,12 +99,13 @@ The MQTT runtime will call on the `MQTTDecoder` class from **solar_classes.py** 
 `_on_message()` runs everytime the MQTT subscriber receives a message from the broker.
 
 ___
+
 ### influx_query.py
+
 Defines a program that generates and handles Influx queries using the Influx query api using the QueryBuilder class in **influx_classes.py**.
 
-**Usage**
-<br>
-To use the query builder you must fist create an Influx query instance through, *InfluxController*.
+**Usage:** To use the query builder you must fist create an Influx query instance through, *InfluxController*.
+
 ```python
 def create_influx_controller(influx_secret) -> InfluxController:
     """
@@ -113,6 +121,7 @@ def create_influx_controller(influx_secret) -> InfluxController:
 ```
 
 Then to generate a query string you create a QueryBuilder instance and add strings to your query like below:
+
 ```python
 def main():
     # ...
@@ -128,6 +137,7 @@ def main():
 ```
 
 You can currently apply the following fields to a query:
+
 * `from(bucket:bucket_name)`, field for choosing the source bucket **(required)**.
 * `range(start: -20m)`, field for choosing how long you want to poll the database **(required)**.
 * `append_filter(field_1, value_1, joiner, new_band)`, takes the following parameters; field type, field value, joiner *('AND' or 'OR')*, new line boolean *(adds a newline to the filter)*.
@@ -136,6 +146,7 @@ You can currently apply the following fields to a query:
 
 When running the query the program will take the query options from config.ini to decide what format to return the data in.
 When querying the Influx database you can use three data types to assign the result to, those being the following:
+
 * Raw CSV file
 * Flux file *(returns a Python dictionary)*
 * Stream file *(returns a FluxRecord object)*

@@ -1,12 +1,12 @@
 """
 classes program which initialises and runs both the MQTT and InfluxDB controllers
 """
+
 from classes.solar_classes import MQTTDecoder
 from classes.influx_classes import InfluxController
 from classes.py_functions import create_logger
+from config.consts import SOLAR_DEBUG_CONFIG_TITLE
 import private
-
-DEBUG_CONFIG_TITLE = 'solar_debugger'
 
 
 def create_influx_controller(influx_secret):
@@ -49,5 +49,5 @@ def main():
 
 
 if __name__ == '__main__':
-    logging = create_logger(DEBUG_CONFIG_TITLE)
+    logging = create_logger(SOLAR_DEBUG_CONFIG_TITLE)
     main()

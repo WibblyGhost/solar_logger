@@ -1,14 +1,12 @@
 """
 Contains both a logger and csv writing function for use in outside functions
 """
+from config.consts import CONFIG_FILENAME
 import distutils.util
 import logging
 import configparser
-import sys
 import csv
 import os
-
-CONFIG_FILENAME = 'app/config.ini'
 
 
 def create_logger(config_name):
@@ -27,9 +25,9 @@ def create_logger(config_name):
                   'ERROR': logging.ERROR,
                   'CRITICAL': logging.CRITICAL}
     debug_level = debug_dict[config_p.get(config_name, 'debug_level')]
-    if sys.gettrace() and not file_logging:
-        logging.basicConfig(stream=sys.stdout, level=debug_level)
-    elif sys.gettrace() and file_logging:
+    if not file_logging:
+        logging.basicConfig(level=debug_level)
+    else:
         file_location = config_p.get(config_name, 'file_location')
         if not os.path.exists(file_location):
             os.makedirs(file_location)

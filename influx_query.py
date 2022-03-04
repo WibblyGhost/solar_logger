@@ -5,10 +5,8 @@ https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#que
 """
 from classes.influx_classes import InfluxController, QueryBuilder
 from classes.py_functions import create_logger, csv_writer, read_query_settings
+from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 import private
-
-QUERY_CONFIG_TITLE = 'query_settings'
-DEBUG_CONFIG_TITLE = 'influx_debugger'
 
 
 def parse_csv(csv_file):
@@ -21,7 +19,7 @@ def parse_csv(csv_file):
     try:
         csv_writer(config_name='query_settings', table=csv_file)
     except IOError:
-        logging.ERROR(f'Failed to write CSV file')
+        logging.ERROR('Failed to write CSV file')
 
 
 def parse_flux(flux_file):
@@ -105,17 +103,20 @@ def main():
     qb.append_filter('_measurement', 'mx-1')
     # qb.append_filter('_measurement', 'dc-1', new_band=True)
     logging.info(f"Created query:\n{qb}")
-    query_mode = read_query_settings(QUERY_CONFIG_TITLE)
+    query_mode = read_query_settings(INFLUX_QUERY_CONFIG_TITLE)
     query_result = run_query(influx_db=influx_db, query=str(qb), query_mode=query_mode)
     if query_mode == 'csv':
         parse_csv(query_result)
-    elif query_mode == 'flux':
-        flux = parse_flux(query_result)
-    elif query_mode == 'stream':
-        # TODO: Not implemented
-        parse_stream(query_result)
+    else:
+        raise(NotImplementedError, f"query mode not supported yet: {query_mode}")
+    # elif query_mode == 'flux':
+    #     flux = parse_flux(query_result)
+    # elif query_mode == 'stream':
+    #     # TODO: Not implemented
+    #     parse_stream(query_result)
+    #     raise(NotImplementedError)
 
 
 if __name__ == '__main__':
-    logging = create_logger(DEBUG_CONFIG_TITLE)
+    logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
     main()

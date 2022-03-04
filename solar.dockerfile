@@ -1,25 +1,18 @@
-#syntax=docker/solar.dockerfile:1
-FROM python:3.9 AS build
+FROM python:3.9
 
-RUN pip install --upgrade pip
 RUN apt-get update
-
-RUN mkdir "app"
-WORKDIR "app"
+RUN pip install --upgrade pip
 
 ADD solar_runtime.py app/
 ADD /classes/ app/classes/
 ADD /private/ app/private/
+ADD /config/ app/config/
+ADD /classes/solar_classes.py app/classes/solar_classes.py
+ADD /classes/py_functions.py app/classes/py_functions.py
+
 ADD requirements.txt app/
-ADD config.ini app/
+RUN pip install -r requirements.txt
 
-RUN pip install -r app/requirements.txt
+WORKDIR "/app"
 
-#INFLUX PORTS
-EXPOSE 8086
-EXPOSE 8088
-
-#MQTT PORTS
-EXPOSE 8883
-
-CMD ["python", "app/solar_runtime.py"]
+CMD [ "python", "solar_runtime.py" ]
