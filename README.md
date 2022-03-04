@@ -1,15 +1,14 @@
 # Solar-Logger
 
-This project is a multi-step program which relies on a MQTT backend to read information from an Outback solar controller which sends statistics of current battery status, input voltages etc. This program subscribes to the MQTT broker to retrieve the information broadcast and deciphers the raw byte streams into a readable form. It then converts the data into points to allow insertion into a time series database (InfluxDB) where the data can be stored, modeled and queried. The database will link to a Grafana website which will graph, model and compare the data on a privately accessible site.
+## Info
 
-___
+This project is a multi-step program which relies on a MQTT backend to read information from an Outback solar controller which sends statistics of current battery status, input voltages etc. This program subscribes to the MQTT broker to retrieve the information broadcast and deciphers the raw byte streams into a readable form. It then converts the data into points to allow insertion into a time series database (InfluxDB) where the data can be stored, modeled and queried. The database will link to a Grafana website which will graph, model and compare the data on a privately accessible site.
 
 ### Logging
 
 All programs below are implemented with a file logger which can be configured through the config.ini file, this can be used for program info or debugging purposes.
-___
 
-### config.ini
+### Configurations
 
 All debugging and querying options can be changed through the config file. If file logging is set to false then the generated output will be set by default to the debug console. There is also additional options for querying modes *(more detail in **influx_query.py**)*.
 
@@ -45,11 +44,11 @@ csv_name        = query_result.csv
 csv_mode        = w
 ```
 
-## Program Files
-
 ___
 
-### solar_runtime.py
+## Program Files
+
+### Solar Logger
 
 Defines the program that deals with subscribing to the solar controller's broker using MQTT, decodes the raw packets, and inputs the data points into a time series database *(Influx DB)*.
 
@@ -100,7 +99,7 @@ The MQTT runtime will call on the `MQTTDecoder` class from **solar_classes.py** 
 
 ___
 
-### influx_query.py
+### Influx Queries
 
 Defines a program that generates and handles Influx queries using the Influx query api using the QueryBuilder class in **influx_classes.py**.
 
