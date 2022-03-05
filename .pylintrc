@@ -1,3 +1,8 @@
 [MESSAGES CONTROL]
 
-disable=import-error, logging-fstring-interpolation
+disable=import-error, 
+    logging-fstring-interpolation, 
+    unspecified-encoding, 
+    too-many-instance-attributes, 
+    too-few-public-methods, 
+    too-many-arguments

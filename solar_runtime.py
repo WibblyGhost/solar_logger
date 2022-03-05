@@ -2,13 +2,12 @@
 classes program which initialises and runs both the MQTT and InfluxDB controllers
 """
 
-
 from classes.influx_classes import InfluxController
 from classes.py_functions import create_logger
 from classes.solar_classes import MQTTDecoder
 from config.consts import SOLAR_DEBUG_CONFIG_TITLE
-from private.mqtt_codenames import MQTTSecret
 from private.influx_codenames import InfluxSecret
+from private.mqtt_codenames import MQTTSecret
 
 
 def create_influx_controller(influx_secret):
@@ -17,10 +16,9 @@ def create_influx_controller(influx_secret):
     :param influx_secret: Secret passwords nad logins for Influx database
     :return: A database object which can be used to write/read data points
     """
-    database = InfluxController(influx_secret.token,
-                                influx_secret.org,
-                                influx_secret.bucket,
-                                influx_secret.url)
+    database = InfluxController(
+        influx_secret.token, influx_secret.org, influx_secret.bucket, influx_secret.url
+    )
     database.startup()
     return database
 
@@ -32,14 +30,16 @@ def mqtt_runtime(mqtt_secret, influx_database):
     :param influx_database: An Influx database object for the MQTTDecoder to write to
     :return: Never returns (see mq.mqtt_runtime())
     """
-    mq = MQTTDecoder(mqtt_secret.host,
-                     mqtt_secret.port,
-                     mqtt_secret.user,
-                     mqtt_secret.password,
-                     mqtt_secret.topic,
-                     influx_database)
-    mq.startup()
-    mq.mqtt_runtime()
+    mqtt = MQTTDecoder(
+        mqtt_secret.host,
+        mqtt_secret.port,
+        mqtt_secret.user,
+        mqtt_secret.password,
+        mqtt_secret.topic,
+        influx_database,
+    )
+    mqtt.startup()
+    mqtt.mqtt_runtime()
 
 
 def main():
@@ -50,6 +50,6 @@ def main():
     mqtt_runtime(MQTTSecret, influx_database)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging = create_logger(SOLAR_DEBUG_CONFIG_TITLE)
     main()

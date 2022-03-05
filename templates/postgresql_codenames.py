@@ -1,3 +1,6 @@
+# pylint: skip-file
+
+
 class PostgreSQL:
     user = "username"
     password = "password"
