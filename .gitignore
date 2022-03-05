@@ -12,3 +12,4 @@ __pycache__/
 #Output log files
 /output/
 /docker_output/
+/docker_influxdb/

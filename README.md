@@ -6,8 +6,19 @@ This project is a multi-step program which relies on a MQTT backend to read info
 
 ## InfluxDB Setup
 
-This project comes with a mostly pre-built influs instance that you can run up or copy to a docker server. To run, copy over the *.env* file to the base directory. After running a docker compose this will setup an Influx server with basic configurations. You will still have to create non-admin users and create read/write token keys.
-
+This project comes with a mostly pre-built Influx instance that you can run up or copy to a Docker server. All Influx configurations will be written to the folder `docker_influxdb`. If this is your first time running InfluxDB I would suggest uncommenting the following code in the `docker_compose.yml` and copying specified `.env` file into the base directory. 
+```yml
+InfluxDB:
+    # For first time setup use these variables
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=$influx_mode
+      - DOCKER_INFLUXDB_INIT_USERNAME=$influx_username
+      - DOCKER_INFLUXDB_INIT_PASSWORD=$influx_password
+      - DOCKER_INFLUXDB_INIT_ORG=$influx_org
+      - DOCKER_INFLUXDB_INIT_BUCKET=$influx_bucket
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=$influx_token
+```
+All following Docker restarts should keep their data.
 
 ## Solar Logger Setup
 
@@ -17,7 +28,14 @@ To start, fill out the template files with personal secrets and copy them to a n
 
 ### Logging
 
-All programs below are implemented with a file logger which can be configured through the config.ini file, this can be used for program info or debugging purposes.
+All programs below are implemented with a file logger which can be configured through the config.ini file, this can be used for program info or debugging purposes. If file logging is enabled all logs will be written in the `output` folder although if using within a Docker instance it will be written to `docker_output` instead.
+
+**Note:** by default a `docker_output` volume is created. If you're not using file logging, comment out the following code in the `docker_compose.yml`:
+```yml
+SolarLogger:
+    volumes:
+      - ./docker_output:/app/output:rw
+```
 
 ### Configurations
 
@@ -110,13 +128,13 @@ The MQTT runtime will call on the `MQTTDecoder` class from **solar_classes.py** 
 
 `_on_connect()` runs when the MQTT subscriber firstly connects to the MQTT broker, in our case it uses the secrets file *(excluded passwords file)*  to choose what subscription to listen to.
 
-`_on_message()` runs everytime the MQTT subscriber receives a message from the broker.
+`_on_message()` runs every time the MQTT subscriber receives a message from the broker.
 
 ### Influx Queries
 
 Defines a program that generates and handles Influx queries using the Influx query api using the QueryBuilder class in **influx_classes.py**.
 
-**Usage:** To use the Influx query program you must run the puthon in an interactive instance:
+**Usage:** To use the Influx query program you must run the Python in an interactive instance:
 
 `python -i .\influx_query.py`
 

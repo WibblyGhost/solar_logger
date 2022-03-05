@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.10.2
 
 RUN pip install --upgrade pip
 RUN apt-get update
@@ -14,8 +14,4 @@ RUN pip install -r app/requirements.txt
 
 WORKDIR "/app"
 
-#INFLUX PORTS
-EXPOSE 8086
-EXPOSE 8088
-
-CMD ["python", "influx_query.py"]
+CMD ["python", "-i influx_query.py"]
