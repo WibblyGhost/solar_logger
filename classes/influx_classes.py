@@ -48,7 +48,7 @@ class InfluxController:
             logging.info(f'Connected to bucket: {self.influx_bucket}')
         except Exception as err:
             logging.error(f'Failed to connect to bucket: {self.influx_bucket}', err)
-            raise ConnectionError
+            raise err
         finally:
             self.influx_client = client
 
@@ -61,6 +61,7 @@ class QueryBuilder:
 
     def __init__(self, bucket, start_range, end_range=None):
         """
+        Creates a base string for the query from which can be built upon
         :param bucket:  Influx database bucket for query
         :param start_range: The earliest time to include in results
         :param end_range: The latest time to include in results, defaults to now()
@@ -83,6 +84,35 @@ class QueryBuilder:
         :return: Raw representation of the query
         """
         return repr(self.__str__())
+
+    @staticmethod
+    def help():
+        print("""
+        QueryBuilder(bucket, start_range, end_range)
+            Creates a base string for the query from which can be built upon
+        :param bucket:  Influx database bucket for query
+        :param start_range: The earliest time to include in results
+        :param end_range=None: The latest time to include in results, defaults to now()
+
+        QueryBuilder.append_filter(self, field_1, value_1, joiner, new_band)
+            Adds filter fields to the query, function is repeatable and 
+            can therefore add multiple filters
+        :param new_band: If true, creates a new filter field instead of appending the filter field
+        :param field_1: Takes _measurement, _tag or _field
+        :param value_1: Value you want the field to equal
+        :param joiner: Optional join operator, can be 'And' / 'Or'
+
+        QueryBuilder.append_aggregate(self, collection_window, aggregate_function)
+                Adds an aggregation field to the query
+        :param collection_window: Time frame for the data to aggregate
+        :param aggregate_function: What function to apply to the window
+
+        QueryBuilder.append_sort(self, field, desc)
+                Adds a sort field to a query
+        :param field: Field to sort results by
+        :param desc=False: Ascending or descending
+        """
+        )
 
     def _build_string(self):
         """
@@ -122,7 +152,7 @@ class QueryBuilder:
     def append_filter(self, field_1, value_1, joiner=None, new_band=False):
         """
         Adds filter fields to the query, function is repeatable and 
-        can therefore add  multiple filters
+        can therefore add multiple filters
         :param new_band: If true, creates a new filter field instead of appending the filter field
         :param field_1: Takes _measurement, _tag or _field
         :param value_1: Value you want the field to equal

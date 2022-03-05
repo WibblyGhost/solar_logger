@@ -2,11 +2,13 @@
 classes program which initialises and runs both the MQTT and InfluxDB controllers
 """
 
-from classes.solar_classes import MQTTDecoder
+
 from classes.influx_classes import InfluxController
 from classes.py_functions import create_logger
+from classes.solar_classes import MQTTDecoder
 from config.consts import SOLAR_DEBUG_CONFIG_TITLE
-import private
+from private.mqtt_codenames import MQTTSecret
+from private.influx_codenames import InfluxSecret
 
 
 def create_influx_controller(influx_secret):
@@ -44,8 +46,8 @@ def main():
     """
     classes function which calls both the Influx database controller and the MQTT controller
     """
-    influx_database = create_influx_controller(private.influx_codenames.InfluxSecret)
-    mqtt_runtime(private.mqtt_codenames.MQTTSecret, influx_database)
+    influx_database = create_influx_controller(InfluxSecret)
+    mqtt_runtime(MQTTSecret, influx_database)
 
 
 if __name__ == '__main__':

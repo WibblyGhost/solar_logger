@@ -1,4 +1,4 @@
-version: '2'
+version: '3.8'
 services:
   # InfluxDB:
   #   container_name: influx_db
@@ -11,25 +11,24 @@ services:
   #     - DOCKER_INFLUXDB_INIT_BUCKET=$influx_bucket
   #     - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=$influx_token
   #   ports:
-  #   # InfluxDB Web Port - Set to 8081 for local machine
-  #     - "8081:8086"
+  #     - "8086:8086"
 
   SolarLogger:
     container_name: solar_logger
     build:
       dockerfile: solar.dockerfile
-    image: python:3.9
-    network_mode: host
-    # ports:
-    # #INFLUX PORTS
-    #   - "8086:8086"
-    #   - "8088:8088"
-    # #MQTT PORTS
-    #   - "8883:8883"
+    image: python:3.10.2
+    volumes:
+      - ./docker_output:/app/output:rw
   
   # InfluxQuery:
   #   container_name: influx_query
   #   build:
   #     dockerfile: query.dockerfile
-  #   image: python:3.9
-  #   network_mode: host
+  #   image: python:3.10.2
+
+  # PosgreSQL:
+  #   container_name: posgresql
+  #   build: 
+  #     dockerfile: posgresql.dockerfile
+  #   image: python:3.10.2

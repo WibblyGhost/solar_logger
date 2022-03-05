@@ -97,8 +97,6 @@ The MQTT runtime will call on the `MQTTDecoder` class from **solar_classes.py** 
 
 `_on_message()` runs everytime the MQTT subscriber receives a message from the broker.
 
-___
-
 ### Influx Queries
 
 Defines a program that generates and handles Influx queries using the Influx query api using the QueryBuilder class in **influx_classes.py**.

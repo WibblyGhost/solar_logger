@@ -5,7 +5,7 @@ Check the Influx query documentation for write syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 # Imports for Influx
-from classes import InfluxController
+from .influx_classes import InfluxController
 from influxdb_client.client.write_api import SYNCHRONOUS
 # Imports for MQTT
 import paho.mqtt.client as mqtt
@@ -15,6 +15,7 @@ from pymate.matenet.mx import MXStatusPacket as MateMX
 from datetime import datetime
 import logging
 import ssl
+
 
 
 class MQTTDecoder:
@@ -70,8 +71,8 @@ class MQTTDecoder:
         try:
             self._mqtt_client.connect(self._mqtt_host, self._mqtt_port)
         except Exception as err:
-            logging.error('Failed to connect to MQTT broker', err)
-            raise ConnectionError
+            logging.error(f'Failed to connect to MQTT broker, {err}')
+            raise err
 
     def _on_connect(self, _client, _userdata, _flags, rc):
         """

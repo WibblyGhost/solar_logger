@@ -1,12 +1,13 @@
 """
 Contains both a logger and csv writing function for use in outside functions
 """
-from config.consts import CONFIG_FILENAME
-import distutils.util
+import os
+import csv
 import logging
 import configparser
-import csv
-import os
+import distutils.util
+
+from config.consts import CONFIG_FILENAME
 
 
 def create_logger(config_name):
@@ -25,20 +26,31 @@ def create_logger(config_name):
                   'ERROR': logging.ERROR,
                   'CRITICAL': logging.CRITICAL}
     debug_level = debug_dict[config_p.get(config_name, 'debug_level')]
-    if not file_logging:
-        logging.basicConfig(level=debug_level)
-    else:
+    file_format = config_p.get(config_name, 'format')
+    date_format = config_p.get(config_name, 'dateformat')
+
+    logger = logging.getLogger()
+    logger.setLevel(debug_level)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(debug_level)
+    log_formatter = logging.Formatter(fmt=file_format, datefmt=date_format)
+    stream_handler.setFormatter(log_formatter)
+    logger.addHandler(stream_handler)
+    logging.info('Created logger')
+
+    if file_logging:
         file_location = config_p.get(config_name, 'file_location')
         if not os.path.exists(file_location):
             os.makedirs(file_location)
         filename = config_p.get(config_name, 'filename')
         full_path = file_location + filename
         file_mode = config_p.get(config_name, 'filemode')
-        file_format = config_p.get(config_name, 'format')
-        date_format = config_p.get(config_name, 'dateformat')
-        logging.basicConfig(filename=full_path, filemode=file_mode, format=file_format,
-                            datefmt=date_format, level=debug_level)
-    logging.info('Created logger')
+        file_stream_handler = logging.FileHandler(filename=full_path, mode=file_mode)
+        file_stream_handler.setLevel(debug_level)
+        file_stream_handler.setFormatter(log_formatter)
+        logger.addHandler(file_stream_handler)
+        logging.info(f'Created file logger at {full_path}')
+
     return logging
 
 
