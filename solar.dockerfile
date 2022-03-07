@@ -1,17 +1,23 @@
 FROM python:3.10.2
 
-ADD requirements.txt /app/
+RUN apt-get update && pip install --upgrade pip
 
-RUN apt-get update
-RUN pip install --upgrade pip
-RUN pip install -r /app/requirements.txt
+# Docker permissions lockdown
+RUN adduser -disabled-password myuser
+USER myuser
+WORKDIR /home/myuser/app
+COPY --chown=myuser:myuser requirements.txt requirements.txt
+RUN pip install --user -r requirements.txt
+ENV PATH="/home/user/.local/bin:${PATH}"
 
-ADD solar_runtime.py /app/
-ADD /config/ /app/config/
-ADD /classes/mqtt_classes.py /app/classes/mqtt_classes.py
-ADD /classes/influx_classes.py /app/classes/influx_classes.py
-ADD /classes/py_functions.py /app/classes/py_functions.py
+# Add needed modules
+ADD solar_runtime.py /home/myuser/app/
+ADD /config/ /home/myuser/app/config/
+ADD /classes/mqtt_classes.py /home/myuser/app/classes/mqtt_classes.py
+ADD /classes/influx_classes.py /home/myuser/app/classes/influx_classes.py
+ADD /classes/py_functions.py /home/myuser/app/classes/py_functions.py
 
+# Setup environment variables
 ENV INFLUX_URL = "$INFLUX_URL"
 ENV INFLUX_ORG = "$INFLUX_ORG"
 ENV INFLUX_BUCKET = "$INFLUX_BUCKET"
@@ -23,6 +29,5 @@ ENV MQTT_USER = "$MQTT_USER"
 ENV MQTT_TOKEN = "$MQTT_TOKEN"
 ENV MQTT_TOPIC = "$MQTT_TOPIC"
 
-WORKDIR "/app"
-
+# Run instance
 CMD [ "python", "solar_runtime.py" ]
