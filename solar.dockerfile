@@ -9,7 +9,7 @@ ADD /config/ /app/config/
 ADD /classes/solar_classes.py /app/classes/solar_classes.py
 ADD /classes/py_functions.py /app/classes/py_functions.py
 ADD requirements.txt /app/
-
+RUN true
 RUN pip install -r /app/requirements.txt
 
 ENV INFLUX_URL = "$INFLUX_URL"
