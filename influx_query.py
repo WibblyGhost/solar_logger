@@ -4,9 +4,8 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from private.influx_codenames import InfluxSecret  # pylint: disable=import-error
 from classes.influx_classes import InfluxController, QueryBuilder
-from classes.py_functions import create_logger, csv_writer, read_query_settings
+from classes.py_functions import create_logger, csv_writer, read_query_settings, get_influx_secrets
 from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 
 INFLUX_DB = None
@@ -142,7 +141,8 @@ def main():
     """
     Classes runtime which creates a query to an Influx database to view the tables.
     """
-    create_influx_controller(InfluxSecret)
+    influx_secret = get_influx_secrets()
+    create_influx_controller(influx_secret)
     # print(
     #     "Build a query using QueryBuilder() run QueryBuilder.help() for info.\n"
     #     "***************\n"

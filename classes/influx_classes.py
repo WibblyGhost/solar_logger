@@ -18,7 +18,7 @@ class InfluxController:
     influx_bucket = None
     influx_org = None
 
-    def __init__(self, token, org, bucket, url):
+    def __init__(self, token: str, org: str, bucket: str, url: str):
         """
         :param token: Secret password to login to database with
         :param org: Organisation of the bucket to login to
@@ -64,7 +64,11 @@ class QueryBuilder:
 
     query_string = None
 
-    def __init__(self, bucket, start_range, end_range=None):
+    def __init__(self, 
+            bucket: str, 
+            start_range: str, 
+            end_range: str=None
+            ):
         """
         Creates a base string for the query from which can be built upon
         :param bucket:  Influx database bucket for query

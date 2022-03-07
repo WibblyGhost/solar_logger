@@ -24,9 +24,14 @@ class MQTTDecoder:
     Class which creates a client to connect to MQTT subscriber and decode the messages
     """
 
-    def __init__(
-        self, host, port, user, password, topic, influx_database=InfluxController
-    ):
+    def __init__(self,
+            host: str,
+            port: int,
+            user: str,
+            password: str,
+            topic: str,
+            influx_database: InfluxController=InfluxController
+            ):
         """
         :param host: Web url for the subscriber to listen on
         :param port: Port which the web server uses for MQTT
@@ -74,6 +79,7 @@ class MQTTDecoder:
         try:
             self._mqtt_client.connect(self._mqtt_host, self._mqtt_port)
         except Exception as err:
+            print(type(self._mqtt_host), type(self._mqtt_port))
             logging.error(f"Failed to connect to MQTT broker, {err}")
             raise err
 

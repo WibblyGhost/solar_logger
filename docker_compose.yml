@@ -24,12 +24,16 @@ services:
     image: python:3.10.2
     volumes:
       - ./docker_output:/app/output:rw
+    env_file:
+      - .env
   
   InfluxQuery:
     container_name: influx_query
     build:
       dockerfile: query.dockerfile
     image: python:3.10.2
+    env_file:
+      - .env
 
   # PosgreSQL:
   #   container_name: posgresql

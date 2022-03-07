@@ -86,3 +86,39 @@ def read_query_settings(config_name):
     config_p = configparser.ConfigParser()
     config_p.read(CONFIG_FILENAME)
     return config_p.get(config_name, "query_mode")
+
+
+def get_mqtt_secrets() -> dict:
+    """
+    Gets secret details from the environment file.
+    :return mqtt_store: Dictionary of secrets
+    """
+    mqtt_store = {}
+    mqtt_store["mqtt_host"] = os.environ.get("mqtt_host")
+    mqtt_store["mqtt_port"] = int(os.environ.get("mqtt_port"))
+    mqtt_store["mqtt_user"] = os.environ.get("mqtt_user")
+    mqtt_store["mqtt_password"] = os.environ.get("mqtt_password")
+    mqtt_store["mqtt_topic"] = os.environ.get("mqtt_topic")
+    for _, value in mqtt_store.items():
+        if not value:
+            logging.error("Missing secret credential for MQTT in the .env")
+            raise ValueError("Missing secret credential for MQTT in the .env")
+    return mqtt_store
+
+
+def get_influx_secrets() -> dict:
+    """
+    Gets secret details from the environment file.
+    :return influx_store: Dictionary of secrets
+    """
+    influx_store = {}
+    influx_store["influx_url"] = os.environ.get("influx_url")
+    influx_store["influx_org"] = os.environ.get("influx_org")
+    influx_store["influx_bucket"] = os.environ.get("influx_bucket")
+    influx_store["influx_token"] = os.environ.get("influx_token")
+    for _, value in influx_store.items():
+        if not value:
+            logging.error("Missing secret credential for InfluxDB in the .env")
+            raise ValueError("Missing secret credential for InfluxDB in the .env")
+    
+    return influx_store
