@@ -1,15 +1,16 @@
 FROM python:3.10.2
 
-RUN pip install --upgrade pip
+ADD requirements.txt app/
+
 RUN apt-get update
+RUN pip install --upgrade pip
+RUN pip install -r app/requirements.txt
 
 # ADD solar_runtime.py app/
 # ADD /classes/ app/classes/
 # ADD /private/ app/private/
 # ADD /config/ app/config/
 
-ADD requirements.txt app/
-RUN pip install -r app/requirements.txt
 
 WORKDIR "/app"
 

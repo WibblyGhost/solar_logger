@@ -3,8 +3,7 @@ init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.app
 
 [MESSAGES CONTROL]
 
-disable=wrong-import-order,
-    logging-fstring-interpolation, 
+disable=logging-fstring-interpolation, 
     unspecified-encoding, 
     too-many-instance-attributes, 
     too-few-public-methods, 

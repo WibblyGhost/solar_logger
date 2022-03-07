@@ -1,10 +1,10 @@
 name: Docker Image CI
 
-on: [push]
-  # push:
-  #   branches: [ main ]
-  # pull_request:
-  #   branches: [ main ]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -14,12 +14,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build the Solar Logger Docker image
       run: docker build . --file solar.dockerfile --tag solar_logger:$(date +%s)
-    - name: Build the InfluxDB Docker image
-      run: docker build . --file solar.dockerfile --tag solar_logger:$(date +%s)
-
-    # - name: List
-    #   run: ls
-    # - name: read
-    #   run: cat ./docker_compose.yml
-    # - name: Build the Docker image
-    #   run: docker-compose -f ./docker_compose.yml up
+      
+    - name: Build the Influx Query Docker image
+      run: docker build . --file influx_query.dockerfile --tag influx_query:$(date +%s)
