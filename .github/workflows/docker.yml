@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Build the Docker image
-      run: docker-compose -f ./docker_compose.yml up
     - name: List
       run: ls
     - name: read
       run: cat ./docker_compose.yml
+    - name: Build the Docker image
+      run: docker-compose -f ./docker_compose.yml up
