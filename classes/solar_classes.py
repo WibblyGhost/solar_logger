@@ -24,14 +24,15 @@ class MQTTDecoder:
     Class which creates a client to connect to MQTT subscriber and decode the messages
     """
 
-    def __init__(self,
-            host: str,
-            port: int,
-            user: str,
-            password: str,
-            topic: str,
-            influx_database: InfluxController=InfluxController
-            ):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        user: str,
+        password: str,
+        topic: str,
+        influx_database: InfluxController = InfluxController,
+    ):
         """
         :param host: Web url for the subscriber to listen on
         :param port: Port which the web server uses for MQTT

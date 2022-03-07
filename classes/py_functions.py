@@ -120,5 +120,5 @@ def get_influx_secrets() -> dict:
         if not value:
             logging.error("Missing secret credential for InfluxDB in the .env")
             raise ValueError("Missing secret credential for InfluxDB in the .env")
-    
+
     return influx_store

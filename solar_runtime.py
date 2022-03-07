@@ -18,12 +18,12 @@ def create_influx_controller(influx_secret):
         if not value:
             logging.error("Missing secret credential for InfluxDB in the .env")
             raise ValueError("Missing secret credential for InfluxDB in the .env")
-    
+
     database = InfluxController(
         influx_secret["influx_url"],
         influx_secret["influx_org"],
         influx_secret["influx_bucket"],
-        influx_secret["influx_token"]
+        influx_secret["influx_token"],
     )
     database.startup()
     return database

@@ -64,11 +64,7 @@ class QueryBuilder:
 
     query_string = None
 
-    def __init__(self, 
-            bucket: str, 
-            start_range: str, 
-            end_range: str=None
-            ):
+    def __init__(self, bucket: str, start_range: str, end_range: str = None):
         """
         Creates a base string for the query from which can be built upon
         :param bucket:  Influx database bucket for query
