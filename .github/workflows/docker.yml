@@ -11,9 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: List
-      run: ls
-    - name: read
-      run: cat ./docker_compose.yml
     - name: Build the Docker image
-      run: docker-compose -f ./docker_compose.yml up
+      run: docker build . --file solar.dockerfile --tag SolarLogger:$(date +%s)
+
+    # - name: List
+    #   run: ls
+    # - name: read
+    #   run: cat ./docker_compose.yml
+    # - name: Build the Docker image
+    #   run: docker-compose -f ./docker_compose.yml up

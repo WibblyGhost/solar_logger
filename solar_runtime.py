@@ -14,16 +14,16 @@ def create_influx_controller(influx_secret):
     :param influx_secret: Secret passwords nad logins for Influx database
     :return: A database object which can be used to write/read data points
     """
-    for _, value in influx_secret.items():
+    for key, value in influx_secret.items():
         if not value:
             logging.error("Missing secret credential for InfluxDB in the .env")
             raise ValueError("Missing secret credential for InfluxDB in the .env")
 
     database = InfluxController(
-        influx_secret["influx_url"],
-        influx_secret["influx_org"],
-        influx_secret["influx_bucket"],
-        influx_secret["influx_token"],
+        url=influx_secret["INFLUX_URL"],
+        org=influx_secret["INFLUX_ORG"],
+        bucket=influx_secret["INFLUX_BUCKET"],
+        token=influx_secret["INFLUX_TOKEN"],
     )
     database.startup()
     return database
@@ -36,18 +36,18 @@ def mqtt_runtime(mqtt_secret, influx_database):
     :param influx_database: An Influx database object for the MQTTDecoder to write to
     :return: Never returns (see mq.mqtt_runtime())
     """
-    for _, value in mqtt_secret.items():
+    for key, value in mqtt_secret.items():
         if not value:
-            logging.error("Missing secret credential for MQTT in the .env")
-            raise ValueError("Missing secret credential for MQTT in the .env")
+            logging.error(f"Missing secret credential for MQTT in the .env, {key}")
+            raise ValueError(f"Missing secret credential for MQTT in the .env, {key}")
 
     mqtt = MQTTDecoder(
-        mqtt_secret["mqtt_host"],
-        mqtt_secret["mqtt_port"],
-        mqtt_secret["mqtt_user"],
-        mqtt_secret["mqtt_password"],
-        mqtt_secret["mqtt_topic"],
-        influx_database,
+        host=mqtt_secret["MQTT_HOST"],
+        port=mqtt_secret["MQTT_PORT"],
+        user=mqtt_secret["MQTT_USER"],
+        token=mqtt_secret["MQTT_TOKEN"],
+        topic=mqtt_secret["MQTT_TOPIC"],
+        influx_database=influx_database,
     )
     mqtt.startup()
     mqtt.mqtt_runtime()

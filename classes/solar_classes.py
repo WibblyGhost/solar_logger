@@ -16,7 +16,7 @@ from pymate.matenet.fx import FXStatusPacket as MateFX
 from pymate.matenet.mx import MXStatusPacket as MateMX
 
 # Imports for Influx
-from influx_classes import InfluxController
+from classes.influx_classes import InfluxController
 
 
 class MQTTDecoder:
@@ -29,7 +29,7 @@ class MQTTDecoder:
         host: str,
         port: int,
         user: str,
-        password: str,
+        token: str,
         topic: str,
         influx_database: InfluxController = InfluxController,
     ):
@@ -37,7 +37,7 @@ class MQTTDecoder:
         :param host: Web url for the subscriber to listen on
         :param port: Port which the web server uses for MQTT
         :param user: Username to access MQTT server
-        :param password: Password to access MQTT server
+        :param token: Token to access MQTT server
         :param influx_database: Database for the MQTTDecoder to write results to
         """
         self._fx_time = None
@@ -48,7 +48,7 @@ class MQTTDecoder:
         self._mqtt_port = port
         self._mqtt_topic = topic
         self._mqtt_user = user
-        self._mqtt_password = password
+        self._mqtt_token = token
         self._mqtt_client = mqtt.Client()
         self._influx_database = influx_database
         self._influx_bucket = influx_database.influx_bucket
@@ -62,7 +62,7 @@ class MQTTDecoder:
         logging.info("Connecting to MQTT broker")
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_message = self._on_message
-        self._mqtt_client.username_pw_set(self._mqtt_user, self._mqtt_password)
+        self._mqtt_client.username_pw_set(self._mqtt_user, self._mqtt_token)
         self._mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
         self._mqtt_client.tls_insecure_set(True)
         self._connect_mqtt()

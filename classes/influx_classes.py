@@ -18,7 +18,7 @@ class InfluxController:
     influx_bucket = None
     influx_org = None
 
-    def __init__(self, token: str, org: str, bucket: str, url: str):
+    def __init__(self, url: str, org:str, bucket: str, token: str):
         """
         :param token: Secret password to login to database with
         :param org: Organisation of the bucket to login to
