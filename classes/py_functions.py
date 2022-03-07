@@ -11,7 +11,7 @@ import os
 from config.consts import CONFIG_FILENAME
 
 
-def create_logger(config_name):
+def create_logger(config_name: str) -> logging:
     """
     Creates a logging instance, can be customised through the config.ini
     :param config_name: Section under the config for the configuration to pull data from
@@ -57,7 +57,7 @@ def create_logger(config_name):
     return logging
 
 
-def csv_writer(config_name, table):
+def csv_writer(config_name: str, table: dict) -> None:
     """
     Writes a CSV file from an Influx query
     :param config_name: Section under the config for the configuration to pull data from
@@ -78,11 +78,48 @@ def csv_writer(config_name, table):
     logging.info(f"Wrote rows into CSV file at: {full_path}")
 
 
-def read_query_settings(config_name):
+def read_query_settings(config_name: str):  # TODO
     """
     :param config_name: Section under the config for the configuration to pull data from
     :return: Query variables
     """
     config_p = configparser.ConfigParser()
     config_p.read(CONFIG_FILENAME)
-    return config_p.get(config_name, "query_mode")
+    return config_p.get(section=config_name, option="query_mode")
+
+
+def get_mqtt_secrets() -> dict:
+    """
+    Gets secret details from the environment file.
+    :return mqtt_store: Dictionary of secrets
+    """
+    mqtt_store = {}
+    mqtt_store["MQTT_HOST"] = os.environ.get("MQTT_HOST")
+    mqtt_store["MQTT_PORT"] = int(os.environ.get("MQTT_PORT"))
+    mqtt_store["MQTT_USER"] = os.environ.get("MQTT_USER")
+    mqtt_store["MQTT_TOKEN"] = os.environ.get("MQTT_TOKEN")
+    mqtt_store["MQTT_TOPIC"] = os.environ.get("MQTT_TOPIC")
+    for key, value in mqtt_store.items():
+        if not value:
+            logging.error(f"Missing secret credential for MQTT in the .env, {key}")
+            raise ValueError(f"Missing secret credential for MQTT in the .env, {key}")
+    return mqtt_store
+
+
+def get_influx_secrets() -> dict:
+    """
+    Gets secret details from the environment file.
+    :return influx_store: Dictionary of secrets
+    """
+    influx_store = {}
+    influx_store["INFLUX_URL"] = os.environ.get("INFLUX_URL")
+    influx_store["INFLUX_ORG"] = os.environ.get("INFLUX_ORG")
+    influx_store["INFLUX_BUCKET"] = os.environ.get("INFLUX_BUCKET")
+    influx_store["INFLUX_TOKEN"] = os.environ.get("INFLUX_TOKEN")
+    for key, value in influx_store.items():
+        if not value:
+            logging.error(f"Missing secret credential for InfluxDB in the .env, {key}")
+            raise ValueError(
+                f"Missing secret credential for InfluxDB in the .env. {key}"
+            )
+    return influx_store

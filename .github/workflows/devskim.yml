@@ -4,13 +4,13 @@
 # documentation.
 name: DevSkim
 
-on: [push]
-  # push:
-  #   branches: [ main ]
-  # pull_request:
-  #   branches: [ main ]
-  # schedule:
-  #   - cron: '41 2 * * 0'
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '41 2 * * 0'
 
 jobs:
   lint:

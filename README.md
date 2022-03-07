@@ -22,7 +22,7 @@ All following Docker restarts should keep their data.
 
 ## Solar Logger Setup
 
-To start, fill out the template files with personal secrets and copy them to a new folder called Private. Then after running a Docker compose it should start the service and start writing data into Influx. If any errors occur then look through the Docker log files.
+To start, fill out the `.env` template file with personal secrets and copy them to the base director. Then after running a Docker compose it will use the environmental variables to start the service and start writing data into Influx. If any errors occur then look through the Docker log files.
 
 ## Contents
 
@@ -124,7 +124,7 @@ def mqtt_runtime(mqtt_secret, influx_database):
     mqtt.mqtt_runtime()
 ```
 
-The MQTT runtime will call on the `MQTTDecoder` class from **solar_classes.py** which will listen and record data points.
+The MQTT runtime will call on the `MQTTDecoder` class from **mqtt_classes.py** which will listen and record data points.
 
 `_on_connect()` runs when the MQTT subscriber firstly connects to the MQTT broker, in our case it uses the secrets file *(excluded passwords file)*  to choose what subscription to listen to.
 
@@ -157,4 +157,4 @@ When querying the Influx database you can use three data types to assign the res
 
 *Currently, the program doesn't support parsing of stream files but will handle writing CSV files and printing Flux files.*
 
-After building up a query you can submit the query by running `run_int_query(query)`.
+After building up a query you can submit the query by running `execute_query(query)`.

@@ -3,6 +3,3 @@ __pycache__/
 .idea/
 .vscode/
 /venv/
-
-#Output log files
-/output/

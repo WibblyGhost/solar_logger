@@ -1,7 +1,7 @@
 version: '3.8'
 services:
-  InfluxDB:
-    container_name: influx_db
+  influx_db:
+    container_name: InfluxDB
     image: influxdb:2.1.1
     # For first time setup use these variables
     # environment:
@@ -17,19 +17,26 @@ services:
       - ./docker_influxdb/var/lib/influxdb2:/var/lib/influxdb2:rw
       - ./docker_influxdb/etc/influxdb2:/etc/influxdb2:rw
   
-  SolarLogger:
-    container_name: solar_logger
+  solar_logger:
+    container_name: SolarLogger
     build:
       dockerfile: solar.dockerfile
-    image: python:3.10.2
     volumes:
       - ./docker_output:/app/output:rw
+    env_file:
+      - .env
   
-  InfluxQuery:
-    container_name: influx_query
+  influx_query:
+    container_name: InfluxQuery
+    stdin_open: true
+    tty: true
     build:
-      dockerfile: query.dockerfile
-    image: python:3.10.2
+      dockerfile: influx_query.dockerfile
+    volumes:
+      - ./docker_output:/app/output:rw
+    env_file:
+      - .env
+
 
   # PosgreSQL:
   #   container_name: posgresql

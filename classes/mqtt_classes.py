@@ -11,12 +11,13 @@ from datetime import datetime
 
 # Imports for MQTT
 import paho.mqtt.client as mqtt
-from influxdb_client.client.write_api import SYNCHRONOUS
 from pymate.matenet.fx import FXStatusPacket as MateFX
 from pymate.matenet.mx import MXStatusPacket as MateMX
 
 # Imports for Influx
-from influx_classes import InfluxController
+from influxdb_client.rest import ApiException
+from influxdb_client.client.write_api import SYNCHRONOUS
+from classes.influx_classes import InfluxController
 
 
 class MQTTDecoder:
@@ -25,13 +26,19 @@ class MQTTDecoder:
     """
 
     def __init__(
-        self, host, port, user, password, topic, influx_database=InfluxController
-    ):
+        self,
+        host: str,
+        port: int,
+        user: str,
+        token: str,
+        topic: str,
+        influx_database: InfluxController = InfluxController,
+    ) -> None:
         """
         :param host: Web url for the subscriber to listen on
         :param port: Port which the web server uses for MQTT
         :param user: Username to access MQTT server
-        :param password: Password to access MQTT server
+        :param token: Token to access MQTT server
         :param influx_database: Database for the MQTTDecoder to write results to
         """
         self._fx_time = None
@@ -42,13 +49,13 @@ class MQTTDecoder:
         self._mqtt_port = port
         self._mqtt_topic = topic
         self._mqtt_user = user
-        self._mqtt_password = password
+        self._mqtt_token = token
         self._mqtt_client = mqtt.Client()
         self._influx_database = influx_database
         self._influx_bucket = influx_database.influx_bucket
         self._influx_org = influx_database.influx_org
 
-    def startup(self):
+    def startup(self) -> None:
         """
         Initial setup for the MQTT connector, connects to MQTT broker
         and failing to connect will exit the program
@@ -56,28 +63,31 @@ class MQTTDecoder:
         logging.info("Connecting to MQTT broker")
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_message = self._on_message
-        self._mqtt_client.username_pw_set(self._mqtt_user, self._mqtt_password)
+        self._mqtt_client.username_pw_set(
+            username=self._mqtt_user, password=self._mqtt_token
+        )
         self._mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
         self._mqtt_client.tls_insecure_set(True)
         self._connect_mqtt()
 
-    def mqtt_runtime(self):
+    def start_mqtt_service(self) -> None:
         """
         Continuous even loop which never returns, runs the classes MQTT program
         """
         self._mqtt_client.loop_forever()
 
-    def _connect_mqtt(self):
+    def _connect_mqtt(self) -> None:
         """
         Connects to MQTT broker, on failure to connect it wil terminate the program
         """
         try:
-            self._mqtt_client.connect(self._mqtt_host, self._mqtt_port)
+            self._mqtt_client.connect(host=self._mqtt_host, port=self._mqtt_port)
         except Exception as err:
+            print(type(self._mqtt_host), type(self._mqtt_port))
             logging.error(f"Failed to connect to MQTT broker, {err}")
             raise err
 
-    def _on_connect(self, _client, _userdata, _flags, return_code):
+    def _on_connect(self, _client, _userdata, _flags, return_code: int) -> None:
         """
         On first connection to MQTT broker this function will subscribe to the brokers topics
         :param _client: Unused
@@ -93,34 +103,8 @@ class MQTTDecoder:
                 f"Connection to MQTT broker refused, returned code: {return_code}"
             )
 
-    def _database_add(self, msg_time, msg_dict, msg_type):
-        """
-        Adds message to Influx database
-        :param msg_dict: Message for MQTTDecoder to input into the Influx Database in dictionary
-        :param msg_type: Type of header the msg carries, either FX, MX or DX
-        # point_template = {"measurement": None, "fields": {None, None}, "time": None}
-        """
-        logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
-        write_client = self._influx_database.influx_client.write_api(
-            write_options=SYNCHRONOUS
-        )
-        for key, value in msg_dict.items():
-            # point_template = {
-            #     "measurement": msg_type,
-            #     "fields": {key: float(value)},
-            #     "time": msg_time,
-            # }
-            # logging.debug(f"wrote point: {point_template}")
-            # write_client.write(self._influx_bucket, self._influx_org, point_template)
-            # Some strange error with inserting time from Points instead of the write_api
-            point_template = {"measurement": msg_type, "fields": {key: float(value)}}
-            logging.debug(f"Wrote point: {point_template} at {msg_time}")
-            write_client.write(
-                self._influx_bucket, self._influx_org, point_template, time=msg_time
-            )
-
     @staticmethod
-    def _fx_decoder(msg=b""):
+    def _fx_decoder(msg: bytearray = b"") -> dict:
         """
         Decoder for FX objects
         :param msg: Input message to decode
@@ -130,7 +114,7 @@ class MQTTDecoder:
         return {key: value for (key, value) in fx_packet.items() if key != "raw"}
 
     @staticmethod
-    def _mx_decoder(msg=b""):
+    def _mx_decoder(msg: bytearray = b"") -> dict:
         """
         Decoder for MX objects
         :param msg: Input message to decode
@@ -140,7 +124,7 @@ class MQTTDecoder:
         return {key: value for (key, value) in mx_packet.items() if key != "raw"}
 
     # @staticmethod
-    # def _dc_decoder(msg=b""):
+    # def _dc_decoder(msg: bytearray=b"") -> dict:
     #     # TODO: Include DC Packets in decoder
     #     """
     #     Decoder for DC objects
@@ -150,7 +134,7 @@ class MQTTDecoder:
     #     dc_packet = MateDC.from_buffer(msg).__dict__
     #     return {key: value for (key, value) in dc_packet.items() if key != "raw"}
 
-    def _on_message(self, _client, _userdata, msg):
+    def _on_message(self, _client, _userdata, msg: str) -> None:
         """
         Called everytime a message is received which it then decodes
         :param msg: Message to partition into categories and decode
@@ -173,15 +157,60 @@ class MQTTDecoder:
             if self._fx_time:
                 fx_payload = self._fx_decoder(msg.payload)
                 logging.debug(f"Received fx_payload packet: {fx_payload}")
-                self._database_add(self._fx_time, fx_payload, "fx-1")
+                self._database_write_points(
+                    msg_time=self._fx_time, msg_payload=fx_payload, msg_type="fx-1"
+                )
         elif msg.topic == "mate/mx-1/stat/raw":
             if self._mx_time:
                 mx_payload = self._mx_decoder(msg.payload)
                 logging.debug(f"Received mx_payload packet: {mx_payload}")
-                self._database_add(self._mx_time, mx_payload, "mx-1")
+                self._database_write_points(
+                    msg_time=self._mx_time, msg_payload=mx_payload, msg_type="mx-1"
+                )
         # TODO: Include DC packets
         # elif msg.topic == "mate/dc-1/stat/raw":
         #     if self.dc_time:
         #         dc_payload = self._dc_decoder(msg.payload)
         #         logging.debug(f"Received dc_payload packet: {dc_payload}"")
-        #         self._database_add(self.dc_time, dc_payload, "dc-1")
+        #         self._database_add(msg_time=self.dc_time, msg_payload=dc_payload, msg_type="dc-1")
+
+    def _database_write_points(
+        self, msg_time: str, msg_payload: dict, msg_type: str
+    ) -> None:
+        """
+        Adds message to Influx database
+        :param msg_dict: Message for MQTTDecoder to input into the Influx Database in dictionary
+        :param msg_type: Type of header the msg carries, either FX, MX or DX
+        # point_template = {"measurement": None, "fields": {None, None}, "time": None}
+        """
+        logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
+        write_client = self._influx_database.influx_client.write_api(
+            write_options=SYNCHRONOUS
+        )
+        try:
+            for key, value in msg_payload.items():
+                # point_template = {
+                #     "measurement": msg_type,
+                #     "fields": {key: float(value)},
+                #     "time": msg_time,
+                # }
+                # logging.debug(f"wrote point: {point_template}")
+                # write_client.write(self._influx_bucket, self._influx_org, point_template)
+                # Some strange error with inserting time from Points instead of the write_api
+                point_template = {
+                    "measurement": msg_type,
+                    "fields": {key: float(value)},
+                }
+                logging.debug(f"Wrote point: {point_template} at {msg_time}")
+                write_client.write(
+                    bucket=self._influx_bucket,
+                    org=self._influx_org,
+                    record=point_template,
+                    time=msg_time,
+                )
+        except ApiException as err:
+            logging.error(f"Failed to run write, returned HTTP error: {err}")
+            raise err
+        except Exception as err:
+            logging.error(f"Failed to run write, returned error: {err}")
+            raise err

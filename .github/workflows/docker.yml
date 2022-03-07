@@ -1,0 +1,19 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: SolarLoggerSecrets
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Solar Logger Docker image
+      run: docker build . --file solar.dockerfile --tag solar_logger:$(date +%s)
+      
+    - name: Build the Influx Query Docker image
+      run: docker build . --file influx_query.dockerfile --tag influx_query:$(date +%s)

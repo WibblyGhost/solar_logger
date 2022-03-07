@@ -8,9 +8,10 @@ ADD requirements.txt /app/
 RUN pip install -r /app/requirements.txt
 
 # Add required modules
-ADD postgresql_connector.py /app/
+ADD influx_query.py /app/
 ADD /config/ /app/config/
-# ADD /classes/py_functions.py /app/classes/py_functions.py
+ADD /classes/influx_classes.py /app/classes/influx_classes.py
+ADD /classes/py_functions.py /app/classes/py_functions.py
 
 # Setting environment variables
 ENV INFLUX_URL = "$INFLUX_URL"
@@ -19,4 +20,4 @@ ENV INFLUX_BUCKET = "$INFLUX_BUCKET"
 ENV INFLUX_TOKEN = "$INFLUX_TOKEN"
 
 # Run instance
-CMD ["python", "postgresql_connector.py"]
+CMD [ "python", "-i", "./influx_query.py"]
