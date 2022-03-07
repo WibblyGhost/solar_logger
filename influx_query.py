@@ -4,7 +4,7 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from private.influx_codenames import InfluxSecret
+from private.influx_codenames import InfluxSecret  # pylint: disable=import-error
 from classes.influx_classes import InfluxController, QueryBuilder
 from classes.py_functions import create_logger, csv_writer, read_query_settings
 from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE

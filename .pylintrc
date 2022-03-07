@@ -1,6 +1,6 @@
 [MESSAGES CONTROL]
 
-disable=
+disable=wrong-import-order,
     logging-fstring-interpolation, 
     unspecified-encoding, 
     too-many-instance-attributes, 
