@@ -12,8 +12,8 @@ from datetime import datetime
 # Imports for MQTT
 import paho.mqtt.client as mqtt
 from influxdb_client.client.write_api import SYNCHRONOUS
-from pymate.matenet.fx import FXStatusPacket as MateFX  # pylint: disable=import-error
-from pymate.matenet.mx import MXStatusPacket as MateMX  # pylint: disable=import-error
+from pymate.matenet.fx import FXStatusPacket as MateFX
+from pymate.matenet.mx import MXStatusPacket as MateMX
 
 # Imports for Influx
 from influx_classes import InfluxController

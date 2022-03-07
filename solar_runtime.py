@@ -6,8 +6,8 @@ from classes.influx_classes import InfluxController
 from classes.py_functions import create_logger
 from classes.solar_classes import MQTTDecoder
 from config.consts import SOLAR_DEBUG_CONFIG_TITLE
-from private.influx_codenames import InfluxSecret
-from private.mqtt_codenames import MQTTSecret
+from private.influx_codenames import InfluxSecret  # pylint: disable=import-error
+from private.mqtt_codenames import MQTTSecret  # pylint: disable=import-error
 
 
 def create_influx_controller(influx_secret):
