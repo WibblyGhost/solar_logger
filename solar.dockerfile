@@ -1,23 +1,20 @@
 FROM python:3.10.2
 
+WORKDIR /app/
+
+# Run updates
 RUN apt-get update && pip install --upgrade pip
+ADD requirements.txt /app/
+RUN pip install -r /app/requirements.txt
 
-# Docker permissions lockdown
-RUN adduser -disabled-password myuser
-USER myuser
-WORKDIR /home/myuser/app
-COPY --chown=myuser:myuser requirements.txt requirements.txt
-RUN pip install --user -r requirements.txt
-ENV PATH="/home/user/.local/bin:${PATH}"
+# Add required modules
+ADD solar_runtime.py /app/
+ADD /config/ /app/config/
+ADD /classes/mqtt_classes.py /app/classes/mqtt_classes.py
+ADD /classes/influx_classes.py /app/classes/influx_classes.py
+ADD /classes/py_functions.py /app/classes/py_functions.py
 
-# Add needed modules
-ADD solar_runtime.py /home/myuser/app/
-ADD /config/ /home/myuser/app/config/
-ADD /classes/mqtt_classes.py /home/myuser/app/classes/mqtt_classes.py
-ADD /classes/influx_classes.py /home/myuser/app/classes/influx_classes.py
-ADD /classes/py_functions.py /home/myuser/app/classes/py_functions.py
-
-# Setup environment variables
+# Setting environment variables
 ENV INFLUX_URL = "$INFLUX_URL"
 ENV INFLUX_ORG = "$INFLUX_ORG"
 ENV INFLUX_BUCKET = "$INFLUX_BUCKET"

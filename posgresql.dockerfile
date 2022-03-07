@@ -1,17 +1,22 @@
 FROM python:3.10.2
 
-ADD requirements.txt app/
+WORKDIR /app/
 
-RUN apt-get update
-RUN pip install --upgrade pip
-RUN pip install -r app/requirements.txt
+# Run updates
+RUN apt-get update && pip install --upgrade pip
+ADD requirements.txt /app/
+RUN pip install -r /app/requirements.txt
 
-# ADD solar_runtime.py app/
-# ADD /classes/ app/classes/
-# ADD /private/ app/private/
-# ADD /config/ app/config/
+# Add required modules
+ADD postgresql_connector.py /app/
+ADD /config/ /app/config/
+# ADD /classes/py_functions.py /app/classes/py_functions.py
 
+# Setting environment variables
+ENV INFLUX_URL = "$INFLUX_URL"
+ENV INFLUX_ORG = "$INFLUX_ORG"
+ENV INFLUX_BUCKET = "$INFLUX_BUCKET"
+ENV INFLUX_TOKEN = "$INFLUX_TOKEN"
 
-WORKDIR "/app"
-
+# Run instance
 CMD ["python", "postgresql_connector.py"]
