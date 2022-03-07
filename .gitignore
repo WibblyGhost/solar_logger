@@ -5,9 +5,13 @@ __pycache__/
 /venv/
 *.py[cod]
 
+# Templates
+/Templates/
+
 # Secret files
 /private/
 *.env
+*codenames.py
 
 #Output log files
 /output/

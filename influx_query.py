@@ -4,10 +4,12 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from private.influx_codenames import InfluxSecret
+from private.influx_codenames import InfluxSecret  # pylint: disable=import-error
 from classes.influx_classes import InfluxController, QueryBuilder
 from classes.py_functions import create_logger, csv_writer, read_query_settings
 from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
+
+INFLUX_DB = None
 
 
 def create_influx_controller(influx_secret) -> InfluxController:
@@ -22,10 +24,6 @@ def create_influx_controller(influx_secret) -> InfluxController:
     return database
 
 
-INFLUX_SECRET = InfluxSecret
-INFLUX_DB = create_influx_controller(INFLUX_SECRET)
-
-
 def parse_csv(csv_file):
     """
     Creating a CSV file from query results
@@ -36,7 +34,7 @@ def parse_csv(csv_file):
     try:
         csv_writer(config_name=INFLUX_QUERY_CONFIG_TITLE, table=csv_file)
     except IOError as err:
-        logging.ERROR("Failed to write CSV file")
+        logging.error("Failed to write CSV file")
         raise err
 
 
@@ -92,7 +90,7 @@ def run_query(influx_db, query, query_mode="csv"):
             query_result = query_api.query_stream(org=influx_db.influx_org, query=query)
         logging.info("Successfully ran query")
     except Exception as err:
-        logging.ERROR("Failed to run query, invalid syntax", err)
+        logging.error("Failed to run query, invalid syntax", err)
         raise err
     return query_result
 
@@ -144,6 +142,7 @@ def main():
     """
     Classes runtime which creates a query to an Influx database to view the tables.
     """
+    create_influx_controller(InfluxSecret)
     # print(
     #     "Build a query using QueryBuilder() run QueryBuilder.help() for info.\n"
     #     "***************\n"

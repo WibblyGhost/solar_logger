@@ -1,8 +1,9 @@
 [MESSAGES CONTROL]
 
-disable=import-error, 
+disable=wrong-import-order,
     logging-fstring-interpolation, 
     unspecified-encoding, 
     too-many-instance-attributes, 
     too-few-public-methods, 
-    too-many-arguments
+    too-many-arguments,
+    fixme  ; Remove this once DC packets are introduced

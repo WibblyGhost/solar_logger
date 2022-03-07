@@ -16,7 +16,7 @@ from pymate.matenet.fx import FXStatusPacket as MateFX
 from pymate.matenet.mx import MXStatusPacket as MateMX
 
 # Imports for Influx
-from .influx_classes import InfluxController
+from influx_classes import InfluxController
 
 
 class MQTTDecoder:
