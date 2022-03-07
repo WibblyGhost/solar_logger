@@ -12,7 +12,9 @@ jobs:
     environment: SolarLoggerSecrets
     steps:
     - uses: actions/checkout@v2
-    - name: Build the Docker image
+    - name: Build the Solar Logger Docker image
+      run: docker build . --file solar.dockerfile --tag solar_logger:$(date +%s)
+    - name: Build the InfluxDB Docker image
       run: docker build . --file solar.dockerfile --tag solar_logger:$(date +%s)
 
     # - name: List
