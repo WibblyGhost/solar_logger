@@ -22,7 +22,7 @@ All following Docker restarts should keep their data.
 
 ## Solar Logger Setup
 
-To start, fill out the `.env` template file with personal secrets and copy them to the base director. Then after running a Docker compose it will use the environmental variables to start the service and start writing data into Influx. If any errors occur then look through the Docker log files.
+To start, fill out the `.env` template file with personal secrets and copy them to the base directory. Then after running a Docker compose it will use the environmental variables to start the service and start writing data into Influx. If any errors occur then look through the Docker log files.
 
 ## Contents
 
