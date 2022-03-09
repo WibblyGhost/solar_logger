@@ -78,7 +78,7 @@ def csv_writer(config_name: str, table: dict) -> None:
     logging.info(f"Wrote rows into CSV file at: {full_path}")
 
 
-def read_query_settings(config_name: str):  # TODO
+def read_query_settings(config_name: str):
     """
     :param config_name: Section under the config for the configuration to pull data from
     :return: Query variables

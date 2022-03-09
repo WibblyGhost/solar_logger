@@ -119,7 +119,7 @@ class MQTTDecoder:
         return {key: value for (key, value) in mx_packet.items() if key != "raw"}
 
     @staticmethod
-    def _dc_decoder(msg: bytearray=b"") -> dict:
+    def _dc_decoder(msg: bytearray = b"") -> dict:
         """
         Decoder for DC objects
         :param msg: Input message to decode
@@ -155,7 +155,7 @@ class MQTTDecoder:
                     msg_time=self._fx_time,
                     msg_payload=fx_payload,
                     msg_type="fx-1",
-                    influx_database=self._influx_database
+                    influx_database=self._influx_database,
                 )
         elif msg.topic == "mate/mx-1/stat/raw":
             if self._mx_time:
@@ -165,7 +165,7 @@ class MQTTDecoder:
                     msg_time=self._mx_time,
                     msg_payload=mx_payload,
                     msg_type="mx-1",
-                    influx_database=self._influx_database
+                    influx_database=self._influx_database,
                 )
         elif msg.topic == "mate/dc-1/stat/raw":
             if self._dc_time:
@@ -176,5 +176,5 @@ class MQTTDecoder:
                     msg_time=self._dc_time,
                     msg_payload=dc_payload,
                     msg_type="dc-1",
-                    influx_database=self._influx_database
-                    )
+                    influx_database=self._influx_database,
+                )

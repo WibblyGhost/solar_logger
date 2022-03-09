@@ -10,6 +10,7 @@ from influxdb_client import InfluxDBClient
 from influxdb_client.rest import ApiException
 from influxdb_client.client.write_api import SYNCHRONOUS
 
+
 class InfluxController:
     """
     Class which creates a client to access and modify a connected database
@@ -240,9 +241,7 @@ def influx_db_write_points(
     # point_template = {"measurement": None, "fields": {None, None}, "time": None}
     """
     logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
-    write_client = influx_database.influx_client.write_api(
-        write_options=SYNCHRONOUS
-    )
+    write_client = influx_database.influx_client.write_api(write_options=SYNCHRONOUS)
     try:
         for key, value in msg_payload.items():
             # point_template = {

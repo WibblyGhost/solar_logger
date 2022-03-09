@@ -60,7 +60,7 @@ def parse_flux(flux_file: dict) -> list:
 
 def parse_stream(stream_file):
     """
-    TODO: Not implemented
+    Not implemented
     :param stream_file: Input stream string to read
     """
     raise NotImplementedError("parse_stream not implemented.")
