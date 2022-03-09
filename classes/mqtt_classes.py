@@ -11,13 +11,10 @@ from datetime import datetime
 
 # Imports for MQTT
 import paho.mqtt.client as mqtt
-from pymate.matenet.fx import FXStatusPacket as MateFX
-from pymate.matenet.mx import MXStatusPacket as MateMX
+from pymate.matenet import FXStatusPacket, MXStatusPacket, DCStatusPacket
 
 # Imports for Influx
-from influxdb_client.rest import ApiException
-from influxdb_client.client.write_api import SYNCHRONOUS
-from classes.influx_classes import InfluxController
+from classes.influx_classes import InfluxController, influx_db_write_points
 
 
 class MQTTDecoder:
@@ -52,8 +49,6 @@ class MQTTDecoder:
         self._mqtt_token = token
         self._mqtt_client = mqtt.Client()
         self._influx_database = influx_database
-        self._influx_bucket = influx_database.influx_bucket
-        self._influx_org = influx_database.influx_org
 
     def startup(self) -> None:
         """
@@ -110,7 +105,7 @@ class MQTTDecoder:
         :param msg: Input message to decode
         :return: List of decoded objects
         """
-        fx_packet = MateFX.from_buffer(msg).__dict__
+        fx_packet = FXStatusPacket.from_buffer(msg).__dict__
         return {key: value for (key, value) in fx_packet.items() if key != "raw"}
 
     @staticmethod
@@ -120,19 +115,18 @@ class MQTTDecoder:
         :param msg: Input message to decode
         :return: List of decoded objects
         """
-        mx_packet = MateMX.from_buffer(msg).__dict__
+        mx_packet = MXStatusPacket.from_buffer(msg).__dict__
         return {key: value for (key, value) in mx_packet.items() if key != "raw"}
 
-    # @staticmethod
-    # def _dc_decoder(msg: bytearray=b"") -> dict:
-    #     # TODO: Include DC Packets in decoder
-    #     """
-    #     Decoder for DC objects
-    #     :param msg: Input message to decode
-    #     :return: List of decoded objects
-    #     """
-    #     dc_packet = MateDC.from_buffer(msg).__dict__
-    #     return {key: value for (key, value) in dc_packet.items() if key != "raw"}
+    @staticmethod
+    def _dc_decoder(msg: bytearray=b"") -> dict:
+        """
+        Decoder for DC objects
+        :param msg: Input message to decode
+        :return: List of decoded objects
+        """
+        dc_packet = DCStatusPacket.from_buffer(msg).__dict__
+        return {key: value for (key, value) in dc_packet.items() if key != "raw"}
 
     def _on_message(self, _client, _userdata, msg: str) -> None:
         """
@@ -157,60 +151,30 @@ class MQTTDecoder:
             if self._fx_time:
                 fx_payload = self._fx_decoder(msg.payload)
                 logging.debug(f"Received fx_payload packet: {fx_payload}")
-                self._database_write_points(
-                    msg_time=self._fx_time, msg_payload=fx_payload, msg_type="fx-1"
+                influx_db_write_points(
+                    msg_time=self._fx_time,
+                    msg_payload=fx_payload,
+                    msg_type="fx-1",
+                    influx_database=self._influx_database
                 )
         elif msg.topic == "mate/mx-1/stat/raw":
             if self._mx_time:
                 mx_payload = self._mx_decoder(msg.payload)
                 logging.debug(f"Received mx_payload packet: {mx_payload}")
-                self._database_write_points(
-                    msg_time=self._mx_time, msg_payload=mx_payload, msg_type="mx-1"
+                influx_db_write_points(
+                    msg_time=self._mx_time,
+                    msg_payload=mx_payload,
+                    msg_type="mx-1",
+                    influx_database=self._influx_database
                 )
-        # TODO: Include DC packets
-        # elif msg.topic == "mate/dc-1/stat/raw":
-        #     if self.dc_time:
-        #         dc_payload = self._dc_decoder(msg.payload)
-        #         logging.debug(f"Received dc_payload packet: {dc_payload}"")
-        #         self._database_add(msg_time=self.dc_time, msg_payload=dc_payload, msg_type="dc-1")
-
-    def _database_write_points(
-        self, msg_time: str, msg_payload: dict, msg_type: str
-    ) -> None:
-        """
-        Adds message to Influx database
-        :param msg_dict: Message for MQTTDecoder to input into the Influx Database in dictionary
-        :param msg_type: Type of header the msg carries, either FX, MX or DX
-        # point_template = {"measurement": None, "fields": {None, None}, "time": None}
-        """
-        logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
-        write_client = self._influx_database.influx_client.write_api(
-            write_options=SYNCHRONOUS
-        )
-        try:
-            for key, value in msg_payload.items():
-                # point_template = {
-                #     "measurement": msg_type,
-                #     "fields": {key: float(value)},
-                #     "time": msg_time,
-                # }
-                # logging.debug(f"wrote point: {point_template}")
-                # write_client.write(self._influx_bucket, self._influx_org, point_template)
-                # Some strange error with inserting time from Points instead of the write_api
-                point_template = {
-                    "measurement": msg_type,
-                    "fields": {key: float(value)},
-                }
-                logging.debug(f"Wrote point: {point_template} at {msg_time}")
-                write_client.write(
-                    bucket=self._influx_bucket,
-                    org=self._influx_org,
-                    record=point_template,
-                    time=msg_time,
-                )
-        except ApiException as err:
-            logging.error(f"Failed to run write, returned HTTP error: {err}")
-            raise err
-        except Exception as err:
-            logging.error(f"Failed to run write, returned error: {err}")
-            raise err
+        elif msg.topic == "mate/dc-1/stat/raw":
+            if self._dc_time:
+                dc_payload = self._dc_decoder(msg.payload)
+                logging.debug(dc_payload)
+                logging.debug(f"Received dc_payload packet: {dc_payload}")
+                influx_db_write_points(
+                    msg_time=self._dc_time,
+                    msg_payload=dc_payload,
+                    msg_type="dc-1",
+                    influx_database=self._influx_database
+                    )

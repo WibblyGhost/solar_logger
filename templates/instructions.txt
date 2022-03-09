@@ -1,2 +1,0 @@
-Put all .py files into private directory
-Put .env into base directory

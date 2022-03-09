@@ -7,7 +7,8 @@ import logging
 
 # Imports for Influx
 from influxdb_client import InfluxDBClient
-
+from influxdb_client.rest import ApiException
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 class InfluxController:
     """
@@ -224,3 +225,48 @@ def create_influx_controller(influx_secret: dict) -> InfluxController:
     )
     database.startup()
     return database
+
+
+def influx_db_write_points(
+    msg_time: str,
+    msg_payload: dict,
+    msg_type: str,
+    influx_database: InfluxController,
+) -> None:
+    """
+    Adds message to Influx database
+    :param msg_dict: Message for MQTTDecoder to input into the Influx Database in dictionary
+    :param msg_type: Type of header the msg carries, either FX, MX or DX
+    # point_template = {"measurement": None, "fields": {None, None}, "time": None}
+    """
+    logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
+    write_client = influx_database.influx_client.write_api(
+        write_options=SYNCHRONOUS
+    )
+    try:
+        for key, value in msg_payload.items():
+            # point_template = {
+            #     "measurement": msg_type,
+            #     "fields": {key: float(value)},
+            #     "time": msg_time,
+            # }
+            # logging.debug(f"wrote point: {point_template}")
+            # write_client.write(self._influx_bucket, self._influx_org, point_template)
+            # Some strange error with inserting time from Points instead of the write_api
+            point_template = {
+                "measurement": msg_type,
+                "fields": {key: float(value)},
+            }
+            logging.debug(f"Wrote point: {point_template} at {msg_time}")
+            write_client.write(
+                bucket=influx_database.influx_bucket,
+                org=influx_database.influx_org,
+                record=point_template,
+                time=msg_time,
+            )
+    except ApiException as err:
+        logging.error(f"Failed to run write, returned HTTP error: {err}")
+        raise err
+    except Exception as err:
+        logging.error(f"Failed to run write, returned error: {err}")
+        raise err

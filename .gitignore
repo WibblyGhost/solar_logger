@@ -1,19 +1,20 @@
 # Enviroment
 __pycache__/
+.pytest_cache/
 .idea/
 .vscode/
-/venv/
+venv/
 *.py[cod]
 
-# Templates
-/Templates/
-
 # Secret files
-/private/
+private/
 *.env
 *codenames.py
 
 #Output log files
-/output/
-/docker_output/
-/docker_influxdb/
+output/
+docker_output/
+docker_influxdb/
+
+# Test files
+*.coverage

@@ -7,8 +7,16 @@ name: DevSkim
 on:
   push:
     branches: [ main ]
+        paths:
+          - '**.py'
+          - '**.dockerfile'
+          - 'docker-compose.yml'
   pull_request:
     branches: [ main ]
+        paths:
+          - '**.py'
+          - '**.dockerfile'
+          - 'docker-compose.yml'
   schedule:
     - cron: '41 2 * * 0'
 
