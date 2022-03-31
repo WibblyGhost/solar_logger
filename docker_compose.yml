@@ -36,10 +36,3 @@ services:
       - ./docker_output:/app/output:rw
     env_file:
       - .env
-
-
-  # PosgreSQL:
-  #   container_name: posgresql
-  #   build: 
-  #     dockerfile: posgresql.dockerfile
-  #   image: python:3.10.2

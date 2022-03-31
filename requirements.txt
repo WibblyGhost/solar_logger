@@ -1,6 +1,6 @@
 influxdb_client==1.20.0
 paho_mqtt==1.5.1
 # git+git://github.com/jorticus/pymate.git@feature/python3
-git+git://github.com/WibblyGhost/pymate.git@feature/python3
+git+https://github.com/WibblyGhost/pymate.git@feature/python3
 Rx~=3.2.0
 pytz~=2021.1

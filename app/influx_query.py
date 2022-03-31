@@ -5,23 +5,17 @@ https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#que
 """
 
 from influxdb_client.rest import ApiException
-
-from classes.influx_classes import (
+from app.classes.influx_classes import (
     InfluxController,
     QueryBuilder,
     create_influx_controller,
 )
-from classes.py_functions import (
+from app.classes.py_functions import (
     create_logger,
-    csv_writer,
-    get_influx_secrets,
     read_query_settings,
+    write_results_to_csv,
 )
-from config.consts import (
-    INFLUX_DEBUG_CONFIG_TITLE,
-    INFLUX_QUERY_CONFIG_TITLE,
-    INFLUX_DB_CONTROLLER,
-)
+from app.config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 
 
 def parse_csv(csv_file: dict) -> None:
@@ -31,7 +25,7 @@ def parse_csv(csv_file: dict) -> None:
     """
     logging.info("Creating CSV file")
     try:
-        csv_writer(config_name=INFLUX_QUERY_CONFIG_TITLE, table=csv_file)
+        write_results_to_csv(config_name=INFLUX_QUERY_CONFIG_TITLE, table=csv_file)
     except IOError as err:
         logging.error("Failed to write CSV file")
         raise err
@@ -146,6 +140,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
-    influx_secrets = get_influx_secrets()
+    influx_secrets = get_influx_secrets()  # FIXME Secrets
     INFLUX_DB_CONTROLLER = create_influx_controller(influx_secrets)
     main()

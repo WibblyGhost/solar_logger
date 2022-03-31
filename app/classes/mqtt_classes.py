@@ -91,7 +91,8 @@ class MQTTDecoder:
         :param return_code: Returned connection code
         """
         if return_code == 0:
-            self._mqtt_client.subscribe(self._mqtt_topic)
+            # self._mqtt_client.subscribe(self._mqtt_topic)
+            self._mqtt_client.subscribe("mate/#")
             logging.info(f"Connected to MQTT broker, returned code: {return_code}")
         else:
             logging.error(
@@ -134,6 +135,7 @@ class MQTTDecoder:
         :param msg: Message to partition into categories and decode
         """
         # Time Packets
+        logging.debug(f"Ran on message {msg.payload.decode('ascii')}")
         if msg.topic == "mate/fx-1/stat/ts":
             self._fx_time = int(msg.payload.decode("ascii"))
             self._fx_time = datetime.fromtimestamp(self._fx_time)
@@ -178,3 +180,4 @@ class MQTTDecoder:
                     msg_type="dc-1",
                     influx_database=self._influx_database,
                 )
+        logging.debug("Ran on message END")
