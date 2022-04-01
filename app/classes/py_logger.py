@@ -9,7 +9,7 @@ import configparser
 from logging import Logger
 from logging.handlers import RotatingFileHandler
 
-from distutils.util import strtobool
+from classes.py_functions import strtobool
 from classes.custom_exceptions import MissingConfigurationError
 from config.consts import CONFIG_FILENAME
 
@@ -55,7 +55,7 @@ class LoggingTools:
             self.file_format = config_p.get(config_name, "format")
             self.date_format = config_p.get(config_name, "dateformat")
             file_logging = config_p.get(config_name, "file_logging")
-            self.is_file_logging = bool(strtobool(file_logging))
+            self.is_file_logging = strtobool(file_logging)
 
             if None in [self.debug_level, self.file_format, self.date_format]:
                 raise MissingConfigurationError("Failed to read basic logger configs")

@@ -114,3 +114,16 @@ class SecretStore:
                 raise MissingCredentialsError(
                     f"Missing secret credential for InfluxDB in the .env, {key}"
                 )
+
+
+def strtobool(val):
+    """
+    Convert a string representation of truth to true (1) or false (0).
+    Note: distutils is being discontinued so this function is required
+    """
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if val in ("n", "no", "f", "false", "off", "0"):
+        return False
+    raise ValueError(f"invalid truth value %{val!r}")
