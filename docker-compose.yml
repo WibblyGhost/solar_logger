@@ -20,6 +20,7 @@ services:
   solar_logger:
     container_name: SolarLogger
     build:
+      context: ./
       dockerfile: solar.dockerfile
     volumes:
       - ./docker_output:/app/output:rw
@@ -31,6 +32,7 @@ services:
     stdin_open: true
     tty: true
     build:
+      context: ./
       dockerfile: influx_query.dockerfile
     volumes:
       - ./docker_output:/app/output:rw

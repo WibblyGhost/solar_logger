@@ -4,4 +4,6 @@ __pycache__/
 .vscode/
 /venv/
 private/
+output/
+
 private.py

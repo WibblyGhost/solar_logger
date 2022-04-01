@@ -10,9 +10,11 @@ RUN pip install -r /app/requirements.txt
 # Add required modules
 ADD /app/solar_runtime.py /app/
 ADD /app/config/ /app/config/
-ADD /app/classes/mqtt_classes.py /app/classes/mqtt_classes.py
+ADD /app/classes/custom_exceptions.py /app/classes/custom_exceptions.py
 ADD /app/classes/influx_classes.py /app/classes/influx_classes.py
+ADD /app/classes/mqtt_classes.py /app/classes/mqtt_classes.py
 ADD /app/classes/py_functions.py /app/classes/py_functions.py
+ADD /app/classes/py_logger.py /app/classes/py_logger.py
 
 # Setting environment variables
 ENV INFLUX_URL = "$INFLUX_URL"
