@@ -6,9 +6,10 @@ import configparser
 import csv
 import logging
 import os
-from classes.custom_exceptions import MissingCredentialsError
 
 from config.consts import CONFIG_FILENAME
+
+from classes.custom_exceptions import MissingCredentialsError
 
 
 def write_results_to_csv(config_name: str, table: dict) -> None:
@@ -35,7 +36,7 @@ def write_results_to_csv(config_name: str, table: dict) -> None:
         raise err
 
 
-def read_query_settings(config_name: str):
+def read_query_settings(config_name: str) -> any:
     """
     :param config_name: Section under the config for the configuration to pull data from
     :return: Query variables
@@ -50,7 +51,7 @@ class SecretStore:
     Class which reads environment secrets and stores them
     """
 
-    def __init__(self, read_mqtt: bool = False, read_influx: bool = False):
+    def __init__(self, read_mqtt: bool = False, read_influx: bool = False) -> None:
         """
         :param mqtt_secrests: Dictionary of secrets for MQTT server
         :param influx_secrets: Dictionary of secrets for Influx server
@@ -89,7 +90,6 @@ class SecretStore:
         except Exception as err:
             logging.error("Ran into error when reading environment variables")
             raise err
-
         for key, value in self.mqtt_secrets.items():
             if not value:
                 logging.error(f"Missing secret credential for MQTT in the .env, {key}")
@@ -116,7 +116,7 @@ class SecretStore:
                 )
 
 
-def strtobool(val):
+def strtobool(val: str) -> bool:
     """
     Convert a string representation of truth to true (1) or false (0).
     Note: distutils is being discontinued so this function is required

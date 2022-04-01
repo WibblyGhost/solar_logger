@@ -2,26 +2,26 @@
 Contains all functions required to setup logging
 """
 
-import os
-import logging
 import configparser
-
+import logging
+import os
 from logging import Logger
 from logging.handlers import RotatingFileHandler
 
-from classes.py_functions import strtobool
-from classes.custom_exceptions import MissingConfigurationError
 from config.consts import CONFIG_FILENAME
+
+from classes.custom_exceptions import MissingConfigurationError
+from classes.py_functions import strtobool
 
 
 class LoggingTools:
     """
-    TODO
+    Class contains all tools required to create loggers
     """
 
     def __init__(self, config_name: str, logger: Logger) -> None:
         """
-        TODO
+        Initialization of logging class
         """
         self.debug_level = None
         self.file_format = None

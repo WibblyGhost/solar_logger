@@ -2,83 +2,105 @@
 classes program which initialises and runs both the MQTT and InfluxDB controllers
 """
 
+import queue
+import signal
+import sys
+import threading
+import time
+
+from classes.influx_classes import create_influx_connector, influx_db_write_points
+from classes.mqtt_classes import MqttConnector
 from classes.py_functions import SecretStore
-from classes.custom_exceptions import MissingCredentialsError
-from classes.influx_classes import InfluxController, create_influx_controller
-from classes.mqtt_classes import MQTTDecoder
 from classes.py_logger import create_logger
-from config.consts import SOLAR_DEBUG_CONFIG_TITLE
+from config.consts import (
+    EXIT_APP,
+    SOLAR_DEBUG_CONFIG_TITLE,
+    THREADED_QUEUE,
+    MAX_WRITE_POINT_EXCEPTIONS,
+)
 
 
-def start_mqtt_server(mqtt_secrets: dict, influx_database: InfluxController) -> None:
+def sigterm_handler(_signo, _stack_frame) -> None:
     """
-    classes function that creates a MQTT client
-    :param mqtt_secret: Secret passwords nad logins for MQTT subscriber
-    :param influx_database: An Influx database object for the MQTTDecoder to write to
-    :return: Never returns (see mq.mqtt_runtime())
+    Handling SIGTERM signals
     """
-    for key, value in mqtt_secrets.items():
-        if not value:
-            logging.error(f"Missing secret credential for MQTT in the .env, {key}")
-            raise MissingCredentialsError(
-                f"Missing secret credential for MQTT in the .env, {key}"
-            )
-
-    mqtt = MQTTDecoder(
-        host=mqtt_secrets["mqtt_host"],
-        port=mqtt_secrets["mqtt_port"],
-        user=mqtt_secrets["mqtt_user"],
-        token=mqtt_secrets["mqtt_token"],
-        topic=mqtt_secrets["mqtt_topic"],
-        influx_database=influx_database,
-    )
-    mqtt.startup()
-    mqtt.start_mqtt_service()
+    logging.critical("Received SIGTERM, shutting down")
+    EXIT_APP.value = True
+    time.sleep(0.5)
+    logging.info("Application exited with code 0")
+    sys.exit(0)
 
 
-# def get_local_secrets() -> None:
-#     """
-#     For running the program locally instead of through docker.
-#     """
-#     from private.private import (
-#         INFLUX_BUCKET,
-#         INFLUX_ORG,
-#         INFLUX_TOKEN,
-#         INFLUX_URL,
-#         MQTT_HOST,
-#         MQTT_PORT,
-#         MQTT_TOKEN,
-#         MQTT_TOPIC,
-#         MQTT_USER,
-#     )
+def sigint_handler(_signo, _stack_frame) -> None:
+    """
+    Handling SIGINT or CTRL + C signals
+    """
+    logging.critical("Recieved SIGINT/CTRL+C quit code, shutting down")
+    EXIT_APP.value = True
+    time.sleep(0.5)
+    logging.info("Application exited with code 0")
+    sys.exit(0)
 
-#     influx_secrets = {
-#         "influx_bucket": INFLUX_BUCKET,
-#         "influx_org": INFLUX_ORG,
-#         "influx_token": INFLUX_TOKEN,
-#         "influx_url": INFLUX_URL,
-#     }
-#     mqtt_secrets = {
-#         "mqtt_host": MQTT_HOST,
-#         "mqtt_user": MQTT_USER,
-#         "mqtt_port": MQTT_PORT,
-#         "mqtt_token": MQTT_TOKEN,
-#         "mqtt_topic": MQTT_TOPIC,
-#     }
-#     return influx_secrets, mqtt_secrets
+
+def run_threaded_influx_writer() -> None:
+    """
+    Writes point data received from the MQTT._on_message in a threaded process
+    """
+    logging.info("Created Influx thread")
+    attempts = 0
+    while not EXIT_APP.value:
+        try:
+            popped_value = THREADED_QUEUE.get(timeout=1.0)
+        except queue.Empty:
+            continue
+        if popped_value:
+            logging.debug(f"Popped value off queue: {popped_value}")
+            try:
+                influx_db_write_points(
+                    msg_time=popped_value[0],
+                    msg_payload=popped_value[1],
+                    msg_type=popped_value[2],
+                    influx_connector=popped_value[3],
+                )
+            except Exception:
+                attempts += 1
+                logging.exception("Exception caught in Influx thread")
+                if attempts > MAX_WRITE_POINT_EXCEPTIONS:
+                    logging.error(
+                        f"Number of exception events for Influx Write Points"
+                        f"exceeded {MAX_WRITE_POINT_EXCEPTIONS}"
+                    )
+                    signal.raise_signal(signal.SIGTERM)
+                time.sleep(1)
+    logging.info("Exited Influx thread")
 
 
 def main() -> None:
     """
     Classes function which calls both the Influx database controller and the MQTT controller
+    and runs them in seperate threads
     """
     secret_store = SecretStore(read_mqtt=True, read_influx=True)
-    influx_controller = create_influx_controller(
+    influx_connector = create_influx_connector(
         influx_secret=secret_store.influx_secrets
     )
-    start_mqtt_server(
-        mqtt_secrets=secret_store.mqtt_secrets, influx_database=influx_controller
+    mqtt_connector = MqttConnector(
+        mqtt_secrets=secret_store.mqtt_secrets,
+        influx_connector=influx_connector,
     )
+
+    # Properly contain termination events and kill of child threads
+    signal.signal(signal.SIGTERM, sigterm_handler)
+    signal.signal(signal.SIGINT, sigint_handler)
+
+    try:
+        thread_influx = threading.Thread(target=run_threaded_influx_writer)
+        thread_influx.start()
+        mqtt_connector.run_mqtt_listener()
+
+    except Exception:
+        logging.exception("Caught unknown exception")
+        EXIT_APP.value = True
 
 
 if __name__ == "__main__":

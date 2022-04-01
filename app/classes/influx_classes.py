@@ -5,14 +5,13 @@ to do writes and queries to the database
 
 import logging
 
-# Imports for Influx
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 from classes.custom_exceptions import MissingCredentialsError
 
 
-class InfluxController:
+class InfluxConnector:
     """
     Class which creates a client to access and modify a connected database
     """
@@ -34,184 +33,31 @@ class InfluxController:
         self.influx_bucket = bucket
         self.influx_client = InfluxDBClient
 
-    def startup(self) -> None:
+    def influx_startup(self) -> None:
         """
-        Defines the initialization of the InfluxController,
+        Defines the initialization of the Influx connector,
         invoking the connection to the InfluxDB and write API
         """
-        logging.info("Connecting to InfluxDB")
-        self._create_client()
-
-    def _create_client(self) -> None:
-        """
-        :return: Client api which act commands on given database,
-            on failure to connect it wil terminate the program
-        """
+        logging.info("Attempting to connect to InfluxDB server")
         client = None
         try:
             client = InfluxDBClient(
                 url=self._influx_url, token=self._influx_token, org=self.influx_org
             )
             client.ready()
-            logging.info(f"Connected to bucket: {self.influx_bucket}")
+            logging.info("Successfully connected to InfluxDB server")
         except Exception as err:
-            logging.error(f"Failed to connect to bucket: {self.influx_bucket}")
+            logging.error("Failed to connect InfluxDB server")
             raise err
         finally:
             self.influx_client = client
 
 
-class QueryBuilder:
+def create_influx_connector(influx_secret: dict) -> InfluxConnector:
     """
-    Class which creates a query to send to the Influx database
-    """
-
-    query_string = None
-
-    def __init__(self, bucket: str, start_range: str, end_range: str = None) -> None:
-        """
-        Creates a base string for the query from which can be built upon
-        :param bucket:  Influx database bucket for query
-        :param start_range: The earliest time to include in results
-        :param end_range: The latest time to include in results, defaults to now()
-        """
-        self._filter_field = ""
-        self._aggregate_field = ""
-        self._sort_field = ""
-        self._bucket = bucket
-        self._start_range = start_range
-        self._end_range = end_range
-
-    def __str__(self) -> str:
-        """
-        :return: String representation of the query
-        """
-        return self._build_string()
-
-    def __repr__(self) -> str:
-        """
-        :return: Raw representation of the query
-        """
-        return repr(self.__str__())
-
-    @staticmethod
-    def help() -> None:
-        """
-        Prints how to use QueryBuilder for the python interactive users.
-        """
-        print(
-            """
-        QueryBuilder(bucket, start_range, end_range)
-            Creates a base string for the query from which can be built upon
-        :param bucket:  Influx database bucket for query
-        :param start_range: The earliest time to include in results
-        :param end_range=None: The latest time to include in results, defaults to now()
-
-        QueryBuilder.append_filter(self, field_1, value_1, joiner, new_band)
-            Adds filter fields to the query, function is repeatable and
-            can therefore add multiple filters
-        :param new_band: If true, creates a new filter field instead of appending the filter field
-        :param field_1: Takes _measurement, _tag or _field
-        :param value_1: Value you want the field to equal
-        :param joiner: Optional join operator, can be "And" / "Or"
-
-        QueryBuilder.append_aggregate(self, collection_window, aggregate_function)
-                Adds an aggregation field to the query
-        :param collection_window: Time frame for the data to aggregate
-        :param aggregate_function: What function to apply to the window
-
-        QueryBuilder.append_sort(self, field, desc)
-                Adds a sort field to a query
-        :param field: Field to sort results by
-        :param desc=False: Ascending or descending
-        """
-        )
-
-    def _build_string(self) -> str:
-        """
-        Creates basic string from set function variables
-        :return: Built query in string form
-        """
-        self.query_string = self._append_from
-        self.query_string += self._append_time_range
-        self.query_string += self._filter_field
-        self.query_string += self._aggregate_field
-        self.query_string += self._sort_field
-        logging.debug(f"Built query string:\n{self.query_string}")
-        return self.query_string
-
-    @property
-    def _append_from(self) -> str:
-        """
-        Adds from field to query, takes bucket attribute and appends to classes string
-        :param self.bucket: Influx database bucket to query
-        """
-        logging.debug("Created query from field")
-        return f'from(bucket: "{self._bucket}")'  # Must use single quotes
-
-    @property
-    def _append_time_range(self) -> str:
-        """
-        Adds time range to query, takes start range and optional end range
-        Can use queries like "-10m" or datetime stamps
-        :param self.start_range: The earliest time to include in results
-        :param self.end_range: The latest time to include in results, defaults to now()
-        """
-        logging.debug("Created query time range field")
-        if self._end_range:
-            return f"\n\t|> range(start: {self._start_range}, stop: {self._end_range})"
-        return f"\n\t|> range(start: {self._start_range})"
-
-    def append_filter(
-        self, field_1: str, value_1: str, joiner: str = None, new_band: bool = False
-    ) -> None:
-        """
-        Adds filter fields to the query, function is repeatable and
-        can therefore add multiple filters
-        :param new_band: If true, creates a new filter field instead of appending the filter field
-        :param field_1: Takes _measurement, _tag or _field
-        :param value_1: Value you want the field to equal
-        :param joiner: Optional join operator, can be "And" / "Or"
-        """
-        logging.debug("Created query filter field")
-        if not self._filter_field or new_band:
-            self._filter_field += "\n\t|> filter(fn: (r) => "
-        self._filter_field += (
-            f'r["{field_1}"] == "{value_1}")'  # Must use single quotes
-        )
-        if joiner:
-            self._filter_field = self._filter_field[:-1]
-            self._filter_field += f" {joiner} "
-
-    def append_aggregate(self, collection_window: str, aggregate_function: str) -> None:
-        """
-        Adds an aggregation field to the query
-        :param collection_window: Time frame for the data to aggregate
-        :param aggregate_function: What function to apply to the window
-        """
-        logging.debug("Created query aggregate field")
-        self._aggregate_field = (
-            f"\n\t|> aggregateWindow(every:"
-            f" {collection_window}, fn: {aggregate_function}"
-        )
-
-    def append_sort(self, field: str, desc: bool = False) -> None:
-        """
-        Adds a sort field to a query
-        :param field: Field to sort results by
-        :param desc: Ascending or descending
-        """
-        logging.debug("Created query sort field")
-        self._sort_field = (
-            f'\n\t|> sort(columns: ["{field}"], desc: {desc}'  # Must use single quotes
-        )
-
-
-def create_influx_controller(influx_secret: dict) -> InfluxController:
-    """
-    classes function that creates a InfluxController for use
-    :param influx_secret: Secret passwords nad logins for Influx database
-    :return: A database object which can be used to write/read data points
+    classes function that creates a Influx connector
+    :param influx_secret: Secret passwords and logins for Influx database
+    :return: A database connector object which can be used to write/read data points
     """
     for key, value in influx_secret.items():
         if not value:
@@ -220,21 +66,21 @@ def create_influx_controller(influx_secret: dict) -> InfluxController:
                 f"Missing secret credential for InfluxDB in the .env, {key}"
             )
 
-    database = InfluxController(
+    connector = InfluxConnector(
         url=influx_secret["influx_url"],
         org=influx_secret["influx_org"],
         bucket=influx_secret["influx_bucket"],
         token=influx_secret["influx_token"],
     )
-    database.startup()
-    return database
+    connector.influx_startup()
+    return connector
 
 
 def influx_db_write_points(
     msg_time: str,
     msg_payload: dict,
     msg_type: str,
-    influx_database: InfluxController,
+    influx_connector: InfluxConnector,
 ) -> None:
     """
     Adds message to Influx database
@@ -242,7 +88,7 @@ def influx_db_write_points(
     :param msg_type: Type of header the msg carries, either FX, MX or DX
     """
     logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
-    write_client = influx_database.influx_client.write_api(write_options=SYNCHRONOUS)
+    write_client = influx_connector.influx_client.write_api(write_options=SYNCHRONOUS)
     try:
         for key, value in msg_payload.items():
             point_template = {
@@ -251,8 +97,8 @@ def influx_db_write_points(
             }
             logging.debug(f"Wrote point: {point_template} at {msg_time}")
             write_client.write(
-                bucket=influx_database.influx_bucket,
-                org=influx_database.influx_org,
+                bucket=influx_connector.influx_bucket,
+                org=influx_connector.influx_org,
                 record=point_template,
                 time=msg_time,
             )
