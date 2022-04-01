@@ -3,12 +3,10 @@ Contains all functions required to setup logging
 """
 
 import configparser
-from datetime import datetime
 import logging
 import os
 from logging import Logger
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
-import re
 
 from config.consts import CONFIG_FILENAME
 
@@ -133,15 +131,6 @@ class LoggingTools:
             when="midnight",
             backupCount=self.max_file_no,
         )
-
-        # def my_namer(default_name):
-        #     # This will be called when doing the log rotation
-        #     # default_name is the default filename that would be assigned, e.g. Rotate_Test.txt.YYYY-MM-DD
-        #     # Do any manipulations to that name here, for example this changes the name to Rotate_Test.YYYY-MM-DD.txt
-        #     base_filename, ext, date = default_name.split(".")
-        #     return f"{base_filename}.{date}.{ext}"
-        # rotating_time_handler.namer = my_namer
-
         rotating_time_handler.suffix = "%Y-%m-%d"
         rotating_time_handler.setLevel(self.debug_level)
         log_formatter = logging.Formatter(
