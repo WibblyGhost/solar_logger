@@ -45,31 +45,37 @@ All debugging and querying options can be changed through the config file. If fi
 
 ```ini
 [influx_debugger]
-file_logging    = True
+file_logging    = true
+; Can be set to" time_based, size_based
+log_rotation    = time_based
+; Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 debug_level     = DEBUG
 ; Only needed if file logging is true
 file_location   = output/
 file_name       = influx_logs.log
 format          = %%(asctime)s, %%(name)s, %%(levelname)s, %%(message)s
 dateformat      = %%d/%%m/%%Y, %%H:%%M:%%S
-; Set to 5 MB
-max_file_bytes  = 5242880
+; Rotating file loggers require the following configs
 max_file_no     = 5
-; Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+time_cutover    = "midnight"
+max_file_bytes  = 5242880
 
 
 [solar_debugger]
-file_logging    = True
+file_logging    = true
+; Can be set to" time_based, size_based
+log_rotation    = time_based
+;Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 debug_level     = DEBUG
 ; Only needed if file logging is true
 file_location   = output/
 file_name       = solar_logs.log
 format          = %%(asctime)s, %%(name)s, %%(levelname)s, %%(message)s
 dateformat      = %%d/%%m/%%Y, %%H:%%M:%%S
-; Set to 5 MB
-max_file_bytes  = 5242880
+; Rotating file loggers require the following configs
 max_file_no     = 5
-;Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+time_cutover    = "midnight"
+max_file_bytes  = 5242880
 
 
 [query_settings]
