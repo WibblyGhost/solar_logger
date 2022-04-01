@@ -11,8 +11,8 @@ import time
 from datetime import datetime
 
 import paho.mqtt.client as mqtt
-from config.consts import MAX_QUEUE_LENGTH, THREADED_QUEUE
 from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
+from config.consts import MAX_QUEUE_LENGTH, THREADED_QUEUE
 
 from classes.custom_exceptions import MqttServerOfflineError
 from classes.influx_classes import InfluxConnector
