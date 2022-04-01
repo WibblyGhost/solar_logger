@@ -7,8 +7,9 @@ import logging
 
 # Imports for Influx
 from influxdb_client import InfluxDBClient
-from influxdb_client.rest import ApiException
 from influxdb_client.client.write_api import SYNCHRONOUS
+
+from classes.custom_exceptions import MissingCredentialsError
 
 
 class InfluxController:
@@ -51,9 +52,10 @@ class InfluxController:
             client = InfluxDBClient(
                 url=self._influx_url, token=self._influx_token, org=self.influx_org
             )
+            client.ready()
             logging.info(f"Connected to bucket: {self.influx_bucket}")
         except Exception as err:
-            logging.error(f"Failed to connect to bucket: {self.influx_bucket}", err)
+            logging.error(f"Failed to connect to bucket: {self.influx_bucket}")
             raise err
         finally:
             self.influx_client = client
@@ -214,15 +216,15 @@ def create_influx_controller(influx_secret: dict) -> InfluxController:
     for key, value in influx_secret.items():
         if not value:
             logging.error(f"Missing secret credential for InfluxDB in the .env, {key}")
-            raise ValueError(
+            raise MissingCredentialsError(
                 f"Missing secret credential for InfluxDB in the .env, {key}"
             )
 
     database = InfluxController(
-        url=influx_secret["INFLUX_URL"],
-        org=influx_secret["INFLUX_ORG"],
-        bucket=influx_secret["INFLUX_BUCKET"],
-        token=influx_secret["INFLUX_TOKEN"],
+        url=influx_secret["influx_url"],
+        org=influx_secret["influx_org"],
+        bucket=influx_secret["influx_bucket"],
+        token=influx_secret["influx_token"],
     )
     database.startup()
     return database
@@ -238,20 +240,11 @@ def influx_db_write_points(
     Adds message to Influx database
     :param msg_dict: Message for MQTTDecoder to input into the Influx Database in dictionary
     :param msg_type: Type of header the msg carries, either FX, MX or DX
-    # point_template = {"measurement": None, "fields": {None, None}, "time": None}
     """
     logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
     write_client = influx_database.influx_client.write_api(write_options=SYNCHRONOUS)
     try:
         for key, value in msg_payload.items():
-            # point_template = {
-            #     "measurement": msg_type,
-            #     "fields": {key: float(value)},
-            #     "time": msg_time,
-            # }
-            # logging.debug(f"wrote point: {point_template}")
-            # write_client.write(self._influx_bucket, self._influx_org, point_template)
-            # Some strange error with inserting time from Points instead of the write_api
             point_template = {
                 "measurement": msg_type,
                 "fields": {key: float(value)},
@@ -263,9 +256,6 @@ def influx_db_write_points(
                 record=point_template,
                 time=msg_time,
             )
-    except ApiException as err:
-        logging.error(f"Failed to run write, returned HTTP error: {err}")
-        raise err
     except Exception as err:
         logging.error(f"Failed to run write, returned error: {err}")
         raise err

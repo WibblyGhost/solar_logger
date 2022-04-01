@@ -1,73 +1,14 @@
 """
-Contains both a logger and csv writing function for use in outside functions
+Contains all functions that aren't directly correlated to Influx, MQTT, or logging
 """
 
 import configparser
 import csv
-from distutils.util import strtobool
 import logging
 import os
+from classes.custom_exceptions import MissingCredentialsError
 
 from config.consts import CONFIG_FILENAME
-
-# from classes.py_logger import LoggerConfigs
-
-
-def create_logger(config_name: str) -> logging:
-    """
-    Creates a logging instance, can be customised through the config.ini
-    :param config_name: Section under the config for the configuration to pull data from
-    :return: Logger for logging
-    """
-    config_p = configparser.ConfigParser()
-    config_p.read(CONFIG_FILENAME)
-    file_logging = config_p.get(config_name, "file_logging")
-    file_logging = bool(strtobool(file_logging))
-    debug_dict = {
-        "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO,
-        "WARNING": logging.WARNING,
-        "ERROR": logging.ERROR,
-        "CRITICAL": logging.CRITICAL,
-    }
-    debug_level = debug_dict[config_p.get(config_name, "debug_level")]
-    file_format = config_p.get(config_name, "format")
-    date_format = config_p.get(config_name, "dateformat")
-
-    logger = logging.getLogger()
-    logger.setLevel(debug_level)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(debug_level)
-    log_formatter = logging.Formatter(fmt=file_format, datefmt=date_format)
-    stream_handler.setFormatter(log_formatter)
-    logger.addHandler(stream_handler)
-    logging.info("Created logger")
-
-    if file_logging:
-        file_location = config_p.get(config_name, "file_location")
-        if not os.path.exists(file_location):
-            os.makedirs(file_location)
-        filename = config_p.get(config_name, "file_name")
-        full_path = file_location + filename
-        file_mode = config_p.get(config_name, "file_mode")
-        file_stream_handler = logging.FileHandler(filename=full_path, mode=file_mode)
-        file_stream_handler.setLevel(debug_level)
-        file_stream_handler.setFormatter(log_formatter)
-        logger.addHandler(file_stream_handler)
-        logging.info(f"Created file logger at {full_path}")
-
-    return logging
-
-
-# def create_logger(config_name: str) -> logging:
-#     """
-#     Creates a logging instance, can be customised through the config.ini
-#     :param config_name: Section under the config for the configuration to pull data from
-#     :return: Logger for logging
-#     """
-#     logger = logging.getLogger()
-#     LoggerConfigs(config_name=config_name, logger=logger)
-#     return logging
 
 
 def write_results_to_csv(config_name: str, table: dict) -> None:
@@ -107,12 +48,13 @@ def read_query_settings(config_name: str):
 
 class SecretStore:
     """
-    TODO
+    Class which reads environment secrets and stores them
     """
 
     def __init__(self, read_mqtt: bool = False, read_influx: bool = False):
         """
-        TODO
+        :param mqtt_secrests: Dictionary of secrets for MQTT server
+        :param influx_secrets: Dictionary of secrets for Influx server
         """
         self.mqtt_secrets = {
             "mqtt_host": None,
@@ -131,7 +73,7 @@ class SecretStore:
 
         if read_mqtt:
             self._read_mqtt_secrets()
-        elif read_influx:
+        if read_influx:
             self._read_influx_secrets()
 
     def _read_mqtt_secrets(self) -> dict:
@@ -139,11 +81,16 @@ class SecretStore:
         Gets secret details from the environment file.
         :return mqtt_store: Dictionary of secrets
         """
-        self.mqtt_secrets["mqtt_host"] = os.environ.get("MQTT_HOST")
-        self.mqtt_secrets["mqtt_port"] = int(os.environ.get("MQTT_PORT"))
-        self.mqtt_secrets["mqtt_user"] = os.environ.get("MQTT_USER")
-        self.mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
-        self.mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
+        try:
+            self.mqtt_secrets["mqtt_host"] = os.environ.get("MQTT_HOST")
+            self.mqtt_secrets["mqtt_port"] = int(os.environ.get("MQTT_PORT"))
+            self.mqtt_secrets["mqtt_user"] = os.environ.get("MQTT_USER")
+            self.mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
+            self.mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
+        except Exception as err:
+            logging.error("Ran into error when reading environment variables")
+            raise err
+
         for key, value in self.mqtt_secrets.items():
             if not value:
                 logging.error(f"Missing secret credential for MQTT in the .env, {key}")
@@ -165,6 +112,6 @@ class SecretStore:
                 logging.error(
                     f"Missing secret credential for InfluxDB in the .env, {key}"
                 )
-                raise ValueError(
-                    f"Missing secret credential for InfluxDB in the .env. {key}"
+                raise MissingCredentialsError(
+                    f"Missing secret credential for InfluxDB in the .env, {key}"
                 )

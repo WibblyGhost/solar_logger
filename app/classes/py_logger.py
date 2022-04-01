@@ -1,16 +1,20 @@
-import configparser
-from distutils.util import strtobool
+"""
+Contains all functions required to setup logging
+"""
+
+import os
 import logging
+import configparser
 
 from logging import Logger
 from logging.handlers import RotatingFileHandler
-import os
 
-from classes.custom_exceptions import EmptyConfig
+from distutils.util import strtobool
+from classes.custom_exceptions import MissingConfigurationError
 from config.consts import CONFIG_FILENAME
 
 
-class LoggerConfigs:
+class LoggingTools:
     """
     TODO
     """
@@ -35,7 +39,7 @@ class LoggerConfigs:
 
     def _read_configs(self, config_name: str) -> None:
         """
-        TODO
+        Reads config file and parses and stores the result
         """
         config_p = configparser.ConfigParser()
         try:
@@ -54,7 +58,7 @@ class LoggerConfigs:
             self.is_file_logging = bool(strtobool(file_logging))
 
             if None in [self.debug_level, self.file_format, self.date_format]:
-                raise EmptyConfig("Failed to read basic logger configs")
+                raise MissingConfigurationError("Failed to read basic logger configs")
 
             if self.is_file_logging:
                 self.file_location = config_p.get(config_name, "file_location")
@@ -69,13 +73,15 @@ class LoggerConfigs:
                     self.max_file_bytes,
                     self.max_file_no,
                 ]:
-                    raise EmptyConfig("Failed to read file logger settings in configs")
+                    raise MissingConfigurationError(
+                        "Failed to read file logger settings in configs"
+                    )
         except Exception as err:
             raise err
 
     def _create_stdout_logger(self, logger: Logger) -> None:
         """
-        TODO
+        Creates a standard STDOUT logger
         """
         logger.setLevel(self.debug_level)
         stream_handler = logging.StreamHandler()
@@ -89,7 +95,8 @@ class LoggerConfigs:
 
     def _create_rotating_file_logger(self, logger: Logger) -> None:
         """
-        TODO
+        Creates a rotating file logger which limits log files size
+        and when exceeding that size, creates a new log file
         """
         if not os.path.exists(self.file_location):
             os.makedirs(self.file_location)
@@ -106,3 +113,14 @@ class LoggerConfigs:
         rotating_handler.setFormatter(log_formatter)
         logger.addHandler(rotating_handler)
         logging.info(f"Created rotating file logger at {self.file_path}")
+
+
+def create_logger(config_name: str) -> logging:
+    """
+    Creates a logging instance, can be customised through the config.ini
+    :param config_name: Section under the config for the configuration to pull data from
+    :return: Logger for logging
+    """
+    logger = logging.getLogger()
+    LoggingTools(config_name=config_name, logger=logger)
+    return logging

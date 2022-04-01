@@ -5,17 +5,11 @@ https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#que
 """
 
 from influxdb_client.rest import ApiException
-from app.classes.influx_classes import (
-    InfluxController,
-    QueryBuilder,
-    create_influx_controller,
-)
-from app.classes.py_functions import (
-    create_logger,
-    read_query_settings,
-    write_results_to_csv,
-)
-from app.config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
+
+from classes.py_logger import create_logger
+from classes.influx_classes import InfluxController, QueryBuilder, create_influx_controller
+from classes.py_functions import read_query_settings, write_results_to_csv, SecretStore
+from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 
 
 def parse_csv(csv_file: dict) -> None:
@@ -140,6 +134,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
-    influx_secrets = get_influx_secrets()  # FIXME Secrets
-    INFLUX_DB_CONTROLLER = create_influx_controller(influx_secrets)
+    secret_store = SecretStore(read_mqtt=False, read_influx=True)
+    INFLUX_DB_CONTROLLER = create_influx_controller(secret_store.influx_secrets)
     main()
