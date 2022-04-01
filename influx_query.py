@@ -4,13 +4,13 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from classes.py_logger import create_logger
 from classes.influx_classes import (
-    InfluxController,
-    QueryBuilder,
-    create_influx_controller,
+    InfluxConnector,
+    create_influx_connector,
 )
-from classes.py_functions import read_query_settings, write_results_to_csv, SecretStore
+from classes.py_functions import SecretStore, read_query_settings, write_results_to_csv
+from classes.py_logger import create_logger
+from classes.query_classes import QueryBuilder
 from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 
 
@@ -57,7 +57,7 @@ def parse_stream(stream_file):
 
 
 def query_influx_server(
-    influx_db: InfluxController, query: str, query_mode: str = "csv"
+    influx_db: InfluxConnector, query: str, query_mode: str = "csv"
 ) -> any:
     """
     Runs given query on Influx database and print results
@@ -92,7 +92,7 @@ def execute_query(query: QueryBuilder) -> None:
     """
     query_mode = read_query_settings(INFLUX_QUERY_CONFIG_TITLE)
     query_result = query_influx_server(
-        influx_db=INFLUX_DB_CONTROLLER, query=str(query), query_mode=query_mode
+        influx_db=influx_db_connector, query=str(query), query_mode=query_mode
     )
     if query_mode == "csv":
         parse_csv(query_result)
@@ -110,7 +110,7 @@ def run_default() -> None:
     # from(bucket: "Bucket")
     #     |> range(start: -5m)
     #     |> filter(fn: (r) => r["_measurement"] == "fx-1" or r["_measurement"] == "mx-1")
-    query = QueryBuilder(bucket=INFLUX_DB_CONTROLLER.influx_bucket, start_range="-5m")
+    query = QueryBuilder(bucket=influx_db_connector.influx_bucket, start_range="-5m")
     query.append_filter(field_1="_measurement", value_1="fx-1", joiner="or")
     query.append_filter(field_1="_measurement", value_1="mx-1")
     # q_b.append_filter("_measurement", "dc-1", new_band=True)
@@ -134,5 +134,5 @@ def main() -> None:
 if __name__ == "__main__":
     logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
     secret_store = SecretStore(read_mqtt=False, read_influx=True)
-    INFLUX_DB_CONTROLLER = create_influx_controller(secret_store.influx_secrets)
+    influx_db_connector = create_influx_connector(secret_store.influx_secrets)
     main()

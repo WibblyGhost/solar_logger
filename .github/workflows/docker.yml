@@ -8,7 +8,6 @@ on:
       - '**.dockerfile'
       - 'docker-compose.yml'
   pull_request:
-    types: [review_requested, ready_for_review]
     branches: [ main ]
     paths:
       - '**.py'

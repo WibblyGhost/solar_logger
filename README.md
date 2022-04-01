@@ -4,6 +4,8 @@
 
 This project is a multi-step program which relies on a MQTT backend to read information from an Outback solar controller which sends statistics of current battery status, input voltages etc. This program subscribes to the MQTT broker to retrieve the information broadcast and deciphers the raw byte streams into a readable form. It then converts the data into points to allow insertion into a time series database (InfluxDB) where the data can be stored, modeled and queried. The database will link to a Grafana website which will graph, model and compare the data on a privately accessible site.
 
+The program makes use of multi-threaded applications for receiving MQTT data packets and uploading the packets into InfluxDB. This is done by transfering packets from one thread into the other by the use of `Queues`.
+
 ## InfluxDB Setup
 
 This project comes with a mostly pre-built Influx instance that you can run up or copy to a Docker server. All Influx configurations will be written to the folder `docker_influxdb`. If this is your first time running InfluxDB I would suggest uncommenting the following code in the `docker-compose.yml` and copying specified `.env` file into the base directory. 
@@ -39,35 +41,41 @@ SolarLogger:
 
 ### Configurations
 
-All debugging and querying options can be changed through the config file. If file logging is set to false then the generated output will be set by default to the debug console. There is also additional options for querying modes *(more detail in **influx_query.py**)*.
+All debugging and querying options can be changed through the config file. If file logging is set to false then the generated output will be set to only use standard output. The file logging uses rotational logging meaning that it will create a new log after a set file size has been reached.
 
 ```ini
 [influx_debugger]
-file_logging    = True
+file_logging    = true
+; Can be set to" time_based, size_based
+log_rotation    = time_based
+; Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 debug_level     = DEBUG
 ; Only needed if file logging is true
 file_location   = output/
 file_name       = influx_logs.log
 format          = %%(asctime)s, %%(name)s, %%(levelname)s, %%(message)s
 dateformat      = %%d/%%m/%%Y, %%H:%%M:%%S
-; Set to 5 MB
-max_file_bytes  = 5242880
+; Rotating file loggers require the following configs
 max_file_no     = 5
-; Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+time_cutover    = "midnight"
+max_file_bytes  = 5242880
 
 
 [solar_debugger]
-file_logging    = True
+file_logging    = true
+; Can be set to" time_based, size_based
+log_rotation    = time_based
+;Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 debug_level     = DEBUG
 ; Only needed if file logging is true
 file_location   = output/
 file_name       = solar_logs.log
 format          = %%(asctime)s, %%(name)s, %%(levelname)s, %%(message)s
 dateformat      = %%d/%%m/%%Y, %%H:%%M:%%S
-; Set to 5 MB
-max_file_bytes  = 5242880
+; Rotating file loggers require the following configs
 max_file_no     = 5
-;Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+time_cutover    = "midnight"
+max_file_bytes  = 5242880
 
 
 [query_settings]
@@ -89,52 +97,70 @@ Defines the program that deals with subscribing to the solar controller's broker
 
 **Usage:** To use this program you must set up an Influx controller which connects to the Influx database and also set up a MQTT subscriber. The MQTT subscriber requires an Influx controller instance for it to run since it uses the controller to write data as it receives the data points.
 
-Firstly create an Influx controller instance to manage and write to the Influx database.
+Firstly create a MQTT listening service that runs indefinitely to retrieve data points from the MQTT broker, from which will then insert the data points into the Influx database.
 
 ```python
-def create_influx_controller(influx_secret):
-    """
-    classes function that creates a InfluxController for use
-    :param influx_secret: Secret passwords nad logins for Influx database
-    :return: A database object which can be used to write/read data points
-    """
-    database = InfluxController(
-        influx_secret.token,
-        influx_secret.org,
-        influx_secret.bucket,
-        influx_secret.url
-    )
-    database.startup()
-    return database
+    def run_mqtt_listener(self) -> None:
+        """
+        Initial setup for the MQTT connector, connects to MQTT broker
+        and failing to connect will exit the program
+        """
+        logging.info("Connecting to MQTT broker")
+        self._mqtt_client.username_pw_set(
+            username=self._mqtt_secrets["mqtt_user"],
+            password=self._mqtt_secrets["mqtt_token"],
+        )
+        self._mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
+        self._mqtt_client.tls_insecure_set(True)
+        self._mqtt_client.on_connect = self._on_connect
+        try:
+            self._mqtt_client.connect(
+                host=self._mqtt_secrets["mqtt_host"],
+                port=self._mqtt_secrets["mqtt_port"],
+            )
+        except Exception as err:
+            print(
+                type(self._mqtt_secrets["mqtt_host"]),
+                type(self._mqtt_secrets["mqtt_port"]),
+            )
+            logging.error(f"Failed to connect to MQTT broker, {err}")
+            raise err
+        self._mqtt_client.on_message = self._on_message
+        self._mqtt_client.loop_forever()
 ```
 
-Afterwards create a MQTT listening service that runs indefinitely to retrieve data points from the solar broker, from which will then insert the data points into the Influx database.
-
-```python
-def mqtt_runtime(mqtt_secret, influx_database):
-    """
-    classes function that creates a MQTT client
-    :param mqtt_secret: Secret passwords nad logins for MQTT subscriber
-    :param influx_database: An Influx database object for the MQTTDecoder to write to
-    :return: Never returns (see mq.mqtt_runtime())
-    """
-    mqtt = MQTTDecoder(
-        mqtt_secret.host,
-        mqtt_secret.port,
-        mqtt_secret.user,
-        mqtt_secret.password,
-        mqtt_secret.topic,
-        influx_database
-    )
-    mqtt.startup()
-    mqtt.mqtt_runtime()
-```
-
-The MQTT runtime will call on the `MQTTDecoder` class from **mqtt_classes.py** which will listen and record data points.
+The MQTT runtime will call on the `MQTTDecoder` class from **mqtt_classes.py** which will listen and push data points onto a `Queue`.
 
 `_on_connect()` runs when the MQTT subscriber firstly connects to the MQTT broker, in our case it uses the secrets file *(excluded passwords file)*  to choose what subscription to listen to.
 
 `_on_message()` runs every time the MQTT subscriber receives a message from the broker.
+
+Afterwards create an Influx controller instance and make an active connection to given Influx server.
+
+```python
+    def influx_startup(self) -> None:
+        """
+        Defines the initialization of the Influx connector,
+        invoking the connection to the InfluxDB and write API
+        """
+        logging.info("Attempting to connect to InfluxDB server")
+        client = None
+        try:
+            client = InfluxDBClient(
+                url=self._influx_url,
+                token=self._influx_token,
+                org=self.influx_org
+            )
+            client.ready()
+            logging.info("Successfully connected to InfluxDB server")
+        except Exception as err:
+            logging.error("Failed to connect InfluxDB server")
+            raise err
+        finally:
+            self.influx_client = client
+```
+
+When messages are received from the MQTT broker, they are then decoded, sorted and uploaded through the `InfluxConnector` class.
 
 ### Influx Queries
 
