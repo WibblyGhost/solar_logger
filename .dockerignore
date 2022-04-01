@@ -3,3 +3,7 @@ __pycache__/
 .idea/
 .vscode/
 /venv/
+private/
+output/
+
+private.py

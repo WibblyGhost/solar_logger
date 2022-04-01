@@ -6,7 +6,7 @@ This project is a multi-step program which relies on a MQTT backend to read info
 
 ## InfluxDB Setup
 
-This project comes with a mostly pre-built Influx instance that you can run up or copy to a Docker server. All Influx configurations will be written to the folder `docker_influxdb`. If this is your first time running InfluxDB I would suggest uncommenting the following code in the `docker_compose.yml` and copying specified `.env` file into the base directory. 
+This project comes with a mostly pre-built Influx instance that you can run up or copy to a Docker server. All Influx configurations will be written to the folder `docker_influxdb`. If this is your first time running InfluxDB I would suggest uncommenting the following code in the `docker-compose.yml` and copying specified `.env` file into the base directory. 
 ```yml
 InfluxDB:
     # For first time setup use these variables
@@ -30,7 +30,7 @@ To start, fill out the `.env` template file with personal secrets and copy them 
 
 All programs below are implemented with a file logger which can be configured through the config.ini file, this can be used for program info or debugging purposes. If file logging is enabled all logs will be written in the `output` folder although if using within a Docker instance it will be written to `docker_output` instead.
 
-**Note:** by default a `docker_output` volume is created. If you're not using file logging, comment out the following code in the `docker_compose.yml`:
+**Note:** by default a `docker_output` volume is created. If you're not using file logging, comment out the following code in the `docker-compose.yml`:
 ```yml
 SolarLogger:
     volumes:
@@ -44,31 +44,37 @@ All debugging and querying options can be changed through the config file. If fi
 ```ini
 [influx_debugger]
 file_logging    = True
-; Only needed if file logging is true
-file_location   = Output/
-filename        = influx_logs.log
-filemode        = a
-format          = %%(asctime)s, %%(name)s, %%(levelname)s, %%(message)s
-dateformat      = %%H:%%M:%%S
-; Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 debug_level     = DEBUG
+; Only needed if file logging is true
+file_location   = output/
+file_name       = influx_logs.log
+format          = %%(asctime)s, %%(name)s, %%(levelname)s, %%(message)s
+dateformat      = %%d/%%m/%%Y, %%H:%%M:%%S
+; Set to 5 MB
+max_file_bytes  = 5242880
+max_file_no     = 5
+; Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
 
 [solar_debugger]
 file_logging    = True
-; Only needed if file logging is true
-file_location   = Output/
-filename        = solar_logs.log
-filemode        = a
-format          = %%(asctime)s, %%(name)s, %%(levelname)s, %%(message)s
-dateformat      = %%H:%%M:%%S
-;Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 debug_level     = DEBUG
+; Only needed if file logging is true
+file_location   = output/
+file_name       = solar_logs.log
+format          = %%(asctime)s, %%(name)s, %%(levelname)s, %%(message)s
+dateformat      = %%d/%%m/%%Y, %%H:%%M:%%S
+; Set to 5 MB
+max_file_bytes  = 5242880
+max_file_no     = 5
+;Logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
 
 [query_settings]
 ; Can be either 'csv, 'flux' or 'stream'
 query_mode      = flux
 ; Following three values are only required for CSV's
-csv_location    = Output/
+csv_location    = output/
 csv_name        = query_result.csv
 csv_mode        = w
 ```

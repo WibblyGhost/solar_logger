@@ -12,6 +12,7 @@ from datetime import datetime
 # Imports for MQTT
 import paho.mqtt.client as mqtt
 from pymate.matenet import FXStatusPacket, MXStatusPacket, DCStatusPacket
+from classes.custom_exceptions import MqttServerOfflineError
 
 # Imports for Influx
 from classes.influx_classes import InfluxController, influx_db_write_points
@@ -128,12 +129,33 @@ class MQTTDecoder:
         dc_packet = DCStatusPacket.from_buffer(msg).__dict__
         return {key: value for (key, value) in dc_packet.items() if key != "raw"}
 
-    def _on_message(self, _client, _userdata, msg: str) -> None:
+    @staticmethod
+    def _check_status(msg: mqtt.MQTTMessage) -> None:
+        """
+        Called everytime a status message is received and checks the status of the server
+        :param msg: Recevied message from MQTT broker
+        """
+        status_topics = [
+            "mate/status",
+            "mate/mx-1/status",
+            "mate/fx-1/status",
+            "mate/dc-1/status",
+        ]
+        for status_group in status_topics:
+            if msg.topic == status_group and msg.payload.decode("ascii") == "offline":
+                logging.error(
+                    f"A backend service isn't online, {status_group} = offline"
+                )
+                raise MqttServerOfflineError(
+                    f"A backend service isn't online, {status_group} = offline"
+                )
+
+    def _on_message(self, _client, _userdata, msg: mqtt.MQTTMessage) -> None:
         """
         Called everytime a message is received which it then decodes
         :param msg: Message to partition into categories and decode
         """
-        # Time Packets
+        self._check_status(msg=msg)
         if msg.topic == "mate/fx-1/stat/ts":
             self._fx_time = int(msg.payload.decode("ascii"))
             self._fx_time = datetime.fromtimestamp(self._fx_time)

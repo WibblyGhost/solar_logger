@@ -4,24 +4,14 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from influxdb_client.rest import ApiException
-
+from classes.py_logger import create_logger
 from classes.influx_classes import (
     InfluxController,
     QueryBuilder,
     create_influx_controller,
 )
-from classes.py_functions import (
-    create_logger,
-    csv_writer,
-    get_influx_secrets,
-    read_query_settings,
-)
-from config.consts import (
-    INFLUX_DEBUG_CONFIG_TITLE,
-    INFLUX_QUERY_CONFIG_TITLE,
-    INFLUX_DB_CONTROLLER,
-)
+from classes.py_functions import read_query_settings, write_results_to_csv, SecretStore
+from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 
 
 def parse_csv(csv_file: dict) -> None:
@@ -31,7 +21,7 @@ def parse_csv(csv_file: dict) -> None:
     """
     logging.info("Creating CSV file")
     try:
-        csv_writer(config_name=INFLUX_QUERY_CONFIG_TITLE, table=csv_file)
+        write_results_to_csv(config_name=INFLUX_QUERY_CONFIG_TITLE, table=csv_file)
     except IOError as err:
         logging.error("Failed to write CSV file")
         raise err
@@ -90,9 +80,6 @@ def query_influx_server(
         elif query_mode == "stream":
             query_result = query_api.query_stream(org=influx_db.influx_org, query=query)
         logging.info("Successfully ran query")
-    except ApiException as err:
-        logging.error(f"Failed to run query, returned HTTP error: {err}\n{query}")
-        raise err
     except Exception as err:
         logging.error(f"Failed to run query, returned error: {err}\n{query}")
         raise err
@@ -146,6 +133,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
-    influx_secrets = get_influx_secrets()
-    INFLUX_DB_CONTROLLER = create_influx_controller(influx_secrets)
+    secret_store = SecretStore(read_mqtt=False, read_influx=True)
+    INFLUX_DB_CONTROLLER = create_influx_controller(secret_store.influx_secrets)
     main()
