@@ -20,7 +20,9 @@ def start_mqtt_server(mqtt_secrets: dict, influx_database: InfluxController) -> 
     for key, value in mqtt_secrets.items():
         if not value:
             logging.error(f"Missing secret credential for MQTT in the .env, {key}")
-            raise MissingCredentialsError(f"Missing secret credential for MQTT in the .env, {key}")
+            raise MissingCredentialsError(
+                f"Missing secret credential for MQTT in the .env, {key}"
+            )
 
     mqtt = MQTTDecoder(
         host=mqtt_secrets["mqtt_host"],
@@ -71,13 +73,14 @@ def main() -> None:
     Classes function which calls both the Influx database controller and the MQTT controller
     """
     secret_store = SecretStore(read_mqtt=True, read_influx=True)
-    influx_controller = create_influx_controller(influx_secret=secret_store.influx_secrets)
-    start_mqtt_server(mqtt_secrets=secret_store.mqtt_secrets, influx_database=influx_controller)
+    influx_controller = create_influx_controller(
+        influx_secret=secret_store.influx_secrets
+    )
+    start_mqtt_server(
+        mqtt_secrets=secret_store.mqtt_secrets, influx_database=influx_controller
+    )
 
 
 if __name__ == "__main__":
     logging = create_logger(SOLAR_DEBUG_CONFIG_TITLE)
     main()
-
-# TODO: Create multi-threaded program
-# async, await

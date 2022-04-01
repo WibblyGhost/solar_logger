@@ -24,7 +24,6 @@ def write_results_to_csv(config_name: str, table: dict) -> None:
         filename = config_p.get(config_name, "csv_name")
         full_path = file_location + filename
         filemode = config_p.get(config_name, "csv_mode")
-
         if not os.path.exists(file_location):
             os.makedirs(file_location)
         with open(full_path, filemode) as file_instance:

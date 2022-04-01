@@ -4,10 +4,12 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from influxdb_client.rest import ApiException
-
 from classes.py_logger import create_logger
-from classes.influx_classes import InfluxController, QueryBuilder, create_influx_controller
+from classes.influx_classes import (
+    InfluxController,
+    QueryBuilder,
+    create_influx_controller,
+)
 from classes.py_functions import read_query_settings, write_results_to_csv, SecretStore
 from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 
@@ -78,9 +80,6 @@ def query_influx_server(
         elif query_mode == "stream":
             query_result = query_api.query_stream(org=influx_db.influx_org, query=query)
         logging.info("Successfully ran query")
-    except ApiException as err:
-        logging.error(f"Failed to run query, returned HTTP error: {err}\n{query}")
-        raise err
     except Exception as err:
         logging.error(f"Failed to run query, returned error: {err}\n{query}")
         raise err
