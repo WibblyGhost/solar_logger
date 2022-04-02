@@ -84,7 +84,7 @@ class LoggingTools:
                         "Failed to read file logger settings in configs"
                     )
         except Exception as err:
-            logging.critical("An unexpected exception has occured\n--quitting--")
+            logging.critical("An unexpected exception has occurred\n--quitting--")
             raise err
 
     def _create_stdout_logger(self, logger: Logger) -> None:
@@ -146,7 +146,7 @@ class LoggingTools:
 
 def create_logger(config_name: str) -> logging:
     """
-    Creates a logging instance, can be customised through the config.ini
+    Creates a logging instance, can be customized through the config.ini
     :param config_name: Section under the config for the configuration to pull data from
     :return: Logger for logging
     """

@@ -1,5 +1,5 @@
 """
-classes program which initialises and runs both the MQTT and InfluxDB controllers
+classes program which initializes and runs both the MQTT and InfluxDB controllers
 """
 
 import queue
@@ -34,7 +34,7 @@ def sigint_handler(_signo, _stack_frame) -> None:
     """
     Handling SIGINT or CTRL + C signals
     """
-    logging.critical("Recieved SIGINT/CTRL+C quit code, shutting down")
+    logging.critical("Received SIGINT/CTRL+C quit code, shutting down")
     EXIT_APP.exit = True
     time.sleep(0.5)
     logging.info("Application exited with code 0")
@@ -66,7 +66,7 @@ def run_threaded_influx_writer() -> None:
 def main() -> None:
     """
     Classes function which calls both the Influx database controller and the MQTT controller
-    and runs them in seperate threads
+    and runs them in separate threads
     """
     secret_store = SecretStore(read_mqtt=True, read_influx=True)
     influx_connector = create_influx_connector(

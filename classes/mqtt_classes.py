@@ -202,14 +202,14 @@ class MqttConnector:
                 )
                 ERROR_COUNTS.contiguous_influx_errors = 0
         except Exception as err:
-            logging.warning(f"Failed to decode incomming MQTT packets: {err}")
+            logging.warning(f"Failed to decode incoming MQTT packets: {err}")
             logging.warning(
-                f"Contiquous MQTT errors increased {ERROR_COUNTS.contiguous_mqtt_errors}"
+                f"Contiguous MQTT errors increased {ERROR_COUNTS.contiguous_mqtt_errors}"
             )
         finally:
             if ERROR_COUNTS.contiguous_mqtt_errors >= ERROR_COUNTS.max_mqtt_errors:
                 logging.critical(
-                    f"Continuous mqtt errors has exceceded max count, \
+                    f"Continuous mqtt errors has exceeded max count, \
                         {ERROR_COUNTS.max_mqtt_errors}\n--quitting--"
                 )
                 raise err
