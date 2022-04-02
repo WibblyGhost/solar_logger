@@ -90,6 +90,13 @@ class SecretStore:
             self.mqtt_secrets["mqtt_user"] = os.environ.get("MQTT_USER")
             self.mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
             self.mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
+        except TypeError as err:
+            logging.critical(
+                "Missing secret credential for MQTT in the .env\n--quitting--"
+            )
+            raise MissingCredentialsError(
+                "Missing secret credential for MQTT in the .env"
+            ) from err
         except ValueError as err:
             logging.critical(
                 "Missing secret credential for MQTT in the .env\n--quitting--"
@@ -102,6 +109,7 @@ class SecretStore:
                 "Ran into error when reading environment variables\n--quitting--"
             )
             raise err
+
         for key, value in self.mqtt_secrets.items():
             if not value:
                 logging.critical(
