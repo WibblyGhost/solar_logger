@@ -10,7 +10,8 @@ import ssl
 import time
 from datetime import datetime
 
-import paho.mqtt.client as mqtt
+# import paho.mqtt.client as mqtt
+from paho.mqtt.client import Client, MQTTMessage
 from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
 from config.consts import ERROR_COUNTS, MAX_QUEUE_LENGTH, THREADED_QUEUE
 
@@ -54,10 +55,10 @@ class PyMateDecoder:
         return {key: value for (key, value) in dc_packet.items() if key != "raw"}
 
     @staticmethod
-    def check_status(msg: mqtt.MQTTMessage) -> None:
+    def check_status(msg: MQTTMessage) -> None:
         """
         Called everytime a status message is received and checks the status of the server
-        :param msg: Recevied message from MQTT broker
+        :param msg: Received message from MQTT broker
         """
         status_topics = [
             "mate/status",
@@ -65,13 +66,13 @@ class PyMateDecoder:
             "mate/fx-1/status",
             "mate/dc-1/status",
         ]
-        for status_group in status_topics:
-            if msg.topic == status_group and msg.payload.decode("ascii") == "offline":
+        for status in status_topics:
+            if msg.topic == status and msg.payload.decode("ascii") == "offline":
                 logging.critical(
-                    f"A backend MQTT service isn't online, {status_group} = offline\n--quitting--"
+                    f"A backend MQTT service isn't online, {status} = offline\n--quitting--"
                 )
                 raise MqttServerOfflineError(
-                    f"A backend MQTT service isn't online, {status_group} = offline"
+                    f"A backend MQTT service isn't online, {status} = offline"
                 )
 
 
@@ -97,10 +98,10 @@ class MqttConnector:
         self._dc_time = None
         self._dec_msg = None
         self._mqtt_secrets = mqtt_secrets
-        self._mqtt_client = mqtt.Client()
+        self._mqtt_client = Client()
         self._influx_connector = influx_connector
 
-    def run_mqtt_listener(self) -> mqtt.Client:
+    def run_mqtt_listener(self) -> Client:
         """
         Initial setup for the MQTT connector, connects to MQTT broker
         and failing to connect will exit the program
@@ -149,7 +150,7 @@ class MqttConnector:
                 f"Connection to MQTT broker refused, returned code: {return_code}"
             )
 
-    def _on_message(self, _client, _userdata, msg: mqtt.MQTTMessage) -> None:
+    def _on_message(self, _client, _userdata, msg: MQTTMessage) -> None:
         """
         Called everytime a message is received which it then decodes
         :param msg: Message to partition into categories and decode

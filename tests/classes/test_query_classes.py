@@ -1,12 +1,14 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring
 
 from faker import Faker
+from pytest import CaptureFixture
+
 from classes.query_classes import QueryBuilder
 
 FAKE = Faker()
 
 
-def test_help_returns_string(capsys):
+def test_help_returns_string(capsys: CaptureFixture):
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)
 

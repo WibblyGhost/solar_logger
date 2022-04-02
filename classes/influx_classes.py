@@ -4,6 +4,7 @@ to do writes and queries to the database
 """
 
 import logging
+import signal
 
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -118,4 +119,4 @@ def influx_db_write_points(
                 f"Contiguous Influx errors has exceceded max count, \
                     {ERROR_COUNTS.max_influx_errors}\n--quitting--"
             )
-            raise err
+            signal.raise_signal(signal.SIGTERM)

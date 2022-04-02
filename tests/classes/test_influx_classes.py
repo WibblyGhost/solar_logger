@@ -1,11 +1,12 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring
 
 import logging
+import time
 from unittest import mock
 
 import pytest
-from faker import Faker
 from pytest import LogCaptureFixture
+from faker import Faker
 
 from config.consts import ERROR_COUNTS
 from classes.custom_exceptions import MissingCredentialsError
@@ -36,8 +37,8 @@ def test_influx_startup_succeeds(caplog: LogCaptureFixture):
 
 
 @mock.patch("classes.influx_classes.InfluxDBClient.ready")
-def test_influx_startup_fails(mocked_ready, caplog: LogCaptureFixture):
-    mocked_ready.side_effect = Exception
+def test_influx_startup_fails(influx_ready, caplog: LogCaptureFixture):
+    influx_ready.side_effect = Exception
     caplog.set_level(logging.WARNING)
     url = FAKE.url()
     org = FAKE.pystr()
@@ -80,9 +81,6 @@ def test_create_influx_connector_fails():
 
 
 def test_influx_write_points_succeed(caplog: LogCaptureFixture):
-    # """
-    # Check that there aren't any unknown exceptions when successfully writing points to Influx
-    # """
     caplog.set_level(logging.DEBUG)
     msg_time = FAKE.date_time()
     msg_payload = {"fields": FAKE.pyint()}
@@ -102,9 +100,6 @@ def test_influx_write_points_succeed(caplog: LogCaptureFixture):
 
 
 def test_influx_write_exception_count_increases_on_error(caplog: LogCaptureFixture):
-    # """
-    # When an Influx write errors happens the count should increase by one
-    # """
     caplog.set_level(logging.WARNING)
     msg_time = FAKE.date_time()
     msg_payload_bad = {"fields": FAKE.pystr()}
@@ -127,9 +122,6 @@ def test_influx_write_exception_count_increases_on_error(caplog: LogCaptureFixtu
 
 
 def test_influx_write_exception_count_exceeds_max(caplog: LogCaptureFixture):
-    # """
-    # The application should shut down after exceeding the maximun number of Influx write errors
-    # """
     caplog.set_level(logging.CRITICAL)
     msg_time = FAKE.date_time()
     msg_payload_bad = {"fields": FAKE.pystr()}
@@ -154,9 +146,6 @@ def test_influx_write_exception_count_exceeds_max(caplog: LogCaptureFixture):
 
 
 def test_influx_write_exception_count_resets(caplog: LogCaptureFixture):
-    # """
-    # The number of contiguous write errors should be reset after a successful upload has been made
-    # """
     caplog.set_level(logging.WARNING)
     msg_time = FAKE.date_time()
     msg_payload_good = {"fields": FAKE.pyint()}
@@ -171,11 +160,13 @@ def test_influx_write_exception_count_resets(caplog: LogCaptureFixture):
             msg_type=msg_type,
             influx_connector=influx_connector,
         )
+        time.sleep(0.2)
         influx_db_write_points(
             msg_time=msg_time,
             msg_payload=msg_payload_good,
             msg_type=msg_type,
             influx_connector=influx_connector,
         )
+        time.sleep(0.2)
 
     assert ERROR_COUNTS.contiguous_influx_errors < ERROR_COUNTS.max_influx_errors

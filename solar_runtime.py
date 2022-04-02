@@ -24,7 +24,7 @@ def sigterm_handler(_signo, _stack_frame) -> None:
     Handling SIGTERM signals
     """
     logging.critical("Received SIGTERM, shutting down")
-    EXIT_APP.EXIT = True
+    EXIT_APP.exit = True
     time.sleep(0.5)
     logging.info("Application exited with code 0")
     sys.exit(0)
@@ -35,7 +35,7 @@ def sigint_handler(_signo, _stack_frame) -> None:
     Handling SIGINT or CTRL + C signals
     """
     logging.critical("Recieved SIGINT/CTRL+C quit code, shutting down")
-    EXIT_APP.EXIT = True
+    EXIT_APP.exit = True
     time.sleep(0.5)
     logging.info("Application exited with code 0")
     sys.exit(0)
@@ -46,7 +46,7 @@ def run_threaded_influx_writer() -> None:
     Writes point data received from the MQTT._on_message in a threaded process
     """
     logging.info("Created Influx thread")
-    while not EXIT_APP.EXIT:
+    while not EXIT_APP.exit:
         try:
             popped_value = THREADED_QUEUE.get(timeout=1.0)
         except queue.Empty:
@@ -88,7 +88,7 @@ def main() -> None:
 
     except Exception:
         logging.exception("Caught unknown exception")
-        EXIT_APP.EXIT = True
+        EXIT_APP.exit = True
 
 
 if __name__ == "__main__":
