@@ -106,7 +106,7 @@ class QueryBuilder:
         return f"\n\t|> range(start: {self._start_range})"
 
     def append_filter(
-        self, field_1: str, value_1: str, joiner: str = None, new_band: bool = False
+        self, field: str, value: str, joiner: str = None, new_band: bool = False
     ) -> None:
         """
         Adds filter fields to the query, function is repeatable and
@@ -119,9 +119,7 @@ class QueryBuilder:
         logging.debug("Created query filter field")
         if not self._filter_field or new_band:
             self._filter_field += "\n\t|> filter(fn: (r) => "
-        self._filter_field += (
-            f'r["{field_1}"] == "{value_1}")'  # Must use single quotes
-        )
+        self._filter_field += f'r["{field}"] == "{value}")'  # Must use single quotes
         if joiner:
             self._filter_field = self._filter_field[:-1]
             self._filter_field += f" {joiner} "

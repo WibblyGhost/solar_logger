@@ -33,6 +33,7 @@ def write_results_to_csv(config_name: str, table: dict) -> None:
                 writer.writerow(row)
         logging.info(f"Wrote rows into CSV file at: {full_path}")
     except Exception as err:
+        logging.error("Failed to write CSV")
         raise err
 
 
@@ -63,7 +64,6 @@ class SecretStore:
             "mqtt_token": None,
             "mqtt_topic": None,
         }
-
         self.influx_secrets = {
             "influx_url": None,
             "influx_org": None,
@@ -73,8 +73,11 @@ class SecretStore:
 
         if read_mqtt:
             self._read_mqtt_secrets()
+            logging.info("Read MQTT environment variables")
+
         if read_influx:
             self._read_influx_secrets()
+            logging.info("Read Influx environment variables")
 
     def _read_mqtt_secrets(self) -> dict:
         """
@@ -87,13 +90,18 @@ class SecretStore:
             self.mqtt_secrets["mqtt_user"] = os.environ.get("MQTT_USER")
             self.mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
             self.mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
+        except ValueError as err:
+            logging.error("Missing secret credential for MQTT in the .env")
+            raise MissingCredentialsError(
+                "Missing secret credential for MQTT in the .env"
+            ) from err
         except Exception as err:
             logging.error("Ran into error when reading environment variables")
             raise err
         for key, value in self.mqtt_secrets.items():
             if not value:
                 logging.error(f"Missing secret credential for MQTT in the .env, {key}")
-                raise ValueError(
+                raise MissingCredentialsError(
                     f"Missing secret credential for MQTT in the .env, {key}"
                 )
 
@@ -102,10 +110,19 @@ class SecretStore:
         Gets secret details from the environment file.
         :return influx_store: Dictionary of secrets
         """
-        self.influx_secrets["influx_url"] = os.environ.get("INFLUX_URL")
-        self.influx_secrets["influx_org"] = os.environ.get("INFLUX_ORG")
-        self.influx_secrets["influx_bucket"] = os.environ.get("INFLUX_BUCKET")
-        self.influx_secrets["influx_token"] = os.environ.get("INFLUX_TOKEN")
+        try:
+            self.influx_secrets["influx_url"] = os.environ.get("INFLUX_URL")
+            self.influx_secrets["influx_org"] = os.environ.get("INFLUX_ORG")
+            self.influx_secrets["influx_bucket"] = os.environ.get("INFLUX_BUCKET")
+            self.influx_secrets["influx_token"] = os.environ.get("INFLUX_TOKEN")
+        except ValueError as err:
+            logging.error("Missing secret credential for MQTT in the .env")
+            raise MissingCredentialsError(
+                "Missing secret credential for MQTT in the .env"
+            ) from err
+        except Exception as err:
+            logging.error("Ran into error when reading environment variables")
+            raise err
         for key, value in self.influx_secrets.items():
             if not value:
                 logging.error(
@@ -114,16 +131,3 @@ class SecretStore:
                 raise MissingCredentialsError(
                     f"Missing secret credential for InfluxDB in the .env, {key}"
                 )
-
-
-def strtobool(val: str) -> bool:
-    """
-    Convert a string representation of truth to true (1) or false (0).
-    Note: distutils is being discontinued so this function is required
-    """
-    val = val.lower()
-    if val in ("y", "yes", "t", "true", "on", "1"):
-        return True
-    if val in ("n", "no", "f", "false", "off", "0"):
-        return False
-    raise ValueError(f"invalid truth value %{val!r}")

@@ -158,7 +158,7 @@ class MqttConnector:
 
         while THREADED_QUEUE.qsize() > MAX_QUEUE_LENGTH:
             logging.error("Queue is full, sleeping for 1 second")
-            time.sleep(1)
+            time.sleep(0.5)
 
         if msg.topic == "mate/fx-1/stat/ts":
             self._fx_time = int(msg.payload.decode("ascii"))

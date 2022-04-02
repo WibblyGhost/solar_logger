@@ -17,4 +17,7 @@ docker_output/
 docker_influxdb/
 
 # Test files
-*.coverage
+.coverage
+coverage.xml
+cov.xml
+htmlcov/

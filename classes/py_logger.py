@@ -11,7 +11,6 @@ from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from config.consts import CONFIG_FILENAME
 
 from classes.custom_exceptions import MissingConfigurationError
-from classes.py_functions import strtobool
 
 
 class LoggingTools:
@@ -57,8 +56,7 @@ class LoggingTools:
             self.debug_level = debug_dict[config_p.get(config_name, "debug_level")]
             self.file_format = config_p.get(config_name, "format")
             self.date_format = config_p.get(config_name, "dateformat")
-            file_logging = config_p.get(config_name, "file_logging")
-            self.is_file_logging = strtobool(file_logging)
+            self.is_file_logging = config_p.getboolean(config_name, "file_logging")
 
             if None in [self.debug_level, self.file_format, self.date_format]:
                 raise MissingConfigurationError("Failed to read basic logger configs")

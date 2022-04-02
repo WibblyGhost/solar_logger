@@ -25,6 +25,15 @@ class ExitContition:
     value = False
 
 
+class MaxErrorCounts:
+    """
+    Stores all error counts for various sections
+    """
+
+    max_influx_errors = 5
+    continuous_influx_errors = 0
+
+
 THREADED_QUEUE = Queue()
 MAX_QUEUE_LENGTH = 20
 EXIT_APP = ExitContition()

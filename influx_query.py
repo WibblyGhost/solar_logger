@@ -111,8 +111,8 @@ def run_default() -> None:
     #     |> range(start: -5m)
     #     |> filter(fn: (r) => r["_measurement"] == "fx-1" or r["_measurement"] == "mx-1")
     query = QueryBuilder(bucket=influx_db_connector.influx_bucket, start_range="-5m")
-    query.append_filter(field_1="_measurement", value_1="fx-1", joiner="or")
-    query.append_filter(field_1="_measurement", value_1="mx-1")
+    query.append_filter(field="_measurement", value="fx-1", joiner="or")
+    query.append_filter(field="_measurement", value="mx-1")
     # q_b.append_filter("_measurement", "dc-1", new_band=True)
     execute_query(query)
 

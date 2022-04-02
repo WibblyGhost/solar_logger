@@ -4,11 +4,13 @@ to do writes and queries to the database
 """
 
 import logging
+import signal
 
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 from classes.custom_exceptions import MissingCredentialsError
+from config.consts import MaxErrorCounts
 
 
 class InfluxConnector:
@@ -53,13 +55,13 @@ class InfluxConnector:
             self.influx_client = client
 
 
-def create_influx_connector(influx_secret: dict) -> InfluxConnector:
+def create_influx_connector(influx_secrets: dict) -> InfluxConnector:
     """
     classes function that creates a Influx connector
     :param influx_secret: Secret passwords and logins for Influx database
     :return: A database connector object which can be used to write/read data points
     """
-    for key, value in influx_secret.items():
+    for key, value in influx_secrets.items():
         if not value:
             logging.error(f"Missing secret credential for InfluxDB in the .env, {key}")
             raise MissingCredentialsError(
@@ -67,10 +69,10 @@ def create_influx_connector(influx_secret: dict) -> InfluxConnector:
             )
 
     connector = InfluxConnector(
-        url=influx_secret["influx_url"],
-        org=influx_secret["influx_org"],
-        bucket=influx_secret["influx_bucket"],
-        token=influx_secret["influx_token"],
+        url=influx_secrets["influx_url"],
+        org=influx_secrets["influx_org"],
+        bucket=influx_secrets["influx_bucket"],
+        token=influx_secrets["influx_token"],
     )
     connector.influx_startup()
     return connector
@@ -102,6 +104,16 @@ def influx_db_write_points(
                 record=point_template,
                 time=msg_time,
             )
+            MaxErrorCounts.continuous_influx_errors = 0
     except Exception as err:
+        MaxErrorCounts.continuous_influx_errors += 1
         logging.error(f"Failed to run write, returned error: {err}")
-        raise err
+        logging.error(
+            f"Continuous influx errors increased to {MaxErrorCounts.continuous_influx_errors}"
+        )
+    finally:
+        if MaxErrorCounts.continuous_influx_errors >= MaxErrorCounts.max_influx_errors:
+            logging.critical(
+                f"Continuous influx errors has exceceded max count, {MaxErrorCounts.max_influx_errors}"
+            )
+            raise err

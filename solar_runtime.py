@@ -82,7 +82,7 @@ def main() -> None:
     """
     secret_store = SecretStore(read_mqtt=True, read_influx=True)
     influx_connector = create_influx_connector(
-        influx_secret=secret_store.influx_secrets
+        influx_secrets=secret_store.influx_secrets
     )
     mqtt_connector = MqttConnector(
         mqtt_secrets=secret_store.mqtt_secrets,
