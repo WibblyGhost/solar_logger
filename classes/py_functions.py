@@ -129,12 +129,19 @@ class SecretStore:
             self.influx_secrets["influx_org"] = os.environ.get("INFLUX_ORG")
             self.influx_secrets["influx_bucket"] = os.environ.get("INFLUX_BUCKET")
             self.influx_secrets["influx_token"] = os.environ.get("INFLUX_TOKEN")
-        except ValueError as err:
+        except TypeError as err:
             logging.critical(
                 "Missing secret credential for MQTT in the .env\n--quitting--"
             )
             raise MissingCredentialsError(
                 "Missing secret credential for MQTT in the .env"
+            ) from err
+        except ValueError as err:
+            logging.critical(
+                "Missing secret credential for Influx in the .env\n--quitting--"
+            )
+            raise MissingCredentialsError(
+                "Missing secret credential for Influx in the .env"
             ) from err
         except Exception as err:
             logging.critical(
