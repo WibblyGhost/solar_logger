@@ -116,7 +116,7 @@ def influx_db_write_points(
     finally:
         if ERROR_COUNTS.contiguous_influx_errors >= ERROR_COUNTS.max_influx_errors:
             logging.critical(
-                f"Contiguous Influx errors has exceceded max count, \
+                f"Contiguous Influx errors has exceeded max count, \
                     {ERROR_COUNTS.max_influx_errors}\n--quitting--"
             )
             signal.raise_signal(signal.SIGTERM)

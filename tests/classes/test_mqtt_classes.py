@@ -163,7 +163,7 @@ def test_check_status_fails(topic):
     )
 
 MQTT_ENV = {
-        "mqtt_host": FAKE.pystr(),
+        "mqtt_host": FAKE.url(),
         "mqtt_port": str(FAKE.pyint(4)),
         "mqtt_user": FAKE.pystr(),
         "mqtt_token": FAKE.pystr(),
@@ -172,12 +172,15 @@ MQTT_ENV = {
 def test_mqtt_connect_succeeds(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     influx_connector = mock.MagicMock(InfluxConnector)
+    mqtt_connect = mock.MagicMock(Client.connect, return_value=mock.MagicMock())
+    mqtt_loop = mock.MagicMock(Client.loop_forever, mock.MagicMock())
 
-    with mock.patch("classes.mqtt_classes.mqtt.Client", mock.MagicMock(Client)):
-        mqtt_connector = MqttConnector(
-            mqtt_secrets=MQTT_ENV, influx_connector=influx_connector
-        )
-        mqtt_connector.run_mqtt_listener()
+    with mock.patch("classes.mqtt_classes.Client.connect", mqtt_connect):
+        with mock.patch("classes.mqtt_classes.Client.loop_forever", mqtt_loop):
+            mqtt_connector = MqttConnector(
+                mqtt_secrets=MQTT_ENV, influx_connector=influx_connector
+            )
+            mqtt_connector.run_mqtt_listener()
 
     assert "Connecting to MQTT broker" in caplog.text
 
@@ -186,12 +189,13 @@ def test_mqtt_connect_fails(caplog: LogCaptureFixture):
     caplog.set_level(logging.CRITICAL)
     influx_connector = mock.MagicMock(InfluxConnector)
     mqtt_connect = mock.MagicMock(Client.connect, side_effect=Exception)
+    mqtt_loop = mock.MagicMock(Client.loop_forever, mock.MagicMock())
 
     with mock.patch("classes.mqtt_classes.Client.connect", mqtt_connect):
-        # with mock.patch("classes.mqtt_classes.Client.connect", side_effect=Exception):
-        with pytest.raises(Exception):
-            mqtt_connector = MqttConnector(
-                mqtt_secrets=MQTT_ENV, influx_connector=influx_connector
-            )
-            mqtt_connector.run_mqtt_listener()
+        with mock.patch("classes.mqtt_classes.Client.loop_forever", mqtt_loop):
+            with pytest.raises(Exception):
+                mqtt_connector = MqttConnector(
+                    mqtt_secrets=MQTT_ENV, influx_connector=influx_connector
+                )
+                mqtt_connector.run_mqtt_listener()
     assert "Failed to connect to MQTT broker" in caplog.text

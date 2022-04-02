@@ -121,25 +121,26 @@ def test_influx_write_exception_count_increases_on_error(caplog: LogCaptureFixtu
     assert ERROR_COUNTS.contiguous_influx_errors > 0
 
 
-def test_influx_write_exception_count_exceeds_max(caplog: LogCaptureFixture):
-    caplog.set_level(logging.CRITICAL)
+def test_influx_write_exception_count_exceed_max(caplog: LogCaptureFixture):
+    caplog.set_level(logging.WARNING)
     msg_time = FAKE.date_time()
-    msg_payload_bad = {"fields": FAKE.pystr()}
     msg_type = FAKE.pystr()
     influx_connector = mock.MagicMock(InfluxConnector)
 
-    with pytest.raises(Exception):
-        for _ in range(0, ERROR_COUNTS.max_influx_errors):
-            influx_db_write_points(
-                msg_time=msg_time,
-                msg_payload=msg_payload_bad,
-                msg_type=msg_type,
-                influx_connector=influx_connector,
-            )
+    msg_payload_bad = {}
+    for _ in range(0,10):
+        msg_payload_bad[FAKE.pystr()] = FAKE.pystr()
 
+    influx_db_write_points(
+        msg_time=msg_time,
+        msg_payload=msg_payload_bad,
+        msg_type=msg_type,
+        influx_connector=influx_connector,
+    )
+
+    assert "Failed to run write, returned error:" in caplog.text
     assert (
-        f"Contiguous Influx errors has exceceded max count, \
-                    {ERROR_COUNTS.max_influx_errors}\n--quitting--"
+        f"Contiguous Influx errors increased to {ERROR_COUNTS.contiguous_influx_errors}"
         in caplog.text
     )
     assert ERROR_COUNTS.contiguous_influx_errors > 0
