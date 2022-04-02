@@ -33,7 +33,7 @@ def write_results_to_csv(config_name: str, table: dict) -> None:
                 writer.writerow(row)
         logging.info(f"Wrote rows into CSV file at: {full_path}")
     except Exception as err:
-        logging.error("Failed to write CSV")
+        logging.critical("Failed to write CSV\n--quitting--")
         raise err
 
 
@@ -91,16 +91,22 @@ class SecretStore:
             self.mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
             self.mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
         except ValueError as err:
-            logging.error("Missing secret credential for MQTT in the .env")
+            logging.critical(
+                "Missing secret credential for MQTT in the .env\n--quitting--"
+            )
             raise MissingCredentialsError(
                 "Missing secret credential for MQTT in the .env"
             ) from err
         except Exception as err:
-            logging.error("Ran into error when reading environment variables")
+            logging.critical(
+                "Ran into error when reading environment variables\n--quitting--"
+            )
             raise err
         for key, value in self.mqtt_secrets.items():
             if not value:
-                logging.error(f"Missing secret credential for MQTT in the .env, {key}")
+                logging.critical(
+                    f"Missing secret credential for MQTT in the .env, {key}\n--quitting--"
+                )
                 raise MissingCredentialsError(
                     f"Missing secret credential for MQTT in the .env, {key}"
                 )
@@ -116,17 +122,21 @@ class SecretStore:
             self.influx_secrets["influx_bucket"] = os.environ.get("INFLUX_BUCKET")
             self.influx_secrets["influx_token"] = os.environ.get("INFLUX_TOKEN")
         except ValueError as err:
-            logging.error("Missing secret credential for MQTT in the .env")
+            logging.critical(
+                "Missing secret credential for MQTT in the .env\n--quitting--"
+            )
             raise MissingCredentialsError(
                 "Missing secret credential for MQTT in the .env"
             ) from err
         except Exception as err:
-            logging.error("Ran into error when reading environment variables")
+            logging.critical(
+                "Ran into error when reading environment variables\n--quitting--"
+            )
             raise err
         for key, value in self.influx_secrets.items():
             if not value:
-                logging.error(
-                    f"Missing secret credential for InfluxDB in the .env, {key}"
+                logging.critical(
+                    f"Missing secret credential for InfluxDB in the .env, {key}\n--quitting"
                 )
                 raise MissingCredentialsError(
                     f"Missing secret credential for InfluxDB in the .env, {key}"

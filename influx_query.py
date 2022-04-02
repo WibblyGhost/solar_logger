@@ -23,7 +23,7 @@ def parse_csv(csv_file: dict) -> None:
     try:
         write_results_to_csv(config_name=INFLUX_QUERY_CONFIG_TITLE, table=csv_file)
     except IOError as err:
-        logging.error("Failed to write CSV file")
+        logging.critical("Failed to write CSV file, exiting")
         raise err
 
 
@@ -81,7 +81,7 @@ def query_influx_server(
             query_result = query_api.query_stream(org=influx_db.influx_org, query=query)
         logging.info("Successfully ran query")
     except Exception as err:
-        logging.error(f"Failed to run query, returned error: {err}\n{query}")
+        logging.critical(f"Failed to run query, returned error: {err}\n{query}")
         raise err
     return query_result
 

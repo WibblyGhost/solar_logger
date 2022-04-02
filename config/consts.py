@@ -5,16 +5,23 @@ File for storing constant variables
 from queue import Queue
 
 
-# Py Functions
-CONFIG_FILENAME = "config/config.ini"
+# Configs
+CONFIG_FILENAME = "config/config.ini"  # Py Functions
+INFLUX_QUERY_CONFIG_TITLE = "query_settings"  # Influx Query
+INFLUX_DEBUG_CONFIG_TITLE = "influx_debugger"  # Influx Query
+SOLAR_DEBUG_CONFIG_TITLE = "solar_debugger"  # Solar Runtime
 
-# Influx Query
-INFLUX_QUERY_CONFIG_TITLE = "query_settings"
-INFLUX_DEBUG_CONFIG_TITLE = "influx_debugger"
+# Error Counts
+class ErrorCounts:
+    """
+    Stores all error counts for various sections
+    """
 
-# Solar Runtime
-SOLAR_DEBUG_CONFIG_TITLE = "solar_debugger"
-MAX_WRITE_POINT_EXCEPTIONS = 5
+    max_influx_errors = 5
+    max_mqtt_errors = 5
+    contiguous_influx_errors = 0
+    contiguous_mqtt_errors = 0
+
 
 # Multi-Threading
 class ExitContition:
@@ -22,19 +29,10 @@ class ExitContition:
     Stores exit condition for multi-threading
     """
 
-    value = False
+    exit = False
 
 
-class MaxErrorCounts:
-    """
-    Stores all error counts for various sections
-    """
-
-    max_influx_errors = 5
-    continuous_influx_errors = 0
-
-
-THREADED_QUEUE = Queue()
 MAX_QUEUE_LENGTH = 20
+THREADED_QUEUE = Queue()
 EXIT_APP = ExitContition()
-LOOP_FLAG = 0
+ERROR_COUNTS = ErrorCounts()

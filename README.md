@@ -123,7 +123,7 @@ Firstly create a MQTT listening service that runs indefinitely to retrieve data 
                 type(self._mqtt_secrets["mqtt_host"]),
                 type(self._mqtt_secrets["mqtt_port"]),
             )
-            logging.error(f"Failed to connect to MQTT broker, {err}")
+            logging.critical(f"Failed to connect to MQTT broker, {err}")
             raise err
         self._mqtt_client.on_message = self._on_message
         self._mqtt_client.loop_forever()
@@ -154,7 +154,7 @@ Afterwards create an Influx controller instance and make an active connection to
             client.ready()
             logging.info("Successfully connected to InfluxDB server")
         except Exception as err:
-            logging.error("Failed to connect InfluxDB server")
+            logging.critical("Failed to connect InfluxDB server")
             raise err
         finally:
             self.influx_client = client

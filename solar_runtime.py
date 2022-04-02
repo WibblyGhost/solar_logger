@@ -16,7 +16,6 @@ from config.consts import (
     EXIT_APP,
     SOLAR_DEBUG_CONFIG_TITLE,
     THREADED_QUEUE,
-    MAX_WRITE_POINT_EXCEPTIONS,
 )
 
 
@@ -25,7 +24,7 @@ def sigterm_handler(_signo, _stack_frame) -> None:
     Handling SIGTERM signals
     """
     logging.critical("Received SIGTERM, shutting down")
-    EXIT_APP.value = True
+    EXIT_APP.EXIT = True
     time.sleep(0.5)
     logging.info("Application exited with code 0")
     sys.exit(0)
@@ -36,7 +35,7 @@ def sigint_handler(_signo, _stack_frame) -> None:
     Handling SIGINT or CTRL + C signals
     """
     logging.critical("Recieved SIGINT/CTRL+C quit code, shutting down")
-    EXIT_APP.value = True
+    EXIT_APP.EXIT = True
     time.sleep(0.5)
     logging.info("Application exited with code 0")
     sys.exit(0)
@@ -47,31 +46,20 @@ def run_threaded_influx_writer() -> None:
     Writes point data received from the MQTT._on_message in a threaded process
     """
     logging.info("Created Influx thread")
-    attempts = 0
-    while not EXIT_APP.value:
+    while not EXIT_APP.EXIT:
         try:
             popped_value = THREADED_QUEUE.get(timeout=1.0)
         except queue.Empty:
             continue
         if popped_value:
             logging.debug(f"Popped value off queue: {popped_value}")
-            try:
-                influx_db_write_points(
-                    msg_time=popped_value[0],
-                    msg_payload=popped_value[1],
-                    msg_type=popped_value[2],
-                    influx_connector=popped_value[3],
-                )
-            except Exception:
-                attempts += 1
-                logging.exception("Exception caught in Influx thread")
-                if attempts > MAX_WRITE_POINT_EXCEPTIONS:
-                    logging.error(
-                        f"Number of exception events for Influx Write Points"
-                        f"exceeded {MAX_WRITE_POINT_EXCEPTIONS}"
-                    )
-                    signal.raise_signal(signal.SIGTERM)
-                time.sleep(1)
+            influx_db_write_points(
+                msg_time=popped_value[0],
+                msg_payload=popped_value[1],
+                msg_type=popped_value[2],
+                influx_connector=popped_value[3],
+            )
+            time.sleep(0.2)
     logging.info("Exited Influx thread")
 
 
@@ -100,7 +88,7 @@ def main() -> None:
 
     except Exception:
         logging.exception("Caught unknown exception")
-        EXIT_APP.value = True
+        EXIT_APP.EXIT = True
 
 
 if __name__ == "__main__":

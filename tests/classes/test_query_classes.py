@@ -1,4 +1,4 @@
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring, missing-module-docstring
 
 from faker import Faker
 from classes.query_classes import QueryBuilder

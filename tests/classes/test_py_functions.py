@@ -1,4 +1,4 @@
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring, missing-module-docstring
 
 import os
 import logging
@@ -7,6 +7,7 @@ from unittest import mock
 from faker import Faker
 from pytest import LogCaptureFixture
 import pytest
+
 from classes.custom_exceptions import MissingCredentialsError
 from classes.py_functions import SecretStore, read_query_settings, write_results_to_csv
 
