@@ -172,9 +172,10 @@ def test_mqtt_connect_succeeds(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     mqtt_connector = MqttConnector(secret_store=MockedSecretStore)
 
-    mqtt_connector.get_mqtt_client()
+    mqtt_client = mqtt_connector.get_mqtt_client()
 
     assert "Connecting to MQTT broker" in caplog.text
+    assert isinstance(mqtt_client, Client)
 
 
 @mock.patch(
@@ -190,7 +191,7 @@ def test_mqtt_connect_fails(caplog: LogCaptureFixture):
     mqtt_connector = MqttConnector(secret_store=MockedSecretStore)
 
     with pytest.raises(Exception):
-        mqtt_connector.get_mqtt_client()
+        _ = mqtt_connector.get_mqtt_client()
     assert "Failed to connect to MQTT broker" in caplog.text
 
 

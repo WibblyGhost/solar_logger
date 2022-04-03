@@ -7,7 +7,7 @@ import csv
 import logging
 import os
 
-from config.consts import CONFIG_FILENAME
+from config.consts import CONFIG_FILENAME, MAX_PORT_RANGE
 
 from classes.custom_exceptions import MissingCredentialsError
 
@@ -57,6 +57,9 @@ class SecretStore:
         :param mqtt_secrests: Dictionary of secrets for MQTT server
         :param influx_secrets: Dictionary of secrets for Influx server
         """
+        self._read_mqtt = read_mqtt
+        self._read_influx = read_influx
+
         self._mqtt_secrets = {
             "mqtt_host": None,
             "mqtt_port": None,
@@ -71,11 +74,11 @@ class SecretStore:
             "influx_token": None,
         }
 
-        if read_mqtt:
-            self._read_mqtt_secrets()
+        if self._read_mqtt:
             logging.info("Reading MQTT environment variables")
+            self._read_mqtt_secrets()
 
-        if read_influx:
+        if self._read_influx:
             self._read_influx_secrets()
             logging.info("Reading Influx environment variables")
 
@@ -84,20 +87,29 @@ class SecretStore:
         """
         Dictionary containing MQTT secrets
         """
-        return self._mqtt_secrets
+        if self._read_mqtt:
+            return self._mqtt_secrets
+        else:
+            # TODO
+            raise NotImplementedError
 
     @property
     def influx_secrets(self) -> dict:
         """
         Dictionary containing Influx secrets
         """
-        return self._influx_secrets
+        if self._read_influx:
+            return self._influx_secrets
+        else:
+            # TODO
+            raise NotImplementedError
 
-    def _validate_secrets(self) -> None:
-        """
-        TODO
-        """
-        raise NotImplementedError
+    def _set_env_secrets(self, env: list) -> None:
+        if self._read_mqtt:
+            # TODO
+            for item in list:
+                self.mqtt_secrets[] = item
+        if self._read_influx:
 
     def _read_mqtt_secrets(self) -> dict:
         """
@@ -105,33 +117,21 @@ class SecretStore:
         :return mqtt_store: Dictionary of secrets
         """
         try:
-            self._mqtt_secrets["mqtt_host"] = os.environ.get("MQTT_HOST")
-            self._mqtt_secrets["mqtt_port"] = int(os.environ.get("MQTT_PORT"))
-            self._mqtt_secrets["mqtt_user"] = os.environ.get("MQTT_USER")
-            self._mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
-            self._mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
-        except TypeError as err:
-            logging.critical("Missing secret credential for MQTT in the .env")
-            raise MissingCredentialsError(
-                "Missing secret credential for MQTT in the .env"
-            ) from err
-        except ValueError as err:
-            logging.critical("Missing secret credential for MQTT in the .env")
-            raise MissingCredentialsError(
-                "Missing secret credential for MQTT in the .env"
-            ) from err
+            _mqtt_host = os.environ.get("MQTT_HOST")
+            _mqtt_port = os.environ.get("MQTT_PORT")
+            if not isinstance(_mqtt_port, int):
+                _mqtt_port = int(_mqtt_port)
+            if _mqtt_port not in range(0, MAX_PORT_RANGE):
+                # TODO Exceptions
+                raise Exception
+            _mqtt_user = os.environ.get("MQTT_USER")
+            _mqtt_token = os.environ.get("MQTT_TOKEN")
+            _mqtt_topic = os.environ.get("MQTT_TOPIC")
         except Exception as err:
+            # TODO
             logging.critical("Ran into error when reading environment variables")
             raise err
 
-        for key, value in self._mqtt_secrets.items():
-            if not value:
-                logging.critical(
-                    f"Missing secret credential for MQTT in the .env, {key}"
-                )
-                raise MissingCredentialsError(
-                    f"Missing secret credential for MQTT in the .env, {key}"
-                )
 
     def _read_influx_secrets(self) -> dict:
         """
