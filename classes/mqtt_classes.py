@@ -10,13 +10,12 @@ import ssl
 import time
 from datetime import datetime
 
-# import paho.mqtt.client as mqtt
 from paho.mqtt.client import Client, MQTTMessage
 from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
-from config.consts import ERROR_COUNTS, MAX_QUEUE_LENGTH, THREADED_QUEUE
 
+from classes.py_functions import SecretStore
 from classes.custom_exceptions import MqttServerOfflineError
-from classes.influx_classes import InfluxConnector
+from config.consts import MAX_MQTT_ERRORS, MAX_QUEUE_LENGTH, THREADED_QUEUE
 
 
 class PyMateDecoder:
@@ -83,8 +82,7 @@ class MqttConnector:
 
     def __init__(
         self,
-        mqtt_secrets: dict,
-        influx_connector: InfluxConnector = InfluxConnector,
+        secret_store: SecretStore,
     ) -> None:
         """
         :param host: Web url for the subscriber to listen on
@@ -97,9 +95,9 @@ class MqttConnector:
         self._mx_time = None
         self._dc_time = None
         self._dec_msg = None
-        self._mqtt_secrets = mqtt_secrets
+        self._mqtt_secrets = secret_store.mqtt_secrets
         self._mqtt_client = Client()
-        self._influx_connector = influx_connector
+        self._contiguous_errors = 0
 
     def run_mqtt_listener(self) -> Client:
         """
@@ -142,13 +140,19 @@ class MqttConnector:
         :param _flags: Unused
         :param return_code: Returned connection code
         """
-        if return_code == 0:
-            self._mqtt_client.subscribe(self._mqtt_secrets["mqtt_topic"])
-            logging.info(f"Connected to MQTT broker, returned code: {return_code}")
-        else:
-            logging.warning(
-                f"Connection to MQTT broker refused, returned code: {return_code}"
+        try:
+            if return_code == 0:
+                self._mqtt_client.subscribe(self._mqtt_secrets["mqtt_topic"])
+                logging.info(f"Connected to MQTT broker, returned code: {return_code}")
+            else:
+                logging.warning(
+                    f"Connection to MQTT broker refused, returned code: {return_code}"
+                )
+        except Exception as err:
+            logging.critical(
+                "Connection to MQTT broker was refused and raised exception."
             )
+            raise err
 
     def _on_message(self, _client, _userdata, msg: MQTTMessage) -> None:
         """
@@ -156,7 +160,6 @@ class MqttConnector:
         :param msg: Message to partition into categories and decode
         """
         PyMateDecoder.check_status(msg=msg)
-
         while THREADED_QUEUE.qsize() > MAX_QUEUE_LENGTH:
             logging.warning("Queue is full, sleeping for 0.5 seconds")
             time.sleep(0.5)
@@ -180,36 +183,49 @@ class MqttConnector:
                     f"Received fx_payload packet and pushed onto queue: {fx_payload}"
                 )
                 THREADED_QUEUE.put(
-                    [self._fx_time, fx_payload, "fx-1", self._influx_connector]
+                    {
+                        "msg_time": self._fx_time,
+                        "msg_type": "fx-1",
+                        "msg_payload": fx_payload,
+                    }
                 )
-                ERROR_COUNTS.contiguous_influx_errors = 0
+                self._contiguous_errors = 0
             elif msg.topic == "mate/mx-1/stat/raw" and self._mx_time:
                 mx_payload = PyMateDecoder.mx_decoder(msg.payload)
                 logging.debug(
                     f"Received mx_payload packet and pushed onto queue: {mx_payload}"
                 )
                 THREADED_QUEUE.put(
-                    [self._mx_time, mx_payload, "mx-1", self._influx_connector]
+                    {
+                        "msg_time": self._mx_time,
+                        "msg_type": "mx-1",
+                        "msg_payload": mx_payload,
+                    }
                 )
-                ERROR_COUNTS.contiguous_influx_errors = 0
+                self._contiguous_errors = 0
             elif msg.topic == "mate/dc-1/stat/raw" and self._dc_time:
                 dc_payload = PyMateDecoder.dc_decoder(msg.payload)
                 logging.debug(
                     f"Received dc_payload packet and pushed onto queue: {dc_payload}"
                 )
                 THREADED_QUEUE.put(
-                    [self._dc_time, dc_payload, "dc-1", self._influx_connector]
+                    {
+                        "msg_time": self._dc_time,
+                        "msg_type": "dc-1",
+                        "msg_payload": dc_payload,
+                    }
                 )
-                ERROR_COUNTS.contiguous_influx_errors = 0
+                self._contiguous_errors = 0
         except Exception as err:
+            self._contiguous_errors += 1
             logging.warning(f"Failed to decode incoming MQTT packets: {err}")
             logging.warning(
-                f"Contiguous MQTT errors increased {ERROR_COUNTS.contiguous_mqtt_errors}"
+                f"Contiguous MQTT errors increased {self._contiguous_errors}"
             )
         finally:
-            if ERROR_COUNTS.contiguous_mqtt_errors >= ERROR_COUNTS.max_mqtt_errors:
+            if self._contiguous_errors >= MAX_MQTT_ERRORS:
                 logging.critical(
-                    f"Continuous mqtt errors has exceeded max count, \
-                        {ERROR_COUNTS.max_mqtt_errors}\n--quitting--"
+                    f"Continuous mqtt errors has exceeded max count, "
+                    f"{MAX_MQTT_ERRORS}\n--quitting--"
                 )
                 raise err

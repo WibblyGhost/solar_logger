@@ -120,7 +120,7 @@ class LoggingTools:
         )
         rotating_handler.setFormatter(log_formatter)
         logger.addHandler(rotating_handler)
-        logging.info(f"Created rotating file logger at {self.file_path}")
+        logging.info(f"Created rotating file log file at {self.file_path}")
 
     def _create_timed_rotating_file_logger(self, logger: Logger) -> None:
         """
@@ -141,7 +141,7 @@ class LoggingTools:
         )
         rotating_time_handler.setFormatter(log_formatter)
         logger.addHandler(rotating_time_handler)
-        logging.info(f"Created rotating file logger at {self.file_path}")
+        logging.info(f"Created time rotating file log file at {self.file_path}")
 
 
 def create_logger(config_name: str) -> logging:

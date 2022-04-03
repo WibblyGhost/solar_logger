@@ -1,173 +1,112 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring
+# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
+
 
 import logging
-import time
 from unittest import mock
-
-import pytest
 from pytest import LogCaptureFixture
-from faker import Faker
+import pytest
 
-from config.consts import ERROR_COUNTS
-from classes.custom_exceptions import MissingCredentialsError
-from classes.influx_classes import (
-    InfluxConnector,
-    create_influx_connector,
-    influx_db_write_points,
-)
-
-FAKE = Faker()
+from classes.influx_classes import InfluxConnector
+from tests.config.consts import FAKE, MockedSecretStore
+from influxdb_client.client.write_api import WriteApi
+from influxdb_client.client.query_api import QueryApi
+from influxdb_client import InfluxDBClient
 
 
-@mock.patch("classes.influx_classes.InfluxDBClient.ready", mock.MagicMock())
-def test_influx_startup_succeeds(caplog: LogCaptureFixture):
+def test_connector_init_succeeds(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
-    url = FAKE.url()
-    org = FAKE.pystr()
-    bucket = FAKE.pystr()
-    token = FAKE.pystr()
-    influx_connector = InfluxConnector(url=url, org=org, bucket=bucket, token=token)
+    _ = InfluxConnector(secret_store=MockedSecretStore)
 
-    try:
-        influx_connector.influx_startup()
-    except Exception as err:
-        assert False, f"influx_startup failed {err}"
-    assert "Attempting to connect to InfluxDB server" in caplog.text
-    assert "Successfully connected to InfluxDB server" in caplog.text
+    assert "Initializing InfluxDB client" in caplog.text
+    assert "Initializing Influx write api" in caplog.text
+    assert "Initializing Influx query api" in caplog.text
 
 
-@mock.patch("classes.influx_classes.InfluxDBClient.ready")
-def test_influx_startup_fails(influx_ready, caplog: LogCaptureFixture):
-    influx_ready.side_effect = Exception
-    caplog.set_level(logging.WARNING)
-    url = FAKE.url()
-    org = FAKE.pystr()
-    bucket = FAKE.pystr()
-    token = FAKE.pystr()
+def test_heath_check_succeeds(caplog: LogCaptureFixture):
+    caplog.set_level(logging.INFO)
+    influx_connector = InfluxConnector(secret_store=MockedSecretStore)
 
-    influx_connector = InfluxConnector(url=url, org=org, bucket=bucket, token=token)
+    with mock.patch("classes.influx_classes.InfluxDBClient.ready"):
+        influx_connector.health_check()
 
-    with pytest.raises(Exception):
-        influx_connector.influx_startup()
-    assert "Failed to connect InfluxDB server" in caplog.text
+    assert "Influx health check succeeded" in caplog.text
 
 
-def test_create_influx_connector_succeeds():
-    influx_secrets = {
-        "influx_url": FAKE.url(),
-        "influx_org": FAKE.pystr(),
-        "influx_bucket": FAKE.pystr(),
-        "influx_token": FAKE.pystr(),
-    }
+def test_heath_check_raises_exception():
+    influx_connector = InfluxConnector(secret_store=MockedSecretStore)
 
-    with mock.patch("classes.influx_classes.InfluxConnector.influx_startup"):
-        influx_connector = create_influx_connector(influx_secrets=influx_secrets)
-
-    assert isinstance(influx_connector, InfluxConnector)
+    with mock.patch(
+        "classes.influx_classes.InfluxDBClient.ready", side_effect=Exception
+    ):
+        with pytest.raises(Exception):
+            influx_connector.health_check()
 
 
-def test_create_influx_connector_fails():
-    influx_secrets = {
-        "influx_url": "",
-        "influx_org": FAKE.pystr(),
-        "influx_bucket": FAKE.pystr(),
-        "influx_token": FAKE.pystr(),
-    }
-
-    with mock.patch("classes.influx_classes.InfluxConnector.influx_startup"):
-        with pytest.raises(MissingCredentialsError) as err:
-            _ = create_influx_connector(influx_secrets=influx_secrets)
-    assert "Missing secret credential for InfluxDB in the .env," in str(err.value)
-
-
-def test_influx_write_points_succeed(caplog: LogCaptureFixture):
+def test_write_points_succeeds(caplog: LogCaptureFixture):
     caplog.set_level(logging.DEBUG)
-    msg_time = FAKE.date_time()
-    msg_payload = {"fields": FAKE.pyint()}
-    msg_type = FAKE.pystr()
-    influx_connector = mock.MagicMock(InfluxConnector)
-
-    influx_db_write_points(
-        msg_time=msg_time,
-        msg_payload=msg_payload,
-        msg_type=msg_type,
-        influx_connector=influx_connector,
-    )
-
-    assert "Creating database points from" in caplog.text
-    assert "Wrote point: " in caplog.text
-    assert ERROR_COUNTS.contiguous_influx_errors == 0
-
-
-def test_influx_write_exception_count_increases_on_error(caplog: LogCaptureFixture):
-    caplog.set_level(logging.WARNING)
-    msg_time = FAKE.date_time()
-    msg_payload_bad = {"fields": FAKE.pystr()}
-    msg_type = FAKE.pystr()
-    influx_connector = mock.MagicMock(InfluxConnector)
-
-    influx_db_write_points(
-        msg_time=msg_time,
-        msg_payload=msg_payload_bad,
-        msg_type=msg_type,
-        influx_connector=influx_connector,
-    )
-
-    assert "Failed to run write, returned error:" in caplog.text
-    assert (
-        f"Contiguous Influx errors increased to {ERROR_COUNTS.contiguous_influx_errors}"
-        in caplog.text
-    )
-    assert ERROR_COUNTS.contiguous_influx_errors > 0
-
-
-def test_influx_write_exception_count_exceed_max(caplog: LogCaptureFixture):
-    caplog.set_level(logging.WARNING)
+    influx_connector = InfluxConnector(secret_store=MockedSecretStore)
     msg_time = FAKE.date_time()
     msg_type = FAKE.pystr()
-    influx_connector = mock.MagicMock(InfluxConnector)
-
-    msg_payload_bad = {}
-    for _ in range(0,10):
-        msg_payload_bad[FAKE.pystr()] = FAKE.pystr()
-
-    influx_db_write_points(
-        msg_time=msg_time,
-        msg_payload=msg_payload_bad,
-        msg_type=msg_type,
-        influx_connector=influx_connector,
-    )
-
-    assert "Failed to run write, returned error:" in caplog.text
-    assert (
-        f"Contiguous Influx errors increased to {ERROR_COUNTS.contiguous_influx_errors}"
-        in caplog.text
-    )
-    assert ERROR_COUNTS.contiguous_influx_errors > 0
-
-
-def test_influx_write_exception_count_resets(caplog: LogCaptureFixture):
-    caplog.set_level(logging.WARNING)
-    msg_time = FAKE.date_time()
-    msg_payload_good = {"fields": FAKE.pyint()}
-    msg_payload_bad = {"fields": FAKE.pystr()}
-    msg_type = FAKE.pystr()
-    influx_connector = mock.MagicMock(InfluxConnector)
-
-    for _ in range(0, ERROR_COUNTS.max_influx_errors):
-        influx_db_write_points(
-            msg_time=msg_time,
-            msg_payload=msg_payload_bad,
-            msg_type=msg_type,
-            influx_connector=influx_connector,
+    msg_payload = {FAKE.pystr(): str(FAKE.pyfloat())}
+    # from influxdb_client.client.write_api import WriteApi
+    with mock.patch(
+        "classes.influx_classes.InfluxDBClient.write_api", mock.MagicMock(WriteApi)
+    ):
+        influx_connector.write_points(
+            msg_time=msg_time, msg_type=msg_type, msg_payload=msg_payload
         )
-        time.sleep(0.2)
-        influx_db_write_points(
-            msg_time=msg_time,
-            msg_payload=msg_payload_good,
-            msg_type=msg_type,
-            influx_connector=influx_connector,
-        )
-        time.sleep(0.2)
 
-    assert ERROR_COUNTS.contiguous_influx_errors < ERROR_COUNTS.max_influx_errors
+    assert f"Wrote point: " in caplog.text
+
+
+def test_write_points_with_bad_data_raises_exception(caplog: LogCaptureFixture):
+    caplog.set_level(logging.DEBUG)
+    influx_connector = InfluxConnector(secret_store=MockedSecretStore)
+    msg_time = FAKE.date_time()
+    msg_type = FAKE.pystr()
+    msg_payload_bad = {FAKE.pystr(): FAKE.pystr()}
+
+    with pytest.raises(Exception) as err:
+        influx_connector.write_points(
+            msg_time=msg_time, msg_type=msg_type, msg_payload=msg_payload_bad
+        )
+    assert err.type == ValueError
+
+
+def test_write_points_raises_connection_exception(caplog: LogCaptureFixture):
+    caplog.set_level(logging.DEBUG)
+    influx_connector = InfluxConnector(secret_store=MockedSecretStore)
+    msg_time = FAKE.date_time()
+    msg_type = FAKE.pystr()
+    msg_payload = {FAKE.pystr(): str(FAKE.pyfloat())}
+
+    with pytest.raises(Exception) as err:
+        influx_connector.write_points(
+            msg_time=msg_time, msg_type=msg_type, msg_payload=msg_payload
+        )
+    assert err.type == ValueError
+
+
+return_data = {FAKE.pystr(): FAKE.pystr()}
+
+
+@pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
+@mock.patch(
+    "classes.influx_classes.InfluxDBClient.query_api.query_csv",
+    return_value=return_data,
+)
+@mock.patch(
+    "classes.influx_classes.InfluxDBClient.query_api.query", return_value=return_data
+)
+@mock.patch(
+    "classes.influx_classes.InfluxDBClient.query_api.query_stream",
+    return_value=return_data,
+)
+def test_query_succeeds(query_mode, caplog: LogCaptureFixture):
+    caplog.set_level(logging.DEBUG)
+    influx_connector = InfluxConnector(secret_store=MockedSecretStore)
+    query = FAKE.pystr()
+
+    result = influx_connector.query_database(query_mode=query_mode, query=query)
+
+    assert result == return_data

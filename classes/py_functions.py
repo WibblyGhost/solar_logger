@@ -57,14 +57,14 @@ class SecretStore:
         :param mqtt_secrests: Dictionary of secrets for MQTT server
         :param influx_secrets: Dictionary of secrets for Influx server
         """
-        self.mqtt_secrets = {
+        self._mqtt_secrets = {
             "mqtt_host": None,
             "mqtt_port": None,
             "mqtt_user": None,
             "mqtt_token": None,
             "mqtt_topic": None,
         }
-        self.influx_secrets = {
+        self._influx_secrets = {
             "influx_url": None,
             "influx_org": None,
             "influx_bucket": None,
@@ -73,11 +73,31 @@ class SecretStore:
 
         if read_mqtt:
             self._read_mqtt_secrets()
-            logging.info("Read MQTT environment variables")
+            logging.info("Reading MQTT environment variables")
 
         if read_influx:
             self._read_influx_secrets()
-            logging.info("Read Influx environment variables")
+            logging.info("Reading Influx environment variables")
+
+    @property
+    def mqtt_secrets(self) -> dict:
+        """
+        Dictionary containing MQTT secrets
+        """
+        return self._mqtt_secrets
+
+    @property
+    def influx_secrets(self) -> dict:
+        """
+        Dictionary containing Influx secrets
+        """
+        return self._influx_secrets
+
+    def _validate_secrets(self) -> None:
+        """
+        TODO
+        """
+        raise NotImplementedError
 
     def _read_mqtt_secrets(self) -> dict:
         """
@@ -85,11 +105,11 @@ class SecretStore:
         :return mqtt_store: Dictionary of secrets
         """
         try:
-            self.mqtt_secrets["mqtt_host"] = os.environ.get("MQTT_HOST")
-            self.mqtt_secrets["mqtt_port"] = int(os.environ.get("MQTT_PORT"))
-            self.mqtt_secrets["mqtt_user"] = os.environ.get("MQTT_USER")
-            self.mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
-            self.mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
+            self._mqtt_secrets["mqtt_host"] = os.environ.get("MQTT_HOST")
+            self._mqtt_secrets["mqtt_port"] = int(os.environ.get("MQTT_PORT"))
+            self._mqtt_secrets["mqtt_user"] = os.environ.get("MQTT_USER")
+            self._mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
+            self._mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
         except TypeError as err:
             logging.critical(
                 "Missing secret credential for MQTT in the .env\n--quitting--"
@@ -110,7 +130,7 @@ class SecretStore:
             )
             raise err
 
-        for key, value in self.mqtt_secrets.items():
+        for key, value in self._mqtt_secrets.items():
             if not value:
                 logging.critical(
                     f"Missing secret credential for MQTT in the .env, {key}\n--quitting--"
@@ -125,10 +145,10 @@ class SecretStore:
         :return influx_store: Dictionary of secrets
         """
         try:
-            self.influx_secrets["influx_url"] = os.environ.get("INFLUX_URL")
-            self.influx_secrets["influx_org"] = os.environ.get("INFLUX_ORG")
-            self.influx_secrets["influx_bucket"] = os.environ.get("INFLUX_BUCKET")
-            self.influx_secrets["influx_token"] = os.environ.get("INFLUX_TOKEN")
+            self._influx_secrets["influx_url"] = os.environ.get("INFLUX_URL")
+            self._influx_secrets["influx_org"] = os.environ.get("INFLUX_ORG")
+            self._influx_secrets["influx_bucket"] = os.environ.get("INFLUX_BUCKET")
+            self._influx_secrets["influx_token"] = os.environ.get("INFLUX_TOKEN")
         except TypeError as err:
             logging.critical(
                 "Missing secret credential for MQTT in the .env\n--quitting--"
@@ -148,7 +168,7 @@ class SecretStore:
                 "Ran into error when reading environment variables\n--quitting--"
             )
             raise err
-        for key, value in self.influx_secrets.items():
+        for key, value in self._influx_secrets.items():
             if not value:
                 logging.critical(
                     f"Missing secret credential for InfluxDB in the .env, {key}\n--quitting"

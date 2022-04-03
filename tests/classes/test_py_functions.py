@@ -1,17 +1,15 @@
-# pylint: disable=duplicate-code, missing-function-docstring, missing-module-docstring
+# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
 
 import logging
 import os
 from unittest import mock
 
 import pytest
-from faker import Faker
 from pytest import LogCaptureFixture
 
 from classes.custom_exceptions import MissingCredentialsError
 from classes.py_functions import SecretStore, read_query_settings, write_results_to_csv
-
-FAKE = Faker()
+from tests.config.consts import FAKE
 
 
 @mock.patch("classes.py_functions.os.path.exists")
@@ -39,7 +37,7 @@ def test_secret_store_reads_mqtt_env(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     mqtt_env = {
         "mqtt_host": FAKE.pystr(),
-        "mqtt_port": str(FAKE.pyint(4)),
+        "mqtt_port": str(FAKE.pyint()),
         "mqtt_user": FAKE.pystr(),
         "mqtt_token": FAKE.pystr(),
         "mqtt_topic": FAKE.pystr(),
@@ -50,7 +48,7 @@ def test_secret_store_reads_mqtt_env(caplog: LogCaptureFixture):
     mqtt_env["mqtt_port"] = int(mqtt_env["mqtt_port"])
 
     assert secret_store.mqtt_secrets == mqtt_env
-    assert "Read MQTT environment variables" in caplog.text
+    assert "Reading MQTT environment variables" in caplog.text
 
 
 def test_secret_store_reads_influx_env(caplog: LogCaptureFixture):
@@ -66,7 +64,7 @@ def test_secret_store_reads_influx_env(caplog: LogCaptureFixture):
         secret_store = SecretStore(read_influx=True)
 
     assert secret_store.influx_secrets == influx_env
-    assert "Read Influx environment variables" in caplog.text
+    assert "Reading Influx environment variables" in caplog.text
 
 
 def test_secret_store_asserts_on_empty_env():

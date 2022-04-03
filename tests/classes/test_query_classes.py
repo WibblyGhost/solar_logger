@@ -1,11 +1,9 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring
 
-from faker import Faker
 from pytest import CaptureFixture
 
 from classes.query_classes import QueryBuilder
-
-FAKE = Faker()
+from tests.config.consts import FAKE
 
 
 def test_help_returns_string(capsys: CaptureFixture):

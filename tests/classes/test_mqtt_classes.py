@@ -1,18 +1,15 @@
-# pylint: disable=duplicate-code, missing-function-docstring, missing-module-docstring
+# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
 
 import logging
 from unittest import mock
 
-from faker import Faker
 from pymate.value import Value
 from pytest import LogCaptureFixture
 from paho.mqtt.client import Client, MQTTMessage
 import pytest
 
-from classes.influx_classes import InfluxConnector
 from classes.mqtt_classes import MqttConnector, PyMateDecoder
-
-FAKE = Faker()
+from tests.config.consts import MockedSecretStore
 
 
 def dict_to_str(dictionary: dict):
@@ -162,40 +159,39 @@ def test_check_status_fails(topic):
         f"{topic.decode('ascii')} = offline"
     )
 
-MQTT_ENV = {
-        "mqtt_host": FAKE.url(),
-        "mqtt_port": str(FAKE.pyint(4)),
-        "mqtt_user": FAKE.pystr(),
-        "mqtt_token": FAKE.pystr(),
-        "mqtt_topic": FAKE.pystr(),
-}
+
+@mock.patch(
+    "classes.mqtt_classes.Client.connect",
+    mock.MagicMock(Client.connect, return_value=mock.MagicMock()),
+)
+@mock.patch(
+    "classes.mqtt_classes.Client.loop_forever",
+    mock.MagicMock(Client.loop_forever, mock.MagicMock()),
+)
 def test_mqtt_connect_succeeds(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
-    influx_connector = mock.MagicMock(InfluxConnector)
-    mqtt_connect = mock.MagicMock(Client.connect, return_value=mock.MagicMock())
-    mqtt_loop = mock.MagicMock(Client.loop_forever, mock.MagicMock())
+    mqtt_connector = MqttConnector(secret_store=MockedSecretStore)
 
-    with mock.patch("classes.mqtt_classes.Client.connect", mqtt_connect):
-        with mock.patch("classes.mqtt_classes.Client.loop_forever", mqtt_loop):
-            mqtt_connector = MqttConnector(
-                mqtt_secrets=MQTT_ENV, influx_connector=influx_connector
-            )
-            mqtt_connector.run_mqtt_listener()
+    mqtt_connector.run_mqtt_listener()
 
     assert "Connecting to MQTT broker" in caplog.text
 
 
+@mock.patch(
+    "classes.mqtt_classes.Client.connect",
+    mock.MagicMock(Client.connect, side_effect=Exception),
+)
+@mock.patch(
+    "classes.mqtt_classes.Client.loop_forever",
+    mock.MagicMock(Client.loop_forever, mock.MagicMock()),
+)
 def test_mqtt_connect_fails(caplog: LogCaptureFixture):
     caplog.set_level(logging.CRITICAL)
-    influx_connector = mock.MagicMock(InfluxConnector)
-    mqtt_connect = mock.MagicMock(Client.connect, side_effect=Exception)
-    mqtt_loop = mock.MagicMock(Client.loop_forever, mock.MagicMock())
+    mqtt_connector = MqttConnector(secret_store=MockedSecretStore)
 
-    with mock.patch("classes.mqtt_classes.Client.connect", mqtt_connect):
-        with mock.patch("classes.mqtt_classes.Client.loop_forever", mqtt_loop):
-            with pytest.raises(Exception):
-                mqtt_connector = MqttConnector(
-                    mqtt_secrets=MQTT_ENV, influx_connector=influx_connector
-                )
-                mqtt_connector.run_mqtt_listener()
+    with pytest.raises(Exception):
+        mqtt_connector.run_mqtt_listener()
     assert "Failed to connect to MQTT broker" in caplog.text
+
+
+# TODO Find a way to test on_message, on_connect and on_disconnect
