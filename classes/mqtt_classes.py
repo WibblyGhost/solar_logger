@@ -127,7 +127,6 @@ class MqttConnector:
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_disconnect = self._on_disconnect
         self._mqtt_client.on_message = self._on_message
-        # self._mqtt_client.loop_start()
         return self._mqtt_client
 
     @staticmethod
