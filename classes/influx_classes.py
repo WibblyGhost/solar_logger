@@ -24,16 +24,16 @@ class InfluxConnector:
         :param bucket: Database source
         :param url: Web address to connect to database
         """
-        influx_secrets = secret_store.influx_secrets
+        _influx_secrets = secret_store.influx_secrets
 
-        self._influx_org = influx_secrets["influx_org"]
-        self._influx_bucket = influx_secrets["influx_bucket"]
+        self._influx_org = _influx_secrets["influx_org"]
+        self._influx_bucket = _influx_secrets["influx_bucket"]
 
         logging.info("Initializing InfluxDB client")
         self._influx_client = InfluxDBClient(
-            url=influx_secrets["influx_url"],
-            org=influx_secrets["influx_org"],
-            token=influx_secrets["influx_token"],
+            url=_influx_secrets["influx_url"],
+            org=_influx_secrets["influx_org"],
+            token=_influx_secrets["influx_token"],
         )
         logging.info("Initializing Influx write api")
         self._write_client = self._influx_client.write_api(write_options=SYNCHRONOUS)

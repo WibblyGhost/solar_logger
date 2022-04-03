@@ -4,17 +4,17 @@ import logging
 import os
 from unittest import mock
 
-import pytest
 from pytest import LogCaptureFixture
-
+import pytest
 from classes.custom_exceptions import MissingCredentialsError
+
 from classes.py_functions import SecretStore, read_query_settings, write_results_to_csv
-from tests.config.consts import FAKE
+from tests.config.consts import FAKE, INFLUX_ENV, MQTT_ENV, TEST_ENV_FULL
 
 
 @mock.patch("classes.py_functions.os.path.exists")
 @mock.patch("classes.py_functions.open", mock.mock_open())
-def test_write_results_to_csv(exists, caplog: LogCaptureFixture):
+def test_passes_write_to_csv(exists, caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     exists.return_value = True
 
@@ -26,95 +26,72 @@ def test_write_results_to_csv(exists, caplog: LogCaptureFixture):
     assert "Wrote rows into CSV file at:" in caplog.text
 
 
-def test_read_query_settings_returns_string():
+def test_passes_read_query_settings():
     result = read_query_settings("query_settings")
 
     assert result is not None
     assert isinstance(result, str)
 
 
-# TODO FIX THE ENV TEST CASES
-def test_secret_store_reads_env(caplog: LogCaptureFixture):
+def test_passes_secret_store_reads_env(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
-    env = {
-            "mqtt_host": FAKE.pystr(),
-            "mqtt_port": str(FAKE.pyint()),
-            "mqtt_user": FAKE.pystr(),
-            "mqtt_token": FAKE.pystr(),
-            "mqtt_topic": FAKE.pystr(),
-            "influx_url": FAKE.url(),
-            "influx_org": FAKE.pystr(),
-            "influx_bucket": FAKE.pystr(),
-            "influx_token": FAKE.pystr(),
-    }
 
-    with mock.patch.dict(os.environ, env):
-        secret_store = SecretStore(read_mqtt=True, read_influx=True)
+    with mock.patch.dict(os.environ, TEST_ENV_FULL):
+        secret_store = SecretStore(has_mqtt_access=True, has_influx_access=True)
+    joined_secret_store = dict(secret_store.influx_secrets, **secret_store.mqtt_secrets)
+    test_env_copy = TEST_ENV_FULL.copy()
+    test_env_copy["mqtt_port"] = int(TEST_ENV_FULL["mqtt_port"])
 
-    secret_env = dict(
-        secret_store.mqtt_secrets,
-        **secret_store.influx_secrets
-    )
-    assert env != secret_env
     assert "Reading MQTT environment variables" in caplog.text
-
-
-# TODO FIX THE ENV TEST CASES
-def test_secret_store_reads_influx_env(caplog: LogCaptureFixture):
-    caplog.set_level(logging.INFO)
-    env = {
-            "mqtt_host": FAKE.pystr(),
-            "mqtt_port": str(FAKE.pyint()),
-            "mqtt_user": FAKE.pystr(),
-            "mqtt_token": FAKE.pystr(),
-            "mqtt_topic": FAKE.pystr(),
-            "influx_url": FAKE.url(),
-            "influx_org": FAKE.pystr(),
-            "influx_bucket": FAKE.pystr(),
-            "influx_token": FAKE.pystr(),
-    }
-
-    with mock.patch.dict(os.environ, env):
-        secret_store = SecretStore(read_influx=True)
-    env["mqtt_port"] = int(env["mqtt_port"])
-
-    assert secret_store.mqtt_secrets != env
-    assert secret_store.mqtt_secrets == {
-        "mqtt_host": env["mqtt_host"],
-        "mqtt_port": env["mqtt_port"],
-        "mqtt_user": env["mqtt_user"],
-        "mqtt_token": env["influx_token"],
-        "mqtt_topic": env["mqtt_topic"]
-    }
-    assert "Reading MQTT environment variables" in caplog.text
-
-
-# TODO FIX THE ENV TEST CASES
-def test_secret_store_reads_influx_env(caplog: LogCaptureFixture):
-    caplog.set_level(logging.INFO)
-
-
-    with mock.patch.dict(os.environ, influx_env):
-        secret_store = SecretStore(read_influx=True)
-
-    assert secret_store.influx_secrets == influx_env
     assert "Reading Influx environment variables" in caplog.text
+    assert joined_secret_store == test_env_copy
 
-# TODO FIX THE ENV TEST CASES
-def test_secret_store_asserts_on_empty_env():
-    env_file = {
-        "mqtt_host": "",
-        "mqtt_port": "",
-        "mqtt_user": "",
-        "mqtt_token": "",
-        "mqtt_topic": "",
-        "influx_url": "",
-        "influx_org": "",
-        "influx_bucket": "",
-        "influx_token": "",
-    }
 
-    with pytest.raises(MissingCredentialsError) as err:
-        with mock.patch.dict(os.environ, env_file):
-            SecretStore(read_influx=True, read_mqtt=True)
-    assert str(err.value) == "Missing secret credential for MQTT in the .env"
+def test_passes_secret_store_reads_mqtt_env(caplog: LogCaptureFixture):
+    caplog.set_level(logging.INFO)
+
+    with mock.patch.dict(os.environ, TEST_ENV_FULL):
+        secret_store = SecretStore(has_mqtt_access=True)
+    mqtt_env_copy = MQTT_ENV.copy()
+    mqtt_env_copy["mqtt_port"] = int(MQTT_ENV["mqtt_port"])
+
+    assert "Reading MQTT environment variables" in caplog.text
+    assert "Reading Influx environment variables" not in caplog.text
+    assert secret_store.mqtt_secrets == mqtt_env_copy
+
+
+def test_passes_secret_store_reads_influx_env(caplog: LogCaptureFixture):
+    caplog.set_level(logging.INFO)
+
+    with mock.patch.dict(os.environ, TEST_ENV_FULL):
+        secret_store = SecretStore(has_influx_access=True)
+
+    assert "Reading MQTT environment variables" not in caplog.text
+    assert "Reading Influx environment variables" in caplog.text
+    assert secret_store.influx_secrets == INFLUX_ENV
+
+
+def test_fails_secret_store_reads_none(caplog: LogCaptureFixture):
+    caplog.set_level(logging.INFO)
+
+    with mock.patch.dict(os.environ, TEST_ENV_FULL):
+        secret_store = SecretStore()
+
+    assert "Reading MQTT environment variables" not in caplog.text
+    assert "Reading Influx environment variables" not in caplog.text
+    assert secret_store.influx_secrets is None
+
+
+def test_fails_secret_store_empty_values(caplog: LogCaptureFixture):
+    caplog.set_level(logging.CRITICAL)
+
+    mqtt_env_copy = TEST_ENV_FULL.copy()
+    mqtt_env_copy["mqtt_user"] = ""
+    mqtt_env_copy["influx_url"] = ""
+
+    with mock.patch.dict(os.environ, mqtt_env_copy):
+        with pytest.raises(MissingCredentialsError) as err:
+            _ = SecretStore(has_mqtt_access=True, has_influx_access=True)
+
+    assert "Ran into error when reading environment variables" in caplog.text
+    assert str(err.value) == "Ran into error when reading environment variables"

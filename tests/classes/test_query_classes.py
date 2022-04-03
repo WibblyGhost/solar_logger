@@ -6,7 +6,7 @@ from classes.query_classes import QueryBuilder
 from tests.config.consts import FAKE
 
 
-def test_help_returns_string(capsys: CaptureFixture):
+def test_passes_help_string(capsys: CaptureFixture):
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)
 
@@ -17,7 +17,7 @@ def test_help_returns_string(capsys: CaptureFixture):
     assert captured.out != ""
 
 
-def test_basic_query_created():
+def test_passes_basic_query_created():
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)
 
@@ -29,7 +29,7 @@ def test_basic_query_created():
     )
 
 
-def test_query_with_end_date_created():
+def test_passes_query_with_end_date():
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30, end_date=-15)
     end_range = FAKE.date_between(start_date=-16)
@@ -44,7 +44,7 @@ def test_query_with_end_date_created():
     )
 
 
-def test_query_with_filter_created():
+def test_passes_query_with_filter():
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)
     field = FAKE.pystr()
@@ -60,7 +60,7 @@ def test_query_with_filter_created():
     )
 
 
-def test_query_with_filter_and_join_created():
+def test_passes_query_filter_with_join():
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)
     field = FAKE.pystr()
@@ -77,7 +77,7 @@ def test_query_with_filter_and_join_created():
     )
 
 
-def test_query_with_filter_and_band_created():
+def test_passes_query_filter_with_band():
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)
     field_1 = FAKE.pystr()
@@ -100,7 +100,7 @@ def test_query_with_filter_and_band_created():
     )
 
 
-def test_query_with_aggregate_created():
+def test_passes_query_with_aggregate():
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)
     collection_window = FAKE.pystr()
@@ -119,7 +119,7 @@ def test_query_with_aggregate_created():
     )
 
 
-def test_query_with_sort_created():
+def test_passes_query_with_sort():
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)
     field = FAKE.pystr()

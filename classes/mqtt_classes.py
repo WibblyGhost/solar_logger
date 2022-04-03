@@ -122,7 +122,7 @@ class MqttConnector:
                 type(self._mqtt_secrets["mqtt_host"]),
                 type(self._mqtt_secrets["mqtt_port"]),
             )
-            logging.critical(f"Failed to connect to MQTT broker:\n{err}")
+            logging.critical("Failed to connect to MQTT broker")
             raise err
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_disconnect = self._on_disconnect

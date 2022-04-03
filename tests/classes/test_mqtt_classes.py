@@ -19,7 +19,7 @@ def dict_to_str(dictionary: dict):
     return result
 
 
-def test_fx_decoder_succeeded():
+def test_passes_fx_decoder():
     fx_bytearray = b"\x00\x00\x00\x04t\x00\x04\x00\x02\x01\x12\t\x00"
     fx_array = {
         "ac_mode": 2,
@@ -47,7 +47,7 @@ def test_fx_decoder_succeeded():
     assert str_decoded_result == str_fx_array
 
 
-def test_mx_decoder_succeeded():
+def test_passes_mx_decoder():
     mx_bytearray = b"\x87\x85\x8b\x00t\x08\x02\x00 \x01\x0f\x02\xa4"
     mx_array = {
         "amp_hours": "116Ah",
@@ -71,7 +71,7 @@ def test_mx_decoder_succeeded():
     assert str_decoded_result == str_mx_array
 
 
-def test_dx_decoder_succeeded():
+def test_passes_dc_decoder():
     dc_bytearray = (
         b"\xff\xe8\x00l\x00\x00\x01\x11d\xff\xf9\x00\x1d\x00\x00\x00!\x00l"
         b"\x00\x18\x00T\x00\x1d\x00\x07\x00\x16\x00\x1b\x00\x0e\x00\r\x00J\x00\x1f\x00+"
@@ -130,7 +130,7 @@ def test_dx_decoder_succeeded():
         b"mate/dc-1/status",
     ],
 )
-def test_check_status_succeeds(topic):
+def test_passes_check_status(topic):
     mqtt_message = MQTTMessage(topic=topic)
     mqtt_message.payload = b"online"
     pymate_decoder = PyMateDecoder()
@@ -147,7 +147,7 @@ def test_check_status_succeeds(topic):
         b"mate/dc-1/status",
     ],
 )
-def test_check_status_fails(topic):
+def test_fails_check_status(topic):
     mqtt_message = MQTTMessage(topic=topic)
     mqtt_message.payload = b"offline"
     pymate_decoder = PyMateDecoder()
@@ -168,7 +168,7 @@ def test_check_status_fails(topic):
     "classes.mqtt_classes.Client.loop_forever",
     mock.MagicMock(Client.loop_forever, mock.MagicMock()),
 )
-def test_mqtt_connect_succeeds(caplog: LogCaptureFixture):
+def test_passes_mqtt_connect(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     mqtt_connector = MqttConnector(secret_store=MockedSecretStore)
 
@@ -186,13 +186,10 @@ def test_mqtt_connect_succeeds(caplog: LogCaptureFixture):
     "classes.mqtt_classes.Client.loop_forever",
     mock.MagicMock(Client.loop_forever, mock.MagicMock()),
 )
-def test_mqtt_connect_fails(caplog: LogCaptureFixture):
+def test_fails_mqtt_connect(caplog: LogCaptureFixture):
     caplog.set_level(logging.CRITICAL)
     mqtt_connector = MqttConnector(secret_store=MockedSecretStore)
 
     with pytest.raises(Exception):
         _ = mqtt_connector.get_mqtt_client()
     assert "Failed to connect to MQTT broker" in caplog.text
-
-
-# TODO Find a way to test on_message, on_connect and on_disconnect

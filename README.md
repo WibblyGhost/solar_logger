@@ -123,7 +123,7 @@ Firstly create a MQTT listening service that runs indefinitely to retrieve data 
                 type(self._mqtt_secrets["mqtt_host"]),
                 type(self._mqtt_secrets["mqtt_port"]),
             )
-            logging.critical(f"Failed to connect to MQTT broker:\n{err}")
+            logging.critical("Failed to connect to MQTT broker")
             raise err
         self._mqtt_client.on_message = self._on_message
         self._mqtt_client.loop_forever()

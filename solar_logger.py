@@ -26,7 +26,7 @@ def run_threaded_influx_writer() -> None:
     Secondary thread which runs the InfluxDB connector
     Writes point data received from the MQTT._on_message in a threaded process
     """
-    secret_store = SecretStore(read_influx=True)
+    secret_store = SecretStore(has_influx_access=True)
     influx_connector = InfluxConnector(secret_store=secret_store)
     contiguous_errors = 0
     logging.info("Attempting health check for InfluxDB")
@@ -68,7 +68,7 @@ def run_threaded_mqtt_client():
     Main process which runs the MQTT connector
     Listens to a MQTT broken then decodes received packets
     """
-    secret_store = SecretStore(read_mqtt=True)
+    secret_store = SecretStore(has_mqtt_access=True)
     mqtt_connector = MqttConnector(
         secret_store=secret_store,
     )

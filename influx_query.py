@@ -30,7 +30,7 @@ class ParseQuery:
                 config_name=INFLUX_QUERY_CONFIG_TITLE, table=query_result
             )
         except IOError as err:
-            logging.critical("Failed to write CSV file, exiting")
+            logging.critical("Failed to write CSV file")
             raise err
 
     @staticmethod
@@ -74,7 +74,7 @@ def execute_query(query: QueryBuilder) -> None:
         influx_connector.query_database(query_mode=query_mode, query=query)
         logging.info("Successfully ran query")
     except Exception as err:
-        logging.critical(f"Failed to run query: {query}\nReturned error: \n{err}")
+        logging.critical(f"Failed to run query: {query}")
         raise err
 
     if query_mode == "csv":
@@ -117,7 +117,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
-    secret_store = SecretStore(read_mqtt=False, read_influx=True)
+    secret_store = SecretStore(has_mqtt_access=False, has_influx_access=True)
     influx_connector = InfluxConnector(secret_store.influx_secrets)
     logging.info("Attempting health check for InfluxDB")
     try:

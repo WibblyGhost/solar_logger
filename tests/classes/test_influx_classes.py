@@ -5,14 +5,12 @@ import logging
 from unittest import mock
 from pytest import LogCaptureFixture
 import pytest
-from classes.common_classes import QueuePackage
 
 from classes.influx_classes import InfluxConnector
-from tests.config.consts import FAKE, MockedSecretStore
-from influxdb_client.client.write_api import WriteApi
+from tests.config.consts import MockedSecretStore
 
 
-def test_connector_init_succeeds(caplog: LogCaptureFixture):
+def test_passes_connector_init(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     _ = InfluxConnector(secret_store=MockedSecretStore)
 
@@ -21,7 +19,7 @@ def test_connector_init_succeeds(caplog: LogCaptureFixture):
     assert "Initializing Influx query api" in caplog.text
 
 
-def test_heath_check_succeeds(caplog: LogCaptureFixture):
+def test_passes_health_check(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     influx_connector = InfluxConnector(secret_store=MockedSecretStore)
 
@@ -31,7 +29,7 @@ def test_heath_check_succeeds(caplog: LogCaptureFixture):
     assert "Influx health check succeeded" in caplog.text
 
 
-def test_heath_check_raises_exception():
+def test_fails_health_check():
     influx_connector = InfluxConnector(secret_store=MockedSecretStore)
 
     with mock.patch(
@@ -41,24 +39,22 @@ def test_heath_check_raises_exception():
             influx_connector.health_check()
 
 
-# def test_write_points_succeeds(caplog: LogCaptureFixture):
+# def test_passes_write_points(caplog: LogCaptureFixture):
 #     caplog.set_level(logging.DEBUG)
 #     influx_connector = InfluxConnector(secret_store=MockedSecretStore)
-#     QueuePackage(
-#         msg_time=FAKE.date_time(),
-#         msg_type=FAKE.pystr(),
-#         msg_payload={FAKE.pystr(): str(FAKE.pyfloat())},
+#     queue_package = QueuePackage(
+#         measurement=FAKE.pystr(),
+#         time_field=FAKE.date_time(),
+#         field={FAKE.pystr(): FAKE.pyfloat(4)},
 #     )
-
+#     # from influxdb_client.client.write
 #     # from influxdb_client.client.write_api import WriteApi
 #     with mock.patch(
-#         "classes.influx_classes.InfluxDBClient.write_api", mock.MagicMock(WriteApi)
+#         "classes.influx_classes.InfluxDBClient.client.write", mock.MagicMock(WriteApi)
 #     ):
-#         influx_connector.write_points(
-#             msg_time=msg_time, msg_type=msg_type, msg_payload=msg_payload
-#         )
+#         influx_connector.write_points(queue_package=queue_package)
 
-#     assert f"Wrote point: " in caplog.text
+#     # assert f"Wrote point: " in caplog.text
 
 
 # def test_write_points_with_bad_data_raises_exception(caplog: LogCaptureFixture):
