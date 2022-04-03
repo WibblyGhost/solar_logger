@@ -74,7 +74,7 @@ def execute_query(query: QueryBuilder) -> None:
         influx_connector.query_database(query_mode=query_mode, query=query)
         logging.info("Successfully ran query")
     except Exception as err:
-        logging.critical(f"Failed to run query, returned error: {err}\n{query}")
+        logging.critical(f"Failed to run query: {query}\nReturned error: \n{err}")
         raise err
 
     if query_mode == "csv":
@@ -124,6 +124,6 @@ if __name__ == "__main__":
         influx_connector.health_check()
         logging.info("Successfully connected to InfluxDB server")
     except Exception as error:
-        logging.critical("Failed to connect InfluxDB server\n--quitting--")
+        logging.critical("Failed to connect InfluxDB server")
         raise error
     main()

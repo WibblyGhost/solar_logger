@@ -7,6 +7,7 @@ import logging
 
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
+from classes.common_classes import QueuePackage
 
 from classes.py_functions import SecretStore
 
@@ -47,7 +48,7 @@ class InfluxConnector:
         self._influx_client.ready()  # External request
         logging.info("Influx health check succeeded")
 
-    def write_points(self, msg_time: str, msg_type: str, msg_payload: dict) -> None:
+    def write_points(self, queue_package: QueuePackage) -> None:
         """
         Writes points to InfluxDB
         :param msg_time: Time value of the packet
@@ -55,18 +56,16 @@ class InfluxConnector:
         :param msg_payload: Dictionary of messages for MQTTDecoder to input into the
             Influx Database in dictionary
         """
-        for key, value in msg_payload.items():
-            point_template = {
-                "measurement": msg_type,
-                "fields": {key: float(value)},
-            }
-            self._write_client.write(
-                bucket=self._influx_bucket,
-                org=self._influx_org,
-                record=point_template,
-                time=msg_time,
-            )  # External request
-            logging.debug(f"Wrote point: {point_template} at {msg_time}")
+        self._write_client.write(
+            bucket=self._influx_bucket,
+            org=self._influx_org,
+            record={
+                "measurement": queue_package.measurement,
+                "fields": queue_package.field,
+            },
+            time=queue_package.time_field,
+        )  # External request
+        logging.debug(f"Wrote point: {queue_package} at {queue_package.time_field}")
 
     def query_database(self, query_mode: str, query: str) -> None:
         """

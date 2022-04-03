@@ -13,7 +13,7 @@
 #     try:
 #         influx_connector.invoke_connect()
 #     except Exception as err:
-#         assert False, f"influx_startup failed {err}"
+#         assert False, f"influx_startup failed\n{err}"
 #     assert "Attempting to connect to InfluxDB server" in caplog.text
 #     assert "Successfully connected to InfluxDB server" in caplog.text
 

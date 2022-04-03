@@ -59,7 +59,7 @@ class LoggingTools:
             self.is_file_logging = config_p.getboolean(config_name, "file_logging")
 
             if None in [self.debug_level, self.file_format, self.date_format]:
-                logging.critical("Failed to read basic logger configs\n--quitting--")
+                logging.critical("Failed to read basic logger configs")
                 raise MissingConfigurationError("Failed to read basic logger configs")
 
             if self.is_file_logging:
@@ -77,14 +77,12 @@ class LoggingTools:
                     self.max_file_bytes,
                     self.max_file_no,
                 ]:
-                    logging.critical(
-                        "Failed to read file logger settings in configs\n--quitting--"
-                    )
+                    logging.critical("Failed to read file logger settings in configs")
                     raise MissingConfigurationError(
                         "Failed to read file logger settings in configs"
                     )
         except Exception as err:
-            logging.critical("An unexpected exception has occurred\n--quitting--")
+            logging.critical("An unexpected exception has occurred")
             raise err
 
     def _create_stdout_logger(self, logger: Logger) -> None:

@@ -5,12 +5,11 @@ import logging
 from unittest import mock
 from pytest import LogCaptureFixture
 import pytest
+from classes.common_classes import QueuePackage
 
 from classes.influx_classes import InfluxConnector
 from tests.config.consts import FAKE, MockedSecretStore
 from influxdb_client.client.write_api import WriteApi
-from influxdb_client.client.query_api import QueryApi
-from influxdb_client import InfluxDBClient
 
 
 def test_connector_init_succeeds(caplog: LogCaptureFixture):
@@ -45,9 +44,12 @@ def test_heath_check_raises_exception():
 def test_write_points_succeeds(caplog: LogCaptureFixture):
     caplog.set_level(logging.DEBUG)
     influx_connector = InfluxConnector(secret_store=MockedSecretStore)
-    msg_time = FAKE.date_time()
-    msg_type = FAKE.pystr()
-    msg_payload = {FAKE.pystr(): str(FAKE.pyfloat())}
+    QueuePackage(
+        msg_time=FAKE.date_time(),
+        msg_type=FAKE.pystr(),
+        msg_payload={FAKE.pystr(): str(FAKE.pyfloat())},
+    )
+
     # from influxdb_client.client.write_api import WriteApi
     with mock.patch(
         "classes.influx_classes.InfluxDBClient.write_api", mock.MagicMock(WriteApi)

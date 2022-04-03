@@ -15,7 +15,8 @@ from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
 
 from classes.py_functions import SecretStore
 from classes.custom_exceptions import MqttServerOfflineError
-from config.consts import MAX_MQTT_ERRORS, MAX_QUEUE_LENGTH, THREADED_QUEUE
+from classes.common_classes import QueuePackage
+from config.consts import MAX_QUEUE_LENGTH, THREADED_QUEUE
 
 
 class PyMateDecoder:
@@ -68,7 +69,7 @@ class PyMateDecoder:
         for status in status_topics:
             if msg.topic == status and msg.payload.decode("ascii") == "offline":
                 logging.critical(
-                    f"A backend MQTT service isn't online, {status} = offline\n--quitting--"
+                    f"A backend MQTT service isn't online, {status} = offline"
                 )
                 raise MqttServerOfflineError(
                     f"A backend MQTT service isn't online, {status} = offline"
@@ -97,9 +98,9 @@ class MqttConnector:
         self._dec_msg = None
         self._mqtt_secrets = secret_store.mqtt_secrets
         self._mqtt_client = Client()
-        self._contiguous_errors = 0
+        self.contiguous_errors = 0
 
-    def run_mqtt_listener(self) -> Client:
+    def get_mqtt_client(self) -> Client:
         """
         Initial setup for the MQTT connector, connects to MQTT broker
         and failing to connect will exit the program
@@ -121,12 +122,13 @@ class MqttConnector:
                 type(self._mqtt_secrets["mqtt_host"]),
                 type(self._mqtt_secrets["mqtt_port"]),
             )
-            logging.critical(f"Failed to connect to MQTT broker, {err}\n--quitting--")
+            logging.critical(f"Failed to connect to MQTT broker:\n{err}")
             raise err
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_disconnect = self._on_disconnect
         self._mqtt_client.on_message = self._on_message
-        self._mqtt_client.loop_forever()
+        # self._mqtt_client.loop_start()
+        return self._mqtt_client
 
     @staticmethod
     def _on_disconnect(_client, _userdata, _flags, return_code: int) -> None:
@@ -154,6 +156,20 @@ class MqttConnector:
             )
             raise err
 
+    @staticmethod
+    def _load_queue(measurement: str, time_field: datetime, payload: dict) -> None:
+        for key, value in payload.items():
+            THREADED_QUEUE.put(
+                QueuePackage(
+                    measurement=measurement,
+                    time_field=time_field,
+                    field={key: float(value)},
+                )
+            )
+        logging.debug(
+            f"Pushed item onto queue, queue now has {THREADED_QUEUE.qsize()} items"
+        )
+
     def _on_message(self, _client, _userdata, msg: MQTTMessage) -> None:
         """
         Called everytime a message is received which it then decodes
@@ -179,53 +195,28 @@ class MqttConnector:
                 logging.debug(f"Received dc_time packet: {self._dc_time}")
             elif msg.topic == "mate/fx-1/stat/raw" and self._fx_time:
                 fx_payload = PyMateDecoder.fx_decoder(msg.payload)
-                logging.debug(
-                    f"Received fx_payload packet and pushed onto queue: {fx_payload}"
+                logging.debug("Loading fx_payload onto queue")
+                self._load_queue(
+                    measurement="fx-1", time_field=self._fx_time, payload=fx_payload
                 )
-                THREADED_QUEUE.put(
-                    {
-                        "msg_time": self._fx_time,
-                        "msg_type": "fx-1",
-                        "msg_payload": fx_payload,
-                    }
-                )
-                self._contiguous_errors = 0
+                self.contiguous_errors = 0
             elif msg.topic == "mate/mx-1/stat/raw" and self._mx_time:
                 mx_payload = PyMateDecoder.mx_decoder(msg.payload)
-                logging.debug(
-                    f"Received mx_payload packet and pushed onto queue: {mx_payload}"
+                logging.debug("Loading mx_payload onto queue")
+                self._load_queue(
+                    measurement="mx-1", time_field=self._mx_time, payload=mx_payload
                 )
-                THREADED_QUEUE.put(
-                    {
-                        "msg_time": self._mx_time,
-                        "msg_type": "mx-1",
-                        "msg_payload": mx_payload,
-                    }
-                )
-                self._contiguous_errors = 0
+                self.contiguous_errors = 0
             elif msg.topic == "mate/dc-1/stat/raw" and self._dc_time:
                 dc_payload = PyMateDecoder.dc_decoder(msg.payload)
-                logging.debug(
-                    f"Received dc_payload packet and pushed onto queue: {dc_payload}"
+                logging.debug("Loading dc_payload onto queue")
+                self._load_queue(
+                    measurement="dc-1", time_field=self._dc_time, payload=dc_payload
                 )
-                THREADED_QUEUE.put(
-                    {
-                        "msg_time": self._dc_time,
-                        "msg_type": "dc-1",
-                        "msg_payload": dc_payload,
-                    }
-                )
-                self._contiguous_errors = 0
+                self.contiguous_errors = 0
         except Exception as err:
-            self._contiguous_errors += 1
-            logging.warning(f"Failed to decode incoming MQTT packets: {err}")
+            self.contiguous_errors += 1
+            logging.warning(f"Failed to decode incoming MQTT packets:\n{err}")
             logging.warning(
-                f"Contiguous MQTT errors increased {self._contiguous_errors}"
+                f"Contiguous MQTT errors increased to {self.contiguous_errors}"
             )
-        finally:
-            if self._contiguous_errors >= MAX_MQTT_ERRORS:
-                logging.critical(
-                    f"Continuous mqtt errors has exceeded max count, "
-                    f"{MAX_MQTT_ERRORS}\n--quitting--"
-                )
-                raise err

@@ -33,7 +33,7 @@ def write_results_to_csv(config_name: str, table: dict) -> None:
                 writer.writerow(row)
         logging.info(f"Wrote rows into CSV file at: {full_path}")
     except Exception as err:
-        logging.critical("Failed to write CSV\n--quitting--")
+        logging.critical("Failed to write CSV")
         raise err
 
 
@@ -111,29 +111,23 @@ class SecretStore:
             self._mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
             self._mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
         except TypeError as err:
-            logging.critical(
-                "Missing secret credential for MQTT in the .env\n--quitting--"
-            )
+            logging.critical("Missing secret credential for MQTT in the .env")
             raise MissingCredentialsError(
                 "Missing secret credential for MQTT in the .env"
             ) from err
         except ValueError as err:
-            logging.critical(
-                "Missing secret credential for MQTT in the .env\n--quitting--"
-            )
+            logging.critical("Missing secret credential for MQTT in the .env")
             raise MissingCredentialsError(
                 "Missing secret credential for MQTT in the .env"
             ) from err
         except Exception as err:
-            logging.critical(
-                "Ran into error when reading environment variables\n--quitting--"
-            )
+            logging.critical("Ran into error when reading environment variables")
             raise err
 
         for key, value in self._mqtt_secrets.items():
             if not value:
                 logging.critical(
-                    f"Missing secret credential for MQTT in the .env, {key}\n--quitting--"
+                    f"Missing secret credential for MQTT in the .env, {key}"
                 )
                 raise MissingCredentialsError(
                     f"Missing secret credential for MQTT in the .env, {key}"
@@ -150,28 +144,22 @@ class SecretStore:
             self._influx_secrets["influx_bucket"] = os.environ.get("INFLUX_BUCKET")
             self._influx_secrets["influx_token"] = os.environ.get("INFLUX_TOKEN")
         except TypeError as err:
-            logging.critical(
-                "Missing secret credential for MQTT in the .env\n--quitting--"
-            )
+            logging.critical("Missing secret credential for MQTT in the .env-")
             raise MissingCredentialsError(
                 "Missing secret credential for MQTT in the .env"
             ) from err
         except ValueError as err:
-            logging.critical(
-                "Missing secret credential for Influx in the .env\n--quitting--"
-            )
+            logging.critical("Missing secret credential for Influx in the .env")
             raise MissingCredentialsError(
                 "Missing secret credential for Influx in the .env"
             ) from err
         except Exception as err:
-            logging.critical(
-                "Ran into error when reading environment variables\n--quitting--"
-            )
+            logging.critical("Ran into error when reading environment variables")
             raise err
         for key, value in self._influx_secrets.items():
             if not value:
                 logging.critical(
-                    f"Missing secret credential for InfluxDB in the .env, {key}\n--quitting"
+                    f"Missing secret credential for InfluxDB in the .env, {key}"
                 )
                 raise MissingCredentialsError(
                     f"Missing secret credential for InfluxDB in the .env, {key}"
