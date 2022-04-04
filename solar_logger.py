@@ -76,7 +76,12 @@ def run_threaded_mqtt_client():
     # Running loop_start() will enter into a confection state and enter on_message() every time
     # a new message comes in. Because of this all error/exception handing must be done in the
     # on_message() command, in our case we don't want the program to exit so we just log the error.
-    mqtt_client.loop_start()
+    try:
+        mqtt_client.loop_start()
+    except Exception as err:
+        logging.critical(f"MQTT listener exited with a fatal error:\n{err}")
+    
+    # Sleep Thread-MQTT
     while thread_events.is_set():
         time.sleep(1)
 

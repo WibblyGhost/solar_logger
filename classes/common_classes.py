@@ -17,14 +17,3 @@ class QueuePackage:
     measurement: str = None
     time_field: datetime = None
     field: str = None
-
-
-def calculate_seconds(
-    days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0
-):
-    """TODO"""
-    _days = days * 3600 * 24
-    _hours = hours * 3600
-    _minutes = minutes * 60
-    _seconds = seconds
-    return _days + _hours + _minutes + _seconds

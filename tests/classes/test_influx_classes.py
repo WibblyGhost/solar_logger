@@ -3,9 +3,10 @@
 
 import logging
 from unittest import mock
+from winreg import QueryValue
 
 import pytest
-from influxdb_client import WriteApi
+from influxdb_client import WriteApi, QueryApi, InfluxDBClient
 from pytest import LogCaptureFixture
 from tests.config.consts import FAKE, TestSecretStore
 
@@ -98,33 +99,22 @@ def test_fails_write_points_bad_data(
     assert str(err.value) == error_message
 
 
-# @pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
-# @mock.patch("classes.influx_classes.InfluxDBClient.query_api")
-# def test_passes_query_database_modes_return(
-#     query_api, query_mode, caplog: LogCaptureFixture
-# ):
-#     query_api.return_value = mock.MagicMock(
-#         QueryApi, return_value={"test_data": FAKE.pystr()}
-#     )
-#     caplog.set_level(logging.INFO)
-#     influx_connector = InfluxConnector(secret_store=TestSecretStore)
-#     query = FAKE.pystr()
 
-#     influx_connector.query_database(query_mode=query_mode, query=query)
+@pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
+@mock.patch("classes.influx_classes.InfluxDBClient.query_api")
+def test_passes_query_database_modes_return(
+    query_api, query_mode, caplog: LogCaptureFixture
+):
+    query_api.return_value = mock.MagicMock(QueryApi)
+    queue_package = FAKE.pystr()
+    query_api.return_value.query_csv.return_value = queue_package
+    query_api.return_value.query.return_value = queue_package
+    query_api.return_value.query_stream.return_value = queue_package
+    caplog.set_level(logging.DEBUG)
 
-#     assert "Query to Influx server was successful" in caplog.text
+    caplog.set_level(logging.DEBUG)
+    influx_connector = InfluxConnector(secret_store=TestSecretStore)
+    result = influx_connector.query_database(query_mode=query_mode, query=queue_package)
 
-
-# @pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
-# @mock.patch("classes.influx_classes.InfluxDBClient.query_api")
-# def test_fails_query_database_raises_esception(
-#     query_api, query_mode, caplog: LogCaptureFixture
-# ):
-#     query_api.return_value = mock.MagicMock(QueryApi)
-#     query_api.query = mock.MagicMock(side_effect = Exception)
-#     caplog.set_level(logging.INFO)
-#     influx_connector = InfluxConnector(secret_store=TestSecretStore)
-#     query = FAKE.pystr()
-
-#     with pytest.raises(Exception):
-#         influx_connector.query_database(query_mode=query_mode, query=query)
+    assert result is queue_package
+    assert "Query to Influx server was successful" in caplog.text
