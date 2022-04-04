@@ -4,28 +4,18 @@ File for storing constant variables
 
 from queue import Queue
 
+# Configs
+CONFIG_FILENAME = "config/config.ini"  # Py Functions
+INFLUX_QUERY_CONFIG_TITLE = "query_settings"  # Influx Query
+INFLUX_DEBUG_CONFIG_TITLE = "influx_debugger"  # Influx Query
+SOLAR_DEBUG_CONFIG_TITLE = "solar_debugger"  # Solar Runtime
 
-# Py Functions
-CONFIG_FILENAME = "config/config.ini"
+# Additional Consts
+MAX_PORT_RANGE = 65535
 
-# Influx Query
-INFLUX_QUERY_CONFIG_TITLE = "query_settings"
-INFLUX_DEBUG_CONFIG_TITLE = "influx_debugger"
-
-# Solar Runtime
-SOLAR_DEBUG_CONFIG_TITLE = "solar_debugger"
-MAX_WRITE_POINT_EXCEPTIONS = 5
-
-# Multi-Threading
-class ExitContition:
-    """
-    Stores exit condition for multi-threading
-    """
-
-    value = False
-
-
-THREADED_QUEUE = Queue()
-MAX_QUEUE_LENGTH = 20
-EXIT_APP = ExitContition()
-LOOP_FLAG = 0
+# Multi-Threading Processing
+# Size of queue, needs to be quite large for the volume of data
+MAX_QUEUE_LENGTH = 100
+# Time to wait when queue is full
+QUEUE_WAIT_TIME = 1
+THREADED_QUEUE = Queue(maxsize=MAX_QUEUE_LENGTH)

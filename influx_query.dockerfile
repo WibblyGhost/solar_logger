@@ -10,6 +10,7 @@ RUN pip install -r /app/requirements.txt
 # Add required modules
 ADD influx_query.py /app/
 ADD /config/ /app/config/
+ADD /classes/common_classes.py /app/classes/common_classes.py
 ADD /classes/custom_exceptions.py /app/classes/custom_exceptions.py
 ADD /classes/influx_classes.py /app/classes/influx_classes.py
 ADD /classes/py_functions.py /app/classes/py_functions.py

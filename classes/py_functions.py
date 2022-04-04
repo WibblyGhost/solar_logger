@@ -7,8 +7,7 @@ import csv
 import logging
 import os
 
-from config.consts import CONFIG_FILENAME
-
+from config.consts import CONFIG_FILENAME, MAX_PORT_RANGE
 from classes.custom_exceptions import MissingCredentialsError
 
 
@@ -19,12 +18,12 @@ def write_results_to_csv(config_name: str, table: dict) -> None:
     :param table: Resultant CSV query from the Influx database
     """
     try:
-        config_p = configparser.ConfigParser()
-        config_p.read(CONFIG_FILENAME)
-        file_location = config_p.get(config_name, "csv_location")
-        filename = config_p.get(config_name, "csv_name")
+        config_parser = configparser.ConfigParser()
+        config_parser.read(CONFIG_FILENAME)
+        file_location = config_parser.get(config_name, "csv_location")
+        filename = config_parser.get(config_name, "csv_name")
         full_path = file_location + filename
-        filemode = config_p.get(config_name, "csv_mode")
+        filemode = config_parser.get(config_name, "csv_mode")
         if not os.path.exists(file_location):
             os.makedirs(file_location)
         with open(full_path, filemode) as file_instance:
@@ -33,6 +32,7 @@ def write_results_to_csv(config_name: str, table: dict) -> None:
                 writer.writerow(row)
         logging.info(f"Wrote rows into CSV file at: {full_path}")
     except Exception as err:
+        logging.critical("Failed to write CSV")
         raise err
 
 
@@ -41,9 +41,9 @@ def read_query_settings(config_name: str) -> any:
     :param config_name: Section under the config for the configuration to pull data from
     :return: Query variables
     """
-    config_p = configparser.ConfigParser()
-    config_p.read(CONFIG_FILENAME)
-    return config_p.get(section=config_name, option="query_mode")
+    config_parser = configparser.ConfigParser()
+    config_parser.read(CONFIG_FILENAME)
+    return config_parser.get(section=config_name, option="query_mode")
 
 
 class SecretStore:
@@ -51,79 +51,81 @@ class SecretStore:
     Class which reads environment secrets and stores them
     """
 
-    def __init__(self, read_mqtt: bool = False, read_influx: bool = False) -> None:
+    def __init__(
+        self, has_mqtt_access: bool = False, has_influx_access: bool = False
+    ) -> None:
         """
         :param mqtt_secrests: Dictionary of secrets for MQTT server
         :param influx_secrets: Dictionary of secrets for Influx server
         """
-        self.mqtt_secrets = {
-            "mqtt_host": None,
-            "mqtt_port": None,
-            "mqtt_user": None,
-            "mqtt_token": None,
-            "mqtt_topic": None,
-        }
+        self._has_mqtt_access = has_mqtt_access
+        self._has_influx_access = has_influx_access
 
-        self.influx_secrets = {
-            "influx_url": None,
-            "influx_org": None,
-            "influx_bucket": None,
-            "influx_token": None,
-        }
+        self._mqtt_secrets = None
+        self._influx_secrets = None
 
-        if read_mqtt:
-            self._read_mqtt_secrets()
-        if read_influx:
-            self._read_influx_secrets()
+        if self._has_mqtt_access:
+            logging.info("Reading MQTT environment variables")
+            self._read_env_mqtt()
 
-    def _read_mqtt_secrets(self) -> dict:
+        if self._has_influx_access:
+            logging.info("Reading Influx environment variables")
+            self._read_env_influx()
+
+    @property
+    def mqtt_secrets(self) -> dict | None:
+        """
+        Dictionary containing MQTT secrets
+        """
+        return self._mqtt_secrets
+
+    @property
+    def influx_secrets(self) -> dict | None:
+        """
+        Dictionary containing Influx secrets
+        """
+        return self._influx_secrets
+
+    def _read_env_mqtt(self) -> dict:
         """
         Gets secret details from the environment file.
         :return mqtt_store: Dictionary of secrets
         """
         try:
-            self.mqtt_secrets["mqtt_host"] = os.environ.get("MQTT_HOST")
-            self.mqtt_secrets["mqtt_port"] = int(os.environ.get("MQTT_PORT"))
-            self.mqtt_secrets["mqtt_user"] = os.environ.get("MQTT_USER")
-            self.mqtt_secrets["mqtt_token"] = os.environ.get("MQTT_TOKEN")
-            self.mqtt_secrets["mqtt_topic"] = os.environ.get("MQTT_TOPIC")
-        except Exception as err:
-            logging.error("Ran into error when reading environment variables")
-            raise err
-        for key, value in self.mqtt_secrets.items():
-            if not value:
-                logging.error(f"Missing secret credential for MQTT in the .env, {key}")
+            mqtt_port = int(os.environ.get("MQTT_PORT"))
+            if mqtt_port not in range(0, MAX_PORT_RANGE):
                 raise ValueError(
-                    f"Missing secret credential for MQTT in the .env, {key}"
+                    f"MQTT port outside maximum port range, 0-{MAX_PORT_RANGE}"
                 )
+            self._mqtt_secrets = {
+                "mqtt_host": os.environ.get("MQTT_HOST"),
+                "mqtt_user": os.environ.get("MQTT_USER"),
+                "mqtt_port": mqtt_port,
+                "mqtt_token": os.environ.get("MQTT_TOKEN"),
+                "mqtt_topic": os.environ.get("MQTT_TOPIC"),
+            }
+            assert "" not in self._mqtt_secrets.values()
+        except Exception as err:
+            logging.critical("Ran into error when reading environment variables")
+            raise MissingCredentialsError(
+                "Ran into error when reading environment variables"
+            ) from err
 
-    def _read_influx_secrets(self) -> dict:
+    def _read_env_influx(self) -> dict:
         """
         Gets secret details from the environment file.
         :return influx_store: Dictionary of secrets
         """
-        self.influx_secrets["influx_url"] = os.environ.get("INFLUX_URL")
-        self.influx_secrets["influx_org"] = os.environ.get("INFLUX_ORG")
-        self.influx_secrets["influx_bucket"] = os.environ.get("INFLUX_BUCKET")
-        self.influx_secrets["influx_token"] = os.environ.get("INFLUX_TOKEN")
-        for key, value in self.influx_secrets.items():
-            if not value:
-                logging.error(
-                    f"Missing secret credential for InfluxDB in the .env, {key}"
-                )
-                raise MissingCredentialsError(
-                    f"Missing secret credential for InfluxDB in the .env, {key}"
-                )
-
-
-def strtobool(val: str) -> bool:
-    """
-    Convert a string representation of truth to true (1) or false (0).
-    Note: distutils is being discontinued so this function is required
-    """
-    val = val.lower()
-    if val in ("y", "yes", "t", "true", "on", "1"):
-        return True
-    if val in ("n", "no", "f", "false", "off", "0"):
-        return False
-    raise ValueError(f"invalid truth value %{val!r}")
+        try:
+            self._influx_secrets = {
+                "influx_url": os.environ.get("INFLUX_URL"),
+                "influx_org": os.environ.get("INFLUX_ORG"),
+                "influx_bucket": os.environ.get("INFLUX_BUCKET"),
+                "influx_token": os.environ.get("INFLUX_TOKEN"),
+            }
+            assert "" not in self._influx_secrets.values()
+        except Exception as err:
+            logging.critical("Ran into error when reading environment variables")
+            raise MissingCredentialsError(
+                "Ran into error when reading environment variables"
+            ) from err

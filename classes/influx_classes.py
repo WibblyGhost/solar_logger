@@ -3,12 +3,14 @@ Classes file, contains methods for the Influx database controller
 to do writes and queries to the database
 """
 
+from datetime import datetime
 import logging
 
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
+from classes.common_classes import QueuePackage
 
-from classes.custom_exceptions import MissingCredentialsError
+from classes.py_functions import SecretStore
 
 
 class InfluxConnector:
@@ -16,92 +18,89 @@ class InfluxConnector:
     Class which creates a client to access and modify a connected database
     """
 
-    influx_client = None
-    influx_bucket = None
-    influx_org = None
-
-    def __init__(self, url: str, org: str, bucket: str, token: str) -> None:
+    def __init__(self, secret_store: SecretStore) -> None:
         """
         :param token: Secret password to login to database with
-        :param org: Organisation of the bucket to login to
+        :param org: Organization of the bucket to login to
         :param bucket: Database source
         :param url: Web address to connect to database
         """
-        self._influx_token = token
-        self._influx_url = url
-        self.influx_org = org
-        self.influx_bucket = bucket
-        self.influx_client = InfluxDBClient
+        _influx_secrets = secret_store.influx_secrets
 
-    def influx_startup(self) -> None:
+        self._influx_org = _influx_secrets["influx_org"]
+        self._influx_bucket = _influx_secrets["influx_bucket"]
+
+        logging.info("Initializing InfluxDB client")
+        self._influx_client = InfluxDBClient(
+            url=_influx_secrets["influx_url"],
+            org=_influx_secrets["influx_org"],
+            token=_influx_secrets["influx_token"],
+        )
+        logging.info("Initializing Influx write api")
+        self._write_client = self._influx_client.write_api(write_options=SYNCHRONOUS)
+        logging.info("Initializing Influx query api")
+        self._query_client = self._influx_client.query_api(query_options=SYNCHRONOUS)
+
+    def health_check(self) -> None:
         """
         Defines the initialization of the Influx connector,
         invoking the connection to the InfluxDB and write API
         """
-        logging.info("Attempting to connect to InfluxDB server")
-        client = None
-        try:
-            client = InfluxDBClient(
-                url=self._influx_url, token=self._influx_token, org=self.influx_org
-            )
-            client.ready()
-            logging.info("Successfully connected to InfluxDB server")
-        except Exception as err:
-            logging.error("Failed to connect InfluxDB server")
-            raise err
-        finally:
-            self.influx_client = client
+        self._influx_client.ready()  # External request
 
+    @staticmethod
+    def _verify_queue_package(queue_package: QueuePackage):
+        assertion_message = "The received queue_packed has malformed data: "
+        assert queue_package is not None, assertion_message + "queue_package empty"
+        assert isinstance(queue_package.measurement, str), (
+            assertion_message + "type of measurement not str"
+        )
+        assert isinstance(queue_package.field, dict | str), (
+            assertion_message + "type of field not, dict | str"
+        )
+        assert isinstance(queue_package.time_field, datetime), (
+            assertion_message + "type of time_field not, datetime"
+        )
 
-def create_influx_connector(influx_secret: dict) -> InfluxConnector:
-    """
-    classes function that creates a Influx connector
-    :param influx_secret: Secret passwords and logins for Influx database
-    :return: A database connector object which can be used to write/read data points
-    """
-    for key, value in influx_secret.items():
-        if not value:
-            logging.error(f"Missing secret credential for InfluxDB in the .env, {key}")
-            raise MissingCredentialsError(
-                f"Missing secret credential for InfluxDB in the .env, {key}"
-            )
+    def write_points(self, queue_package: QueuePackage) -> None:
+        """
+        Writes points to InfluxDB
+        :param msg_time: Time value of the packet
+        :param msg_type: Type of header the msg carries, either FX, MX or DX
+        :param msg_payload: Dictionary of messages for MQTTDecoder to input into the
+            Influx Database in dictionary
+        """
+        self._verify_queue_package(queue_package=queue_package)
+        self._write_client.write(
+            bucket=self._influx_bucket,
+            org=self._influx_org,
+            record={
+                "measurement": queue_package.measurement,
+                "fields": queue_package.field,
+            },
+            time=queue_package.time_field,
+        )  # External request
+        logging.debug(f"Wrote point: {queue_package} at {queue_package.time_field}")
 
-    connector = InfluxConnector(
-        url=influx_secret["influx_url"],
-        org=influx_secret["influx_org"],
-        bucket=influx_secret["influx_bucket"],
-        token=influx_secret["influx_token"],
-    )
-    connector.influx_startup()
-    return connector
-
-
-def influx_db_write_points(
-    msg_time: str,
-    msg_payload: dict,
-    msg_type: str,
-    influx_connector: InfluxConnector,
-) -> None:
-    """
-    Adds message to Influx database
-    :param msg_dict: Message for MQTTDecoder to input into the Influx Database in dictionary
-    :param msg_type: Type of header the msg carries, either FX, MX or DX
-    """
-    logging.debug(f"Creating database points from ({msg_time}, {msg_type})")
-    write_client = influx_connector.influx_client.write_api(write_options=SYNCHRONOUS)
-    try:
-        for key, value in msg_payload.items():
-            point_template = {
-                "measurement": msg_type,
-                "fields": {key: float(value)},
-            }
-            logging.debug(f"Wrote point: {point_template} at {msg_time}")
-            write_client.write(
-                bucket=influx_connector.influx_bucket,
-                org=influx_connector.influx_org,
-                record=point_template,
-                time=msg_time,
-            )
-    except Exception as err:
-        logging.error(f"Failed to run write, returned error: {err}")
-        raise err
+    def query_database(self, query_mode: str, query: str) -> None:
+        """
+        Runs given query on Influx database and returns results
+        :param query_mode: Defines what mode to run the query in,
+            supports "csv", "flux" and "stream"
+        :param query: Input query to run on Influx database
+        """
+        query_result = None
+        if query_mode == "csv":
+            query_result = self._query_client.query_csv(
+                org=self._influx_org, query=query
+            )  # External request
+        elif query_mode == "flux":
+            query_result = self._query_client.query(
+                org=self._influx_org, query=query
+            )  # External request
+        elif query_mode == "stream":
+            query_result = self._query_client.query_stream(
+                org=self._influx_org, query=query
+            )  # External request
+        logging.debug("Query to Influx server was successful")
+        return query_result

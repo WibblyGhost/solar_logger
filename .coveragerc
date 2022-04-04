@@ -1,0 +1,11 @@
+[run]
+source = /tests/
+
+[report]
+omit = */config/*, custom_exceptions.py, py_logger.py
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
