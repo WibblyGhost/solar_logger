@@ -83,7 +83,7 @@ class MqttConnector:
         self._mqtt_secrets = secret_store.mqtt_secrets
         self._mqtt_client = Client()
 
-    def on_connect(self, _client, _userdata, _flags, _return_code) -> None:
+    def _on_connect(self, _client, _userdata, _flags, _return_code) -> None:
         """
         On first connection to MQTT broker this function will subscribe to the brokers topics
         :param _client: Unused
@@ -170,7 +170,7 @@ class MqttConnector:
                 measurement="dc-1", time_field=self._dc_time, payload=dc_payload
             )
 
-    def on_message(self, _client, _userdata, msg: MQTTMessage) -> None:
+    def _on_message(self, _client, _userdata, msg: MQTTMessage) -> None:
         """
         Called everytime a message is received which it then decodes
         :param msg: Message to partition into categories and decode
@@ -193,8 +193,8 @@ class MqttConnector:
         )
         self._mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
         self._mqtt_client.tls_insecure_set(True)
-        self._mqtt_client.on_connect = self.on_connect
-        self._mqtt_client.on_message = self.on_message
+        self._mqtt_client.on_connect = self._on_connect
+        self._mqtt_client.on_message = self._on_message
         self._mqtt_client.connect(
             host=self._mqtt_secrets["mqtt_host"],
             port=self._mqtt_secrets["mqtt_port"],

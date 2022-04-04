@@ -1,9 +1,12 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
 
+from unittest import mock
 from pymate.value import Value
+from paho.mqtt.client import Client
 
-from classes.mqtt_classes import PyMateDecoder
+from classes.mqtt_classes import PyMateDecoder, MqttConnector
 
+from tests.config.consts import TestSecretStore
 
 def dict_to_str(dictionary: dict):
     result = {}
@@ -112,3 +115,12 @@ def test_passes_dc_decoder():
 
     assert isinstance(decoded_result["bat_current"], Value)
     assert str_decoded_result == str_dc_array
+
+
+def test_passes_get_mqtt_client():
+    mqtt_connector = MqttConnector(TestSecretStore)
+
+    with mock.patch("classes.mqtt_classes.Client.connect"):
+        result = mqtt_connector.get_mqtt_client()
+
+    assert isinstance(result, Client)
