@@ -3,10 +3,9 @@
 
 import logging
 from unittest import mock
-from winreg import QueryValue
 
 import pytest
-from influxdb_client import WriteApi, QueryApi, InfluxDBClient
+from influxdb_client import WriteApi, QueryApi
 from pytest import LogCaptureFixture
 from tests.config.consts import FAKE, TestSecretStore
 
@@ -97,7 +96,6 @@ def test_fails_write_points_bad_data(
     with pytest.raises(Exception) as err:
         influx_connector.write_points(queue_package=queue_package)
     assert str(err.value) == error_message
-
 
 
 @pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])

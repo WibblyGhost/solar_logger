@@ -8,6 +8,7 @@ from classes.mqtt_classes import PyMateDecoder, MqttConnector
 
 from tests.config.consts import TestSecretStore
 
+
 def dict_to_str(dictionary: dict):
     result = {}
     for key, value in dictionary.items():

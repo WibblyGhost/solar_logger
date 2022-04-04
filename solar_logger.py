@@ -80,7 +80,7 @@ def run_threaded_mqtt_client():
         mqtt_client.loop_start()
     except Exception as err:
         logging.critical(f"MQTT listener exited with a fatal error:\n{err}")
-    
+
     # Sleep Thread-MQTT
     while thread_events.is_set():
         time.sleep(1)
