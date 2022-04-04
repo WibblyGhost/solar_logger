@@ -3,16 +3,20 @@
 
 import logging
 from unittest import mock
-from pytest import LogCaptureFixture
-import pytest
 
+import pytest
+from influxdb_client import WriteApi, QueryApi
+from pytest import LogCaptureFixture
+from tests.config.consts import FAKE, TestSecretStore
+
+from classes.common_classes import QueuePackage
 from classes.influx_classes import InfluxConnector
-from tests.config.consts import MockedSecretStore
 
 
 def test_passes_connector_init(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
-    _ = InfluxConnector(secret_store=MockedSecretStore)
+
+    _ = InfluxConnector(secret_store=TestSecretStore)
 
     assert "Initializing InfluxDB client" in caplog.text
     assert "Initializing Influx write api" in caplog.text
@@ -21,90 +25,106 @@ def test_passes_connector_init(caplog: LogCaptureFixture):
 
 def test_passes_health_check(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
-    influx_connector = InfluxConnector(secret_store=MockedSecretStore)
+    influx_connector = InfluxConnector(secret_store=TestSecretStore)
 
     with mock.patch("classes.influx_classes.InfluxDBClient.ready"):
         influx_connector.health_check()
 
-    assert "Influx health check succeeded" in caplog.text
 
-
-def test_fails_health_check():
-    influx_connector = InfluxConnector(secret_store=MockedSecretStore)
+def test_fails_health_check_raises_exception(caplog: LogCaptureFixture):
+    caplog.set_level(logging.ERROR)
+    influx_connector = InfluxConnector(secret_store=TestSecretStore)
 
     with mock.patch(
         "classes.influx_classes.InfluxDBClient.ready", side_effect=Exception
-    ):
-        with pytest.raises(Exception):
-            influx_connector.health_check()
+    ) and pytest.raises(Exception):
+        influx_connector.health_check()
 
 
-# def test_passes_write_points(caplog: LogCaptureFixture):
-#     caplog.set_level(logging.DEBUG)
-#     influx_connector = InfluxConnector(secret_store=MockedSecretStore)
-#     queue_package = QueuePackage(
-#         measurement=FAKE.pystr(),
-#         time_field=FAKE.date_time(),
-#         field={FAKE.pystr(): FAKE.pyfloat(4)},
-#     )
-#     # from influxdb_client.client.write
-#     # from influxdb_client.client.write_api import WriteApi
-#     with mock.patch(
-#         "classes.influx_classes.InfluxDBClient.client.write", mock.MagicMock(WriteApi)
-#     ):
-#         influx_connector.write_points(queue_package=queue_package)
+@mock.patch("classes.influx_classes.InfluxDBClient.write_api")
+def test_passes_write_points(write_api, caplog: LogCaptureFixture):
+    write_api.return_value = mock.MagicMock(WriteApi, return_value=None)
+    caplog.set_level(logging.DEBUG)
+    influx_connector = InfluxConnector(secret_store=TestSecretStore)
+    queue_package = QueuePackage(
+        measurement=FAKE.pystr(),
+        time_field=FAKE.date_time(),
+        field={FAKE.pystr(): FAKE.pyfloat(4)},
+    )
 
-#     # assert f"Wrote point: " in caplog.text
+    influx_connector.write_points(queue_package=queue_package)
 
 
-# def test_write_points_with_bad_data_raises_exception(caplog: LogCaptureFixture):
-#     caplog.set_level(logging.DEBUG)
-#     influx_connector = InfluxConnector(secret_store=MockedSecretStore)
-#     msg_time = FAKE.date_time()
-#     msg_type = FAKE.pystr()
-#     msg_payload_bad = {FAKE.pystr(): FAKE.pystr()}
+@pytest.mark.parametrize(
+    "queue_package, error_message",
+    [
+        [None, "The received queue_packed has malformed data: queue_package empty"],
+        [
+            QueuePackage(
+                measurement=None,  # Bad data
+                time_field=FAKE.date_time(),
+                field={FAKE.pystr(): FAKE.pyfloat(4)},
+            ),
+            "The received queue_packed has malformed data: type of measurement not str",
+        ],
+        [
+            QueuePackage(
+                measurement=FAKE.pystr(),
+                time_field=None,  # Bad data
+                field={FAKE.pystr(): FAKE.pyfloat(4)},
+            ),
+            "The received queue_packed has malformed data: type of time_field not, datetime",
+        ],
+        [
+            QueuePackage(
+                measurement=FAKE.pystr(),
+                time_field=FAKE.date_time(),
+                field=None,  # Bad data
+            ),
+            "The received queue_packed has malformed data: type of field not, dict | str",
+        ],
+    ],
+)
+@mock.patch("classes.influx_classes.InfluxDBClient.write_api")
+def test_fails_write_points_bad_data(
+    write_api, queue_package, error_message, caplog: LogCaptureFixture
+):
+    write_api.return_value = mock.MagicMock(WriteApi, return_value=None)
+    caplog.set_level(logging.DEBUG)
+    influx_connector = InfluxConnector(secret_store=TestSecretStore)
 
-#     with pytest.raises(Exception) as err:
-#         influx_connector.write_points(
-#             msg_time=msg_time, msg_type=msg_type, msg_payload=msg_payload_bad
-#         )
-#     assert err.type == ValueError
+    with pytest.raises(Exception) as err:
+        influx_connector.write_points(queue_package=queue_package)
+    assert str(err.value) == error_message
 
 
-# def test_write_points_raises_connection_exception(caplog: LogCaptureFixture):
-#     caplog.set_level(logging.DEBUG)
-#     influx_connector = InfluxConnector(secret_store=MockedSecretStore)
-#     msg_time = FAKE.date_time()
-#     msg_type = FAKE.pystr()
-#     msg_payload = {FAKE.pystr(): str(FAKE.pyfloat())}
+@pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
+@mock.patch("classes.influx_classes.InfluxDBClient.query_api")
+def test_passes_query_database_modes_return(
+    query_api, query_mode, caplog: LogCaptureFixture
+):
+    query_api.return_value = mock.MagicMock(
+        QueryApi, return_value={"test_data": FAKE.pystr()}
+    )
+    caplog.set_level(logging.INFO)
+    influx_connector = InfluxConnector(secret_store=TestSecretStore)
+    query = FAKE.pystr()
 
-#     with pytest.raises(Exception) as err:
-#         influx_connector.write_points(
-#             msg_time=msg_time, msg_type=msg_type, msg_payload=msg_payload
-#         )
-#     assert err.type == ValueError
+    influx_connector.query_database(query_mode=query_mode, query=query)
 
-
-# return_data = {FAKE.pystr(): FAKE.pystr()}
+    assert "Query to Influx server was successful" in caplog.text
 
 
 # @pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
-# @mock.patch(
-#     "classes.influx_classes.InfluxDBClient.query_api.query_csv",
-#     return_value=return_data,
-# )
-# @mock.patch(
-#     "classes.influx_classes.InfluxDBClient.query_api.query", return_value=return_data
-# )
-# @mock.patch(
-#     "classes.influx_classes.InfluxDBClient.query_api.query_stream",
-#     return_value=return_data,
-# )
-# def test_query_succeeds(query_mode, caplog: LogCaptureFixture):
-#     caplog.set_level(logging.DEBUG)
-#     influx_connector = InfluxConnector(secret_store=MockedSecretStore)
+# @mock.patch("classes.influx_classes.InfluxDBClient.query_api")
+# def test_fails_query_database_raises_esception(
+#     query_api, query_mode, caplog: LogCaptureFixture
+# ):
+#     query_api.return_value = mock.MagicMock(QueryApi)
+#     query_api.query = mock.MagicMock(side_effect = Exception)
+#     caplog.set_level(logging.INFO)
+#     influx_connector = InfluxConnector(secret_store=TestSecretStore)
 #     query = FAKE.pystr()
 
-#     result = influx_connector.query_database(query_mode=query_mode, query=query)
-
-#     assert result == return_data
+#     with pytest.raises(Exception):
+#         influx_connector.query_database(query_mode=query_mode, query=query)

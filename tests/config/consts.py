@@ -5,7 +5,7 @@ from faker import Faker
 FAKE = Faker()
 
 
-class MockedSecretStore:
+class TestSecretStore:
     mqtt_secrets = {
         "mqtt_host": FAKE.url(),
         "mqtt_port": str(FAKE.pyint()),
@@ -21,7 +21,7 @@ class MockedSecretStore:
     }
 
 
-MQTT_ENV = {
+TEST_MQTT_ENV = {
     "mqtt_host": FAKE.pystr(),
     "mqtt_port": str(FAKE.pyint(6)),
     "mqtt_user": FAKE.pystr(),
@@ -29,12 +29,12 @@ MQTT_ENV = {
     "mqtt_topic": FAKE.pystr(),
 }
 
-INFLUX_ENV = {
+TEST_INFLUX_ENV = {
     "influx_url": FAKE.url(),
     "influx_org": FAKE.pystr(),
     "influx_bucket": FAKE.pystr(),
     "influx_token": FAKE.pystr(),
 }
 
-TEST_ENV_FULL = dict(MQTT_ENV, **INFLUX_ENV)
+TEST_ENV_FULL = dict(TEST_MQTT_ENV, **TEST_INFLUX_ENV)
 TEST_MAX_PORT_RANGE = 65535

@@ -3,7 +3,6 @@ classes program which initializes and runs both the MQTT and InfluxDB controller
 """
 
 import logging
-import queue
 import signal
 import threading
 import time
@@ -14,8 +13,6 @@ from classes.mqtt_classes import MqttConnector
 from classes.py_functions import SecretStore
 from classes.py_logger import create_logger
 from config.consts import (
-    MAX_INFLUX_ERRORS,
-    MAX_MQTT_ERRORS,
     SOLAR_DEBUG_CONFIG_TITLE,
     THREADED_QUEUE,
 )
@@ -25,63 +22,65 @@ def run_threaded_influx_writer() -> None:
     """
     Secondary thread which runs the InfluxDB connector
     Writes point data received from the MQTT._on_message in a threaded process
+    NOTE: Since this program needs to indefinitely run all
+    exceptions will just be logged instead of exiting the program.
     """
     secret_store = SecretStore(has_influx_access=True)
     influx_connector = InfluxConnector(secret_store=secret_store)
-    contiguous_errors = 0
     logging.info("Attempting health check for InfluxDB")
     try:
         influx_connector.health_check()
-        logging.info("Successfully connected to InfluxDB server")
+        logging.info("Influx health check succeeded")
     except Exception as err:
-        logging.critical("Failed to connect InfluxDB server")
+        logging.critical(f"Failed to complete health check:\n{err}")
         raise err
-    while thread_events.is_set() and contiguous_errors < MAX_INFLUX_ERRORS:
-        try:
+
+    while thread_events.is_set():
+        if not THREADED_QUEUE.empty():
             queue_package: QueuePackage = THREADED_QUEUE.get(timeout=1.0)
             logging.debug(
                 f"Popped packet off queue, queue now has {THREADED_QUEUE.qsize()} items"
             )
-        except queue.Empty:
-            continue
-        if queue_package:
             try:
                 influx_connector.write_points(queue_package=queue_package)
-                contiguous_errors = 0
             except Exception as err:
-                contiguous_errors += 1
-                logging.warning(f"Failed to run write, returned error: \n{err}")
-                logging.warning(
-                    f"Contiguous Influx errors increased to {contiguous_errors}"
+                logging.exception(
+                    f"Failed to run write to Influx server, returned error: \n{err}"
                 )
-            if contiguous_errors >= MAX_INFLUX_ERRORS:
-                break
-    if contiguous_errors >= MAX_INFLUX_ERRORS:
-        logging.critical(
-            f"Contiguous Influx errors has exceeded max count, " f"{MAX_INFLUX_ERRORS}"
-        )
-        thread_events.clear()
+                time.sleep(1)
+        else:
+            time.sleep(0.5)
+    thread_events.clear()
 
 
 def run_threaded_mqtt_client():
     """
     Main process which runs the MQTT connector
     Listens to a MQTT broken then decodes received packets
+    NOTE: Since this program needs to indefinitely run all
+    exceptions will just be logged instead of exiting the program.
     """
     secret_store = SecretStore(has_mqtt_access=True)
     mqtt_connector = MqttConnector(
         secret_store=secret_store,
     )
-    mqtt_client = mqtt_connector.get_mqtt_client()
-    logging.info("Started thread: MQTT-Listener")
+    logging.info("Creating MQTT listening service")
+    try:
+        mqtt_client = mqtt_connector.get_mqtt_client()
+    except Exception as err:
+        logging.critical(f"Failed to create MQTT listening service:\n{err}")
+
+    # Start MQTT-Listener thread to indefinitley listen to the broker
     # NOTE: This actually runs another thread as a Daemon due to the behavior of loop_start
+    logging.info("Started thread: MQTT-Listener")
+    # Running loop_start() will enter into a confection state and enter on_message() every time
+    # a new message comes in. Because of this all error/exception handing must be done in the
+    # on_message() command, in our case we don't want the program to exit so we just log the error.
     mqtt_client.loop_start()
-    while thread_events.is_set() and mqtt_connector.contiguous_errors < MAX_MQTT_ERRORS:
+    while thread_events.is_set():
         time.sleep(1)
-    if mqtt_connector.contiguous_errors >= MAX_MQTT_ERRORS:
-        logging.critical(
-            f"Continuous mqtt errors has exceeded max count, {MAX_MQTT_ERRORS}"
-        )
+
+    # Stops the extra MQTT-Listener thread gracefully
     mqtt_client.loop_stop()
     logging.info("Joined thread: MQTT-Listener")
     thread_events.clear()

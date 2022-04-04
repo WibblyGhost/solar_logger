@@ -4,19 +4,19 @@ import logging
 import os
 from unittest import mock
 
-from pytest import LogCaptureFixture
 import pytest
-from classes.custom_exceptions import MissingCredentialsError
+from pytest import LogCaptureFixture
+from tests.config.consts import FAKE, TEST_ENV_FULL, TEST_INFLUX_ENV, TEST_MQTT_ENV
 
+from classes.custom_exceptions import MissingCredentialsError
 from classes.py_functions import SecretStore, read_query_settings, write_results_to_csv
-from tests.config.consts import FAKE, INFLUX_ENV, MQTT_ENV, TEST_ENV_FULL
 
 
 @mock.patch("classes.py_functions.os.path.exists")
 @mock.patch("classes.py_functions.open", mock.mock_open())
 def test_passes_write_to_csv(exists, caplog: LogCaptureFixture):
-    caplog.set_level(logging.INFO)
     exists.return_value = True
+    caplog.set_level(logging.INFO)
 
     with mock.patch(
         "configparser.ConfigParser.read", return_value=FAKE.pystr()
@@ -52,8 +52,8 @@ def test_passes_secret_store_reads_mqtt_env(caplog: LogCaptureFixture):
 
     with mock.patch.dict(os.environ, TEST_ENV_FULL):
         secret_store = SecretStore(has_mqtt_access=True)
-    mqtt_env_copy = MQTT_ENV.copy()
-    mqtt_env_copy["mqtt_port"] = int(MQTT_ENV["mqtt_port"])
+    mqtt_env_copy = TEST_MQTT_ENV.copy()
+    mqtt_env_copy["mqtt_port"] = int(TEST_MQTT_ENV["mqtt_port"])
 
     assert "Reading MQTT environment variables" in caplog.text
     assert "Reading Influx environment variables" not in caplog.text
@@ -68,7 +68,7 @@ def test_passes_secret_store_reads_influx_env(caplog: LogCaptureFixture):
 
     assert "Reading MQTT environment variables" not in caplog.text
     assert "Reading Influx environment variables" in caplog.text
-    assert secret_store.influx_secrets == INFLUX_ENV
+    assert secret_store.influx_secrets == TEST_INFLUX_ENV
 
 
 def test_fails_secret_store_reads_none(caplog: LogCaptureFixture):

@@ -3,6 +3,7 @@ Classes file, contains methods for the Influx database controller
 to do writes and queries to the database
 """
 
+from datetime import datetime
 import logging
 
 from influxdb_client import InfluxDBClient
@@ -46,7 +47,20 @@ class InfluxConnector:
         invoking the connection to the InfluxDB and write API
         """
         self._influx_client.ready()  # External request
-        logging.info("Influx health check succeeded")
+
+    @staticmethod
+    def _verify_queue_package(queue_package: QueuePackage):
+        assertion_message = "The received queue_packed has malformed data: "
+        assert queue_package is not None, assertion_message + "queue_package empty"
+        assert isinstance(queue_package.measurement, str), (
+            assertion_message + "type of measurement not str"
+        )
+        assert isinstance(queue_package.field, dict | str), (
+            assertion_message + "type of field not, dict | str"
+        )
+        assert isinstance(queue_package.time_field, datetime), (
+            assertion_message + "type of time_field not, datetime"
+        )
 
     def write_points(self, queue_package: QueuePackage) -> None:
         """
@@ -56,6 +70,7 @@ class InfluxConnector:
         :param msg_payload: Dictionary of messages for MQTTDecoder to input into the
             Influx Database in dictionary
         """
+        self._verify_queue_package(queue_package=queue_package)
         self._write_client.write(
             bucket=self._influx_bucket,
             org=self._influx_org,
@@ -87,4 +102,5 @@ class InfluxConnector:
             query_result = self._query_client.query_stream(
                 org=self._influx_org, query=query
             )  # External request
+        logging.debug("Query to Influx server was successful")
         return query_result

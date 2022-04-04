@@ -14,7 +14,10 @@ SOLAR_DEBUG_CONFIG_TITLE = "solar_debugger"  # Solar Runtime
 MAX_PORT_RANGE = 65535
 
 # Multi-Threading Processing
-MAX_INFLUX_ERRORS = 5
-MAX_MQTT_ERRORS = 5
+# Size of queue, needs to be quite large for the volume of data
 MAX_QUEUE_LENGTH = 100
-THREADED_QUEUE = Queue()
+# Time to wait when queue is full
+QUEUE_WAIT_TIME = 1
+THREADED_QUEUE = Queue(
+    maxsize=MAX_QUEUE_LENGTH
+)

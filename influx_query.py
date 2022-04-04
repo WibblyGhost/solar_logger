@@ -4,9 +4,7 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from classes.influx_classes import (
-    InfluxConnector,
-)
+from classes.influx_classes import InfluxConnector
 from classes.py_functions import SecretStore, read_query_settings, write_results_to_csv
 from classes.py_logger import create_logger
 from classes.query_classes import QueryBuilder
