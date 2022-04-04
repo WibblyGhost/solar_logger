@@ -1,7 +1,5 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
 
-import pytest
-from paho.mqtt.client import MQTTMessage
 from pymate.value import Value
 
 from classes.mqtt_classes import PyMateDecoder
@@ -114,42 +112,3 @@ def test_passes_dc_decoder():
 
     assert isinstance(decoded_result["bat_current"], Value)
     assert str_decoded_result == str_dc_array
-
-
-# @pytest.mark.parametrize(
-#     "topic",
-#     [
-#         b"mate/status",
-#         b"mate/mx-1/status",
-#         b"mate/fx-1/status",
-#         b"mate/dc-1/status",
-#     ],
-# )
-# def test_passes_check_status(topic):
-#     mqtt_message = MQTTMessage(topic=topic)
-#     mqtt_message.payload = b"online"
-#     pymate_decoder = PyMateDecoder()
-
-#     pymate_decoder.check_status(mqtt_message)
-
-
-# @pytest.mark.parametrize(
-#     "topic",
-#     [
-#         b"mate/status",
-#         b"mate/mx-1/status",
-#         b"mate/fx-1/status",
-#         b"mate/dc-1/status",
-#     ],
-# )
-# def test_fails_check_status(topic):
-#     mqtt_message = MQTTMessage(topic=topic)
-#     mqtt_message.payload = b"offline"
-#     pymate_decoder = PyMateDecoder()
-
-#     with pytest.raises(Exception) as err:
-#         pymate_decoder.check_status(mqtt_message)
-#     assert (
-#         str(err.value) == f"A backend MQTT service isn't online, "
-#         f"{topic.decode('ascii')} = offline"
-#     )

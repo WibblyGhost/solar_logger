@@ -116,9 +116,7 @@ class MqttConnector:
             # We don't like a queue building up since it means our program isn't
             # handling the volume of data or a service is offline
             while THREADED_QUEUE.full():
-                logging.error(
-                    f"Queue is full, sleeping for {QUEUE_WAIT_TIME} seconds"
-                )
+                logging.error(f"Queue is full, sleeping for {QUEUE_WAIT_TIME} seconds")
                 time.sleep(QUEUE_WAIT_TIME)
             THREADED_QUEUE.put(
                 QueuePackage(

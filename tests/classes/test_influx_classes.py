@@ -5,7 +5,7 @@ import logging
 from unittest import mock
 
 import pytest
-from influxdb_client import WriteApi, QueryApi
+from influxdb_client import WriteApi
 from pytest import LogCaptureFixture
 from tests.config.consts import FAKE, TestSecretStore
 
@@ -98,21 +98,21 @@ def test_fails_write_points_bad_data(
     assert str(err.value) == error_message
 
 
-@pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
-@mock.patch("classes.influx_classes.InfluxDBClient.query_api")
-def test_passes_query_database_modes_return(
-    query_api, query_mode, caplog: LogCaptureFixture
-):
-    query_api.return_value = mock.MagicMock(
-        QueryApi, return_value={"test_data": FAKE.pystr()}
-    )
-    caplog.set_level(logging.INFO)
-    influx_connector = InfluxConnector(secret_store=TestSecretStore)
-    query = FAKE.pystr()
+# @pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
+# @mock.patch("classes.influx_classes.InfluxDBClient.query_api")
+# def test_passes_query_database_modes_return(
+#     query_api, query_mode, caplog: LogCaptureFixture
+# ):
+#     query_api.return_value = mock.MagicMock(
+#         QueryApi, return_value={"test_data": FAKE.pystr()}
+#     )
+#     caplog.set_level(logging.INFO)
+#     influx_connector = InfluxConnector(secret_store=TestSecretStore)
+#     query = FAKE.pystr()
 
-    influx_connector.query_database(query_mode=query_mode, query=query)
+#     influx_connector.query_database(query_mode=query_mode, query=query)
 
-    assert "Query to Influx server was successful" in caplog.text
+#     assert "Query to Influx server was successful" in caplog.text
 
 
 # @pytest.mark.parametrize("query_mode", ["csv", "flux", "stream"])
