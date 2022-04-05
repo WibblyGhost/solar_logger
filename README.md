@@ -26,16 +26,15 @@ $IsFromDockerHub = $TRUE
 $VersionTag = "0.0.1"
 
 
-if ($IsFromDockerHub) {
-    # If you are pulling the image from my repository use this command instead
-    docker build . -f solar.dockerfile -t wibblyghost/solar_logger:$VersionTag
-} else {
+if ($IsFromDockerHub == $FALSE) {
     # Start by building an image of SolarLogger localy
     docker build . -f solar.dockerfile -t solar_logger_local
 }
 
 # Before running the Docker images I would suggest creating the config and output volumes first
 # Otherwise the config.ini won't get copied across
+mkdir $CurrentDir/docker_solar_logger/output
+mkdir $CurrentDir/docker_solar_logger/config
 
 # CONFIG VOLUMES
 # docker volume create --driver local \
