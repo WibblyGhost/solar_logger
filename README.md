@@ -9,7 +9,7 @@ The program makes use of multi-threaded applications for receiving MQTT data pac
 
 ## Docker Setup
 
-To make installation easy there is a PowerShell file that will run the Docker pull from my hub repository, and run all basic configurations needed to start SolarLogger. If you want to customize images or run the other programs held within this repository I would recommend editing and using the `docker-compose.yml`.
+To make installation easy there is a PowerShell file that will run the Docker pull from my hub repository, and run all basic configurations needed to start SolarLogger. If you want to customize images or run the other programs held within this repository I would recommend editing and using the `docker-compose.yml`. You can pull my Docker image using the image tag `wibblyghost/solar_logger`.
 
 Both `docker-compose.yml` and `docker-run-commands.ps1` can be customized to your personal preferences.
 
