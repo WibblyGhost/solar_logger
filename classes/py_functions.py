@@ -7,7 +7,7 @@ import csv
 import logging
 import os
 
-from config.consts import CONFIG_FILENAME, MAX_PORT_RANGE
+from classes.consts import CONFIG_FILENAME, MAX_PORT_RANGE
 from classes.custom_exceptions import MissingCredentialsError
 
 

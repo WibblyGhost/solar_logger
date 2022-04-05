@@ -12,7 +12,7 @@ from classes.influx_classes import InfluxConnector
 from classes.mqtt_classes import MqttConnector
 from classes.py_functions import SecretStore
 from classes.py_logger import create_logger
-from config.consts import (
+from classes.consts import (
     SOLAR_DEBUG_CONFIG_TITLE,
     THREADED_QUEUE,
 )
@@ -64,6 +64,7 @@ def run_threaded_mqtt_client():
     mqtt_connector = MqttConnector(
         secret_store=secret_store,
     )
+    mqtt_client = None
     logging.info("Creating MQTT listening service")
     try:
         mqtt_client = mqtt_connector.get_mqtt_client()
@@ -86,7 +87,8 @@ def run_threaded_mqtt_client():
         time.sleep(1)
 
     # Stops the extra MQTT-Listener thread gracefully
-    mqtt_client.loop_stop()
+    if mqtt_client:
+        mqtt_client.loop_stop()
     logging.info("Joined thread: MQTT-Listener")
     thread_events.clear()
 

@@ -1,4 +1,3 @@
-
 # Enviroment
 __pycache__/
 .pytest_cache/
@@ -8,17 +7,18 @@ venv/
 *.py[cod]
 
 # Secret files
-private/
-# *.env
-*codenames.py
+*.env
 
 #Output log files
 output/
-docker_output/
-docker_influxdb/
 
 # Test files
 .coverage
 coverage.xml
 cov.xml
 htmlcov/
+
+# Docker Mappings
+docker_output/
+docker_influxdb/
+docker_solar_logger/

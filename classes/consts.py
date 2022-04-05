@@ -15,7 +15,7 @@ MAX_PORT_RANGE = 65535
 
 # Multi-Threading Processing
 # Size of queue, needs to be quite large for the volume of data
-MAX_QUEUE_LENGTH = 100
+MAX_QUEUE_LENGTH = 150
 # Time to wait when queue is full
 QUEUE_WAIT_TIME = 1
 THREADED_QUEUE = Queue(maxsize=MAX_QUEUE_LENGTH)

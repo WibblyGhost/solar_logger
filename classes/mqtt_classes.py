@@ -15,7 +15,7 @@ from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
 
 from classes.py_functions import SecretStore
 from classes.common_classes import QueuePackage
-from config.consts import QUEUE_WAIT_TIME, THREADED_QUEUE
+from classes.consts import QUEUE_WAIT_TIME, THREADED_QUEUE
 
 
 class PyMateDecoder:

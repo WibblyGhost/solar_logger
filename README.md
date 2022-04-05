@@ -7,6 +7,72 @@ This project is a multi-step program which relies on a MQTT backend to read info
 
 The program makes use of multi-threaded applications for receiving MQTT data packets and uploading the packets into InfluxDB. This is done by transferring packets from one thread into the other by the use of `Queues`. The MQTT listener and Influx `write_api` both run concurrently.
 
+## Docker Setup
+
+To make installation easy there is a PowerShell file that will run the Docker pull from my hub repository, and run all basic configurations needed to start SolarLogger. If you want to customize images or run the other programs held within this repository I would recommend editing and using the `docker-compose.yml`.
+
+Both `docker-compose.yml` and `docker-run-commands.ps1` can be customized to your personal preferences.
+
+**Note:** To run the SolarLogger you require a .env file in the same directory that you run the `docker-run-commands.ps1` file, otherwise change the `$EnvFile` variable to reflect the true path.
+
+```powershell
+# NOTES
+# $(pwd) - Expands to working directory on Linux or Mac
+# ${pwd} - Expands to working directory on Windows IN POWERSHELL
+
+$CurrentDir = ${pwd}
+$EnvFile = ".env"
+$IsFromDockerHub = $TRUE
+$VersionTag = "0.0.1"
+
+
+if ($IsFromDockerHub) {
+    # If you are pulling the image from my repository use this command instead
+    docker build . -f solar.dockerfile -t wibblyghost/solar_logger:$VersionTag
+} else {
+    # Start by building an image of SolarLogger localy
+    docker build . -f solar.dockerfile -t solar_logger_local
+}
+
+# Before running the Docker images I would suggest creating the config and output volumes first
+# Otherwise the config.ini won't get copied across
+
+# CONFIG VOLUMES
+# docker volume create --driver local \
+# --opt type=none \
+# --opt device="${pwd}/docker_solar_logger/config" \
+# --opt o=bind \
+# SolarLogger-Config
+
+docker volume create --driver local --opt type=none --opt device="$CurrentDir/docker_solar_logger/config" --opt o=bind SolarLogger-Config
+
+# OUTPUT VOLUMES
+# docker volume create --driver local \
+# --opt type=none \
+# --opt device="${pwd}/docker_solar_logger/output" \
+# --opt o=bind \
+# SolarLogger-Output
+
+docker volume create --driver local --opt type=none --opt device="$CurrentDir/docker_solar_logger/output" --opt o=bind SolarLogger-Output
+
+
+# Run the Docker image with an environment file, output folder and config folder
+# docker run -d \
+# --name solar_logger \
+# --env-file ".env" \
+# --volume "SolarLogger-Config:/app/config" \
+# --volume "SolarLogger-Output:/app/output" \
+# solar_logger_local
+
+if ($IsFromDockerHub) {
+    # If the image is built from Docker hub
+    docker run -d --name solar_logger_hub --env-file $EnvFile --volume "SolarLogger-Config:/app/config" --volume "SolarLogger-Output:/app/output" wibblyghost/solar_logger:$VersionTag
+} else {
+    # If the image is built locally
+    docker run -d --name solar_logger_local --env-file $EnvFile --volume "SolarLogger-Config:/app/config" --volume "SolarLogger-Output:/app/output" solar_logger_local
+}
+```
+
 ## Logging
 
 All programs below are implemented with a file logger which can be configured through the `config.ini` file, this can be used for program info or debugging purposes. If file logging is enabled all logs will be written in the `output` folder although if using within a Docker instance it will be written to `docker_output` instead.
@@ -89,7 +155,7 @@ try:
 ```
 
 
-## InfluxDB *(Docker Only)*
+## InfluxDB *(Docker Compose Only)*
 
 ### Setup
 
@@ -106,7 +172,7 @@ InfluxDB:
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=$influx_token
 ```
 
-## Influx Queries
+## Influx Queries *(Docker Compose Only)*
 
 ### Summary
 

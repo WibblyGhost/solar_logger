@@ -8,7 +8,7 @@ from classes.influx_classes import InfluxConnector
 from classes.py_functions import SecretStore, read_query_settings, write_results_to_csv
 from classes.py_logger import create_logger
 from classes.query_classes import QueryBuilder
-from config.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
+from classes.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 
 
 class ParseQuery:
