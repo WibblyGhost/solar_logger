@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Solar Logger Docker image
-      run: docker build . --file solar.dockerfile --tag solar_logger:$(date +%s)
+      run: docker build . --file solar.dockerfile --tag solar-logger:$(date +%s)
       
     - name: Build the Influx Query Docker image
-      run: docker build . --file influx-query.dockerfile --tag influx_query:$(date +%s)
+      run: docker build . --file influx-query.dockerfile --tag influx-query:$(date +%s)
