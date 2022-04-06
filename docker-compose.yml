@@ -3,19 +3,11 @@ services:
   influx_db:
     container_name: InfluxDB
     image: influxdb:2.1.1
-    # For first time setup use these variables
-    # environment:
-    #   - DOCKER_INFLUXDB_INIT_MODE=$influx_mode
-    #   - DOCKER_INFLUXDB_INIT_USERNAME=$influx_username
-    #   - DOCKER_INFLUXDB_INIT_PASSWORD=$influx_password
-    #   - DOCKER_INFLUXDB_INIT_ORG=$influx_org
-    #   - DOCKER_INFLUXDB_INIT_BUCKET=$influx_bucket
-    #   - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=$influx_token
     ports:
       - "8086:8086"
     volumes:
-      - ./docker_influxdb/var/lib/influxdb2:/var/lib/influxdb2:rw
-      - ./docker_influxdb/etc/influxdb2:/etc/influxdb2:rw
+      - ./docker-influxdb/var/lib/influxdb2:/var/lib/influxdb2:rw
+      - ./docker-influxdb/etc/influxdb2:/etc/influxdb2:rw
   
   solar_logger:
     container_name: SolarLogger
@@ -23,7 +15,7 @@ services:
       context: ./
       dockerfile: solar.dockerfile
     volumes:
-      - ./docker_output:/app/output:rw
+      - ./docker-output:/app/output:rw
     env_file:
       - .env
   
@@ -33,8 +25,8 @@ services:
     tty: true
     build:
       context: ./
-      dockerfile: influx_query.dockerfile
+      dockerfile: influx-query.dockerfile
     volumes:
-      - ./docker_output:/app/output:rw
+      - ./docker-output:/app/output:rw
     env_file:
       - .env

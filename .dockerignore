@@ -19,6 +19,5 @@ cov.xml
 htmlcov/
 
 # Docker Mappings
-docker_output/
-docker_influxdb/
-docker_solar_logger/
+docker-solar-logger/
+docker-influxdb/

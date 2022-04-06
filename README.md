@@ -9,11 +9,11 @@ The program makes use of multi-threaded applications for receiving MQTT data pac
 
 ## Docker Setup
 
-To make installation easy there is a PowerShell file that will run the Docker pull from my hub repository, and run all basic configurations needed to start SolarLogger. If you want to customize images or run the other programs held within this repository I would recommend editing and using the `docker-compose.yml`. You can pull my Docker image using the image tag `wibblyghost/solar_logger`.
+To make installation easy there is a PowerShell file that will run the Docker pull from my hub repository, and run all basic configurations needed to start SolarLogger. If you want to customize images or run the other programs held within this repository I would recommend editing and using the `docker-compose.yml`. You can pull my Docker image using the image tag `wibblyghost/solar-logger`.
 
-Both `docker-compose.yml` and `docker-run-commands.ps1` can be customized to your personal preferences.
+Both `docker-compose.yml` and `solar-logger-build.ps1` can be customized to your personal preferences.
 
-**Note:** To run the SolarLogger you require a .env file in the same directory that you run the `docker-run-commands.ps1` file, otherwise change the `$EnvFile` variable to reflect the true path.
+**Note:** To run the SolarLogger you require a `solar.env` file in the same directory that you run the `solar-logger-build.ps1` file, otherwise change the `$EnvFile` variable to reflect the true path.
 
 ```powershell
 # NOTES
@@ -21,73 +21,86 @@ Both `docker-compose.yml` and `docker-run-commands.ps1` can be customized to you
 # ${pwd} - Expands to working directory on Windows IN POWERSHELL
 
 $CurrentDir = ${pwd}
-$EnvFile = ".env"
+$EnvFile = "solar.env"
 $IsFromDockerHub = $TRUE
 $VersionTag = "0.0.1"
+$RestartMode = "unless-stopped"
 
 
-if ($IsFromDockerHub == $FALSE) {
-    # Start by building an image of SolarLogger localy
-    docker build . -f solar.dockerfile -t solar_logger_local
+if (!(${IsFromDockerHub})) {
+    # Start by building an image of SolarLogger locally
+    docker build . -f solar.dockerfile -t solar-logger-local
 }
 
 # Before running the Docker images I would suggest creating the config and output volumes first
 # Otherwise the config.ini won't get copied across
-mkdir $CurrentDir/docker_solar_logger/output
-mkdir $CurrentDir/docker_solar_logger/config
+if (!(Test-Path -Path "${CurrentDir}/docker-solar-logger/output")) {
+    mkdir -p "${CurrentDir}/docker-solar-logger/output"
+}
+if (!(Test-Path -Path "${CurrentDir}/docker-solar-logger/config")) {
+    mkdir -p "${CurrentDir}/docker-solar-logger/config"
+}
+
 
 # CONFIG VOLUMES
-# docker volume create --driver local \
-# --opt type=none \
-# --opt device="${pwd}/docker_solar_logger/config" \
-# --opt o=bind \
-# SolarLogger-Config
-
-docker volume create --driver local --opt type=none --opt device="$CurrentDir/docker_solar_logger/config" --opt o=bind SolarLogger-Config
+# docker volume create \
+docker volume create --driver local --opt type=none --opt device="${CurrentDir}/docker-solar-logger/config" --opt o=bind SolarLogger-Config
 
 # OUTPUT VOLUMES
-# docker volume create --driver local \
-# --opt type=none \
-# --opt device="${pwd}/docker_solar_logger/output" \
-# --opt o=bind \
-# SolarLogger-Output
-
-docker volume create --driver local --opt type=none --opt device="$CurrentDir/docker_solar_logger/output" --opt o=bind SolarLogger-Output
+docker volume create --driver local --opt type=none --opt device="${CurrentDir}/docker-solar-logger/output" --opt o=bind SolarLogger-Output
 
 
 # Run the Docker image with an environment file, output folder and config folder
-# docker run -d \
-# --name solar_logger \
-# --env-file ".env" \
-# --volume "SolarLogger-Config:/app/config" \
-# --volume "SolarLogger-Output:/app/output" \
-# solar_logger_local
-
-if ($IsFromDockerHub) {
+if (${IsFromDockerHub}) {
     # If the image is built from Docker hub
-    docker run -d --name solar_logger_hub --env-file $EnvFile --volume "SolarLogger-Config:/app/config" --volume "SolarLogger-Output:/app/output" wibblyghost/solar_logger:$VersionTag
+    docker run -d --name solar-logger --restart="${RestartMode}" --env-file "${EnvFile}" --volume "SolarLogger-Config:/app/config" --volume "SolarLogger-Output:/app/output" wibblyghost/solar-logger:"${VersionTag}"
 } else {
     # If the image is built locally
-    docker run -d --name solar_logger_local --env-file $EnvFile --volume "SolarLogger-Config:/app/config" --volume "SolarLogger-Output:/app/output" solar_logger_local
+    docker run -d --name solar-logger --restart="$RestartMode" --env-file "${EnvFile}" --volume "SolarLogger-Config:/app/config" --volume "SolarLogger-Output:/app/output" solar-logger-local
 }
+```
+
+In a recent update I've also added a script `influxdb-build.ps1` to pull and create a InfluxDB image through docker also.
+
+```PowerShell
+# NOTES
+# $(pwd) - Expands to working directory on Linux or Mac
+# ${pwd} - Expands to working directory on Windows IN POWERSHELL
+
+$CurrentDir = ${pwd}
+$RestartMode = "unless-stopped"
+
+
+# Before running the Docker images I would suggest creating the config and output volumes first
+# Otherwise the config.ini won't get copied across
+if (!(Test-Path -Path "${CurrentDir}/docker-influxdb/data-volume")) {
+    mkdir -p "${CurrentDir}/docker-influxdb/data-volume"
+}
+if (!(Test-Path -Path "${CurrentDir}/docker-influxdb/config")) {
+    mkdir -p "${CurrentDir}/docker-influxdb/config"
+}
+
+# Create docker volumes that mount to the current directory
+# /var/lib/influxdb2
+docker volume create --driver local --opt type=none --opt device="${CurrentDir}/docker-influxdb/data-volume" --opt o=bind InfluxDB-DataVolume
+# /etc/influxdb2
+docker volume create --driver local --opt type=none --opt device="${CurrentDir}/docker-influxdb/config" --opt o=bind InfluxDB-Config
+
+# Run the build command and start InfluxDB
+docker run -d --name influx-db -p 8086:8086 -p 8088:8088 --restart="${RestartMode}" --volume "InfluxDB-DataVolume:/var/lib/influxdb2" --volume "InfluxDB-Config:/etc/influxdb2" influxdb:2.1.1
 ```
 
 ## Logging
 
-All programs below are implemented with a file logger which can be configured through the `config.ini` file, this can be used for program info or debugging purposes. If file logging is enabled all logs will be written in the `output` folder although if using within a Docker instance it will be written to `docker_output` instead.
+All programs below are implemented with a file logger which can be configured through the `config.ini` file, this can be used for program info or debugging purposes. If file logging is enabled all logs will be written in the `output` folder although if using within a Docker instance it will be written to `/docker-name/output` instead.
 
-**Note:** by default a `docker_output` volume is created. If you're not using file logging, comment out the following code in the `docker-compose.yml`:
-```yml
-SolarLogger:
-    volumes:
-      - ./docker_output:/app/output:rw
-```
+**Note:** By default a `/docker-name/output` volume is created.
 
 ## Solar Logger
 
 ### Setup
 
-To start, fill out the `.env` template file with personal secrets and copy them to the base directory. Then after running a Docker compose it will use the environmental variables to start the service and start writing data into Influx. If any errors occur then look through the Docker log files.
+To start, fill out the `solar.env` template file with personal secrets and copy them to the base directory. Then after running a Docker compose it will use the environmental variables to start the service and start writing data into Influx. You can run the Docker build commands either through the `docker-compose.yml` or `solar-logger-build.ps1` files and both will mount a config and output volume under `/docker-solar-logger/`.
 
 ### Summary
 
@@ -158,7 +171,8 @@ try:
 
 ### Setup
 
-This project comes with a mostly pre-built InfluxDB instance that you can run up or copy to a Docker server. This can be run through the `docker-compose.yml` and customized to accept initial setup variables. All Influx configurations will be written to the folder `docker_influxdb`. If this is your first time running InfluxDB I would suggest uncommenting the following code in the `docker-compose.yml` and copying specified `.env` file into the base directory, this will bind the passwords/secrets to your environment variables in Docker then complete the InfluxDB configurations. All following Docker restarts should keep their configs and data.
+This project comes with a mostly pre-built InfluxDB instance that you can run up or copy to a Docker server. This can be run through the `docker-compose.yml` or `influxdb-build.ps1` and customized to accept initial setup variables. All Influx configurations will be written to the folder `/docker-influxdb/`. *(If this is your first time running the `docker-compose.yml` I would suggest uncommenting the following code.)* After configuring InfluxDB all following Docker restarts should keep their configs and data through the mounted volumes in `/docker-influxdb/`.
+
 ```yml
 InfluxDB:
     # For first time setup use these variables
