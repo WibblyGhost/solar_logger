@@ -5,7 +5,7 @@
 $CurrentDir = ${pwd}
 $EnvFile = "solar.env"
 $IsFromDockerHub = $TRUE
-$VersionTag = "0.0.1"
+$VersionTag = "latest"
 $RestartMode = "unless-stopped"
 
 

@@ -23,7 +23,7 @@ Both `docker-compose.yml` and `solar-logger-build.ps1` can be customized to your
 $CurrentDir = ${pwd}
 $EnvFile = "solar.env"
 $IsFromDockerHub = $TRUE
-$VersionTag = "0.0.1"
+$VersionTag = "latest"
 $RestartMode = "unless-stopped"
 
 
