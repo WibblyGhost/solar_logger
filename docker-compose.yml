@@ -1,25 +1,26 @@
 version: '3.8'
 services:
-  influx_db:
+  influx-db:
     container_name: InfluxDB
     image: influxdb:2.1.1
     ports:
       - "8086:8086"
     volumes:
-      - ./docker-influxdb/var/lib/influxdb2:/var/lib/influxdb2:rw
-      - ./docker-influxdb/etc/influxdb2:/etc/influxdb2:rw
-  
-  solar_logger:
+      - ./docker-influxdb/data-volume:/var/lib/influxdb2:rw
+      - ./docker-influxdb/config:/etc/influxdb2:rw
+
+  solar-logger:
     container_name: SolarLogger
     build:
       context: ./
       dockerfile: solar.dockerfile
     volumes:
-      - ./docker-output:/app/output:rw
+      - ./docker-solar-logger/output:/app/output:rw
+      - ./docker-solar-logger/config:/app/config:rw
     env_file:
-      - .env
+      - solar.env
   
-  influx_query:
+  influx-query:
     container_name: InfluxQuery
     stdin_open: true
     tty: true
@@ -27,6 +28,6 @@ services:
       context: ./
       dockerfile: influx-query.dockerfile
     volumes:
-      - ./docker-output:/app/output:rw
+      - ./docker-influx-query/output:/app/output:rw
     env_file:
-      - .env
+      - influx.env
