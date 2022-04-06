@@ -1,6 +1,9 @@
 # Solar Logger
 ![slice3](https://user-images.githubusercontent.com/47839859/161478218-66dbca5d-5277-479e-8144-1c017c92fbd3.png)
 
+[![Pylint](https://github.com/WibblyGhost/solar_logger/actions/workflows/pylint.yml/badge.svg)](https://github.com/WibblyGhost/solar_logger/actions/workflows/pylint.yml)
+[![Docker Image CI](https://github.com/WibblyGhost/solar_logger/actions/workflows/docker.yml/badge.svg)](https://github.com/WibblyGhost/solar_logger/actions/workflows/docker.yml)
+
 ## Info
 
 This project is a multi-step program which relies on a MQTT backend to read information from an Outback solar controller which sends statistics of current battery status, input voltages etc. This program subscribes to the MQTT broker to retrieve the information broadcast and deciphers the raw byte streams into a readable form. It then converts the data into points to allow insertion into a time series database (InfluxDB) where the data can be stored, modeled and queried. The database will link to a Grafana website which will graph, model and compare the data on a privately accessible site.
