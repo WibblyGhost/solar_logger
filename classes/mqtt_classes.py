@@ -5,6 +5,7 @@ Check the Influx query documentation for write syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
+from dataclasses import dataclass
 import logging
 import ssl
 import time
@@ -54,6 +55,29 @@ class PyMateDecoder:
         return {key: value for (key, value) in dc_packet.items() if key != "raw"}
 
 
+@dataclass
+class MqttTopics:
+    """
+    Object which is a model of all the different MQTT topics
+    """
+    mate_status = "mate/status"
+
+    fx_name = "fx-1"
+    fx_status = "mate/fx-1/status"
+    fx_ts = "mate/fx-1/stat/ts"
+    fx_raw = "mate/fx-1/stat/raw"
+
+    mx_name = "mx-1"
+    mx_status = "mate/mx-1/status"
+    mx_ts = "mate/mx-1/stat/ts"
+    mx_raw = "mate/mx-1/stat/raw"
+
+    dc_name = "dc-1"
+    dc_status = "mate/dc-1/status"
+    dc_ts = "mate/dc-1/stat/ts"
+    dc_raw = "mate/dc-1/stat/raw"
+
+
 class MqttConnector:
     """
     Class which creates a client to connect to MQTT subscriber and decode the messages
@@ -71,10 +95,10 @@ class MqttConnector:
         :param influx_connector: Database for the MQTTDecoder to write results to
         """
         self._status = {
-            "mate/status": "offline",
-            "mate/mx-1/status": "offline",
-            "mate/fx-1/status": "offline",
-            "mate/dc-1/status": "offline",
+            MqttTopics.mate_status: "offline",
+            MqttTopics.fx_status: "offline",
+            MqttTopics.mx_status: "offline",
+            MqttTopics.dc_status: "offline",
         }
         self._fx_time = None
         self._mx_time = None
@@ -115,8 +139,10 @@ class MqttConnector:
         for topic, _ in self._status.items():
             if msg.topic == topic and msg.payload.decode("ascii") == "offline":
                 self._status[topic] = "offline"
+                logging.warning(f"{msg.topic} has gone offline")
             elif msg.topic == topic and msg.payload.decode("ascii") == "online":
                 self._status[topic] = "online"
+                logging.info(f"{msg.topic} is now online")
 
     @staticmethod
     def _load_queue(measurement: str, time_field: datetime, payload: dict) -> None:
@@ -148,40 +174,40 @@ class MqttConnector:
         :param msg: Takes in a raw bytestring from MQTT
         """
         # TODO Convert to new packet format
-        fx_online = self._status["mate/fx-1/status"]
-        mx_online = self._status["mate/mx-1/status"]
-        dc_online = self._status["mate/dc-1/status"]
-        if msg.topic == "mate/fx-1/stat/ts" and fx_online:
+        fx_online = self._status[MqttTopics.fx_status]
+        mx_online = self._status[MqttTopics.mx_status]
+        dc_online = self._status[MqttTopics.dc_status]
+        if msg.topic == MqttTopics.fx_ts and fx_online:
             self._fx_time = int(msg.payload.decode("ascii"))
             self._fx_time = datetime.fromtimestamp(self._fx_time)
             logging.debug(f"Received fx_time packet: {self._fx_time}")
-        elif msg.topic == "mate/fx-1/stat/raw" and self._fx_time and fx_online:
+        elif msg.topic == MqttTopics.fx_raw and self._fx_time and fx_online:
             fx_payload = PyMateDecoder.fx_decoder(msg.payload)
             logging.debug("Loading fx_payload onto queue")
             self._load_queue(
-                measurement="fx-1", time_field=self._fx_time, payload=fx_payload
+                measurement=MqttTopics.fx_name, time_field=self._fx_time, payload=fx_payload
             )
 
-        elif msg.topic == "mate/mx-1/stat/ts" and mx_online:
+        elif msg.topic == MqttTopics.mx_ts and mx_online:
             self._mx_time = int(msg.payload.decode("ascii"))
             self._mx_time = datetime.fromtimestamp(self._mx_time)
             logging.debug(f"Received mx_time packet: {self._mx_time}")
-        elif msg.topic == "mate/mx-1/stat/raw" and self._mx_time and mx_online:
+        elif msg.topic == MqttTopics.mx_raw and self._mx_time and mx_online:
             mx_payload = PyMateDecoder.mx_decoder(msg.payload)
             logging.debug("Loading mx_payload onto queue")
             self._load_queue(
-                measurement="mx-1", time_field=self._mx_time, payload=mx_payload
+                measurement=MqttTopics.mx_name, time_field=self._mx_time, payload=mx_payload
             )
 
-        elif msg.topic == "mate/dc-1/stat/ts" and dc_online:
+        elif msg.topic == MqttTopics.fx_ts and dc_online:
             self._dc_time = int(msg.payload.decode("ascii"))
             self._dc_time = datetime.fromtimestamp(self._dc_time)
             logging.debug(f"Received dc_time packet: {self._dc_time}")
-        elif msg.topic == "mate/dc-1/stat/raw" and self._dc_time and dc_online:
+        elif msg.topic == MqttTopics.fx_raw and self._dc_time and dc_online:
             dc_payload = PyMateDecoder.dc_decoder(msg.payload)
             logging.debug("Loading dc_payload onto queue")
             self._load_queue(
-                measurement="dc-1", time_field=self._dc_time, payload=dc_payload
+                measurement=MqttTopics.fx_name, time_field=self._dc_time, payload=dc_payload
             )
 
     def _on_message(self, _client, _userdata, msg: MQTTMessage) -> None:
@@ -191,8 +217,10 @@ class MqttConnector:
         """
         try:
             self._check_status(msg=msg)
-            if self._status["mate/status"] == "online":
+            if self._status[MqttTopics.mate_status] == "online":
                 self._decode_message(msg=msg)
+            else:
+                logging.warning(f"{MqttTopics.mate_status} is offline")
         except Exception as err:
             logging.exception(f"MQTT on_message raised an exception:{err}")
 
