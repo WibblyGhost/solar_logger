@@ -83,16 +83,29 @@ class MqttConnector:
         self._mqtt_secrets = secret_store.mqtt_secrets
         self._mqtt_client = Client()
 
-    def _on_connect(self, _client, _userdata, _flags, _return_code) -> None:
+    def _on_subscribe(self) -> None:
         """
-        On first connection to MQTT broker this function will subscribe to the brokers topics
-        :param _client: Unused
-        :param _userdata: Unused
-        :param _flags: Unused
-        :param return_code: Returned connection code
+        Logs when the MQTT client calls on_subscribe
         """
-        self._mqtt_client.subscribe(self._mqtt_secrets["mqtt_topic"])
-        logging.info("Subscribed to MQTT topic")
+        logging.info("Subscribed to MQTT topic, _on_subscribe")
+
+    def _on_unsubscribe(self) -> None:
+        """
+        Logs when MQTT calls on_unsubscribe
+        """
+        logging.info("Unsubscribed from MQTT topic, _on_unsubscribe")
+
+    def _on_connect(self) -> None:
+        """
+        Logs when MQTT calls on_connect
+        """
+        logging.info("Connecting to MQTT broker, _on_connect")
+
+    def _on_disconnect(self) -> None:
+        """
+        Logs when MQTT calls on_disconnect
+        """
+        logging.warning("Disconnected from MQTT broker, _on_disconnect")
 
     def _check_status(self, msg: MQTTMessage) -> None:
         """
@@ -134,6 +147,7 @@ class MqttConnector:
         Handles all code around decoding raw bytestrings and loading the packets into a global queue
         :param msg: Takes in a raw bytestring from MQTT
         """
+        # TODO Convert to new packet format
         fx_online = self._status["mate/fx-1/status"]
         mx_online = self._status["mate/mx-1/status"]
         dc_online = self._status["mate/dc-1/status"]
@@ -193,10 +207,17 @@ class MqttConnector:
         )
         self._mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
         self._mqtt_client.tls_insecure_set(True)
+
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_message = self._on_message
+        self._mqtt_client.on_disconnect = self._on_disconnect
+        self._mqtt_client.on_unsubscribe = self._on_unsubscribe
+        self._mqtt_client.on_subscribe = self._on_subscribe
+
+        self._mqtt_client.subscribe(self._mqtt_secrets["mqtt_topic"])
         self._mqtt_client.connect(
             host=self._mqtt_secrets["mqtt_host"],
             port=self._mqtt_secrets["mqtt_port"],
         )
+
         return self._mqtt_client
