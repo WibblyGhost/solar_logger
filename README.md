@@ -170,7 +170,7 @@ try:
 ```
 
 
-## InfluxDB *(Docker Compose Only)*
+## InfluxDB
 
 ### Setup
 
