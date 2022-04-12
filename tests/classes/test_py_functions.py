@@ -75,11 +75,10 @@ def test_fails_secret_store_reads_none(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
 
     with mock.patch.dict(os.environ, TEST_ENV_FULL):
-        secret_store = SecretStore()
+        _ = SecretStore()
 
     assert "Reading MQTT environment variables" not in caplog.text
     assert "Reading Influx environment variables" not in caplog.text
-    assert secret_store.influx_secrets is None
 
 
 def test_fails_secret_store_empty_values(caplog: LogCaptureFixture):
