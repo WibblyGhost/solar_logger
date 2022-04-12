@@ -77,7 +77,7 @@ class SecretStore:
         """
         Dictionary containing MQTT secrets
         """
-        assert self._mqtt_secrets is not None
+        assert self._mqtt_secrets is not None, "MQTT secrets missing"
         return self._mqtt_secrets
 
     @property
@@ -85,7 +85,7 @@ class SecretStore:
         """
         Dictionary containing Influx secrets
         """
-        assert self._influx_secrets is not None
+        assert self._influx_secrets is not None, "Influx secrets missing"
         return self._influx_secrets
 
     def _read_env_mqtt(self) -> dict:

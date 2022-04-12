@@ -48,6 +48,9 @@ def run_threaded_influx_writer() -> None:
                     f"Failed to run write to Influx server, returned error: \n{err}"
                 )
                 time.sleep(1)
+            if THREADED_QUEUE.empty():
+                logging.info("Popped all packets off queue and wrote to InfluxDB")
+                
         else:
             time.sleep(0.5)
     thread_events.clear()

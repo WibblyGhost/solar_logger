@@ -18,7 +18,7 @@ services:
       - ./docker-solar-logger/output:/app/output:rw
       - ./docker-solar-logger/config:/app/config:rw
     env_file:
-      - solar.env
+      - .env
   
   influx-query:
     container_name: InfluxQuery
@@ -30,4 +30,4 @@ services:
     volumes:
       - ./docker-influx-query/output:/app/output:rw
     env_file:
-      - influx.env
+      - .env

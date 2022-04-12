@@ -3,7 +3,7 @@
 # ${pwd} - Expands to working directory on Windows IN POWERSHELL
 
 $CurrentDir = ${pwd}
-$EnvFile = "solar.env"
+$EnvFile = ".env"
 $IsFromDockerHub = $TRUE
 $VersionTag = "latest"
 $RestartMode = "unless-stopped"

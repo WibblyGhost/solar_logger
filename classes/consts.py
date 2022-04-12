@@ -12,6 +12,7 @@ SOLAR_DEBUG_CONFIG_TITLE = "solar_debugger"  # Solar Runtime
 
 # Additional Consts
 MAX_PORT_RANGE = 65535
+TIME_PACKET_SIZE = 4  # Measured in bytes
 
 # Multi-Threading Processing
 # Size of queue, needs to be quite large for the volume of data

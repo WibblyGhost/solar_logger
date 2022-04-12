@@ -8,15 +8,17 @@ https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#que
 from dataclasses import dataclass
 import logging
 import ssl
+import struct
 import time
 from datetime import datetime
+from typing import Tuple
 
 from paho.mqtt.client import Client, MQTTMessage
 from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
 
 from classes.py_functions import SecretStore
 from classes.common_classes import QueuePackage
-from classes.consts import QUEUE_WAIT_TIME, THREADED_QUEUE
+from classes.consts import QUEUE_WAIT_TIME, THREADED_QUEUE, TIME_PACKET_SIZE
 
 
 class PyMateDecoder:
@@ -25,7 +27,29 @@ class PyMateDecoder:
     """
 
     @staticmethod
-    def fx_decoder(msg: bytearray = b"") -> dict:
+    def detach_time(
+        msg: bytearray, padding_at_end: int = 0
+    ) -> Tuple[bytearray, bytearray]:
+        """
+        Splits the bytearray into two objects, time and payload
+        """
+        raw_time = msg[:TIME_PACKET_SIZE]
+        msg_time = struct.unpack("i", raw_time)
+        msg_payload = msg[TIME_PACKET_SIZE:-padding_at_end]
+        return msg_time[0], msg_payload
+
+    @staticmethod
+    def dc_decoder(msg: bytearray) -> dict:
+        """
+        Decoder for DC objects
+        :param msg: Input message to decode
+        :return: List of decoded objects
+        """
+        dc_packet = DCStatusPacket.from_buffer(msg).__dict__
+        return {key: value for (key, value) in dc_packet.items() if key != "raw"}
+
+    @staticmethod
+    def fx_decoder(msg: bytearray) -> dict:
         """
         Decoder for FX objects
         :param msg: Input message to decode
@@ -35,7 +59,7 @@ class PyMateDecoder:
         return {key: value for (key, value) in fx_packet.items() if key != "raw"}
 
     @staticmethod
-    def mx_decoder(msg: bytearray = b"") -> dict:
+    def mx_decoder(msg: bytearray) -> dict:
         """
         Decoder for MX objects
         :param msg: Input message to decode
@@ -44,38 +68,32 @@ class PyMateDecoder:
         mx_packet = MXStatusPacket.from_buffer(msg).__dict__
         return {key: value for (key, value) in mx_packet.items() if key != "raw"}
 
-    @staticmethod
-    def dc_decoder(msg: bytearray = b"") -> dict:
-        """
-        Decoder for DC objects
-        :param msg: Input message to decode
-        :return: List of decoded objects
-        """
-        dc_packet = DCStatusPacket.from_buffer(msg).__dict__
-        return {key: value for (key, value) in dc_packet.items() if key != "raw"}
-
 
 @dataclass
 class MqttTopics:
     """
     Object which is a model of all the different MQTT topics
     """
+
     mate_status = "mate/status"
-
-    fx_name = "fx-1"
-    fx_status = "mate/fx-1/status"
-    fx_ts = "mate/fx-1/stat/ts"
-    fx_raw = "mate/fx-1/stat/raw"
-
-    mx_name = "mx-1"
-    mx_status = "mate/mx-1/status"
-    mx_ts = "mate/mx-1/stat/ts"
-    mx_raw = "mate/mx-1/stat/raw"
 
     dc_name = "dc-1"
     dc_status = "mate/dc-1/status"
-    dc_ts = "mate/dc-1/stat/ts"
+    dc_data = "mate/dc-1/dc-status"
     dc_raw = "mate/dc-1/stat/raw"
+    dc_ts = "mate/dc-1/stat/ts"
+
+    fx_name = "fx-1"
+    fx_status = "mate/fx-1/status"
+    fx_data = "mate/fx-1/fx-status"
+    fx_raw = "mate/fx-1/stat/raw"
+    fx_ts = "mate/fx-1/stat/ts"
+
+    mx_name = "mx-1"
+    mx_status = "mate/mx-1/status"
+    mx_data = "mate/mx-1/mx-status"
+    mx_raw = "mate/mx-1/stat/raw"
+    mx_ts = "mate/mx-1/stat/ts"
 
 
 class MqttConnector:
@@ -96,36 +114,53 @@ class MqttConnector:
         """
         self._status = {
             MqttTopics.mate_status: "offline",
+            MqttTopics.dc_status: "offline",
             MqttTopics.fx_status: "offline",
             MqttTopics.mx_status: "offline",
-            MqttTopics.dc_status: "offline",
         }
-        self._fx_time = None
-        self._mx_time = None
-        self._dc_time = None
         self._dec_msg = None
         self._mqtt_secrets = secret_store.mqtt_secrets
         self._mqtt_client = Client()
 
-    def _on_subscribe(self) -> None:
+    @staticmethod
+    def _on_subscribe(_client, _userdata, _mid, granted_qos) -> None:
         """
         Logs when the MQTT client calls on_subscribe
         """
         logging.info("Subscribed to MQTT topic, _on_subscribe")
+        logging.info(f"MQTT topic returns QoS level of {granted_qos}")
 
-    def _on_unsubscribe(self) -> None:
+    @staticmethod
+    def _on_unsubscribe(_client, _userdata, _mid) -> None:
         """
         Logs when MQTT calls on_unsubscribe
         """
         logging.info("Unsubscribed from MQTT topic, _on_unsubscribe")
 
-    def _on_connect(self) -> None:
+    def _on_connect(self, _client, _userdata, _flags, return_code) -> None:
         """
         Logs when MQTT calls on_connect
+        The value of rc indicates success or not
         """
-        logging.info("Connecting to MQTT broker, _on_connect")
+        return_codes = {
+            0: "Connection successful",
+            1: "Connection refused - incorrect protocol version",
+            2: "Connection refused - invalid client identifier",
+            3: "Connection refused - server unavailable",
+            4: "Connection refused - bad username or password",
+            5: "Connection refused - not authorized",
+        }
+        if return_code == 0:
+            logging.info("Connecting to MQTT broker, _on_connect")
+            self._mqtt_client.subscribe(topic=self._mqtt_secrets["mqtt_topic"])
+        else:
+            logging.error(
+                f"Couldn't connect to MQTT broker returned code: {return_code}\n"
+                f"{return_codes[return_code]}"
+            )
 
-    def _on_disconnect(self) -> None:
+    @staticmethod
+    def _on_disconnect(_client, _userdata, _rc) -> None:
         """
         Logs when MQTT calls on_disconnect
         """
@@ -164,50 +199,62 @@ class MqttConnector:
                     field={key: float(value)},
                 )
             )
-        logging.debug(
-            f"Pushed item onto queue, queue now has {THREADED_QUEUE.qsize()} items"
+        logging.info(
+            f"Pushed items onto queue, queue now has {THREADED_QUEUE.qsize()} items"
         )
 
-    def _decode_message(self, msg: MQTTMessage):
+    def _decode_message(self, msg: MQTTMessage) -> None:
         """
         Handles all code around decoding raw bytestrings and loading the packets into a global queue
         :param msg: Takes in a raw bytestring from MQTT
         """
-        # TODO Convert to new packet format
+        dc_online = self._status[MqttTopics.dc_status]
         fx_online = self._status[MqttTopics.fx_status]
         mx_online = self._status[MqttTopics.mx_status]
-        dc_online = self._status[MqttTopics.dc_status]
-        if msg.topic == MqttTopics.fx_ts and fx_online:
-            self._fx_time = int(msg.payload.decode("ascii"))
-            self._fx_time = datetime.fromtimestamp(self._fx_time)
-            logging.debug(f"Received fx_time packet: {self._fx_time}")
-        elif msg.topic == MqttTopics.fx_raw and self._fx_time and fx_online:
-            fx_payload = PyMateDecoder.fx_decoder(msg.payload)
-            logging.debug("Loading fx_payload onto queue")
+
+        if msg.topic == MqttTopics.dc_data and dc_online:
+            logging.info(f"Received {MqttTopics.dc_name} data packet")
+            logging.debug(f"{MqttTopics.dc_name} payload: {msg.payload}")
+            # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
+            padding_at_end = 2
+            msg_time, msg_payload = PyMateDecoder.detach_time(
+                msg=msg.payload, padding_at_end=padding_at_end
+            )
+            dc_time = datetime.fromtimestamp(msg_time)
+            dc_payload = PyMateDecoder.dc_decoder(msg_payload)
+            logging.debug(f"Decoded and split {MqttTopics.dc_name} payload: {dc_payload} at {dc_time}")
             self._load_queue(
-                measurement=MqttTopics.fx_name, time_field=self._fx_time, payload=fx_payload
+                measurement=MqttTopics.dc_name, time_field=dc_time, payload=dc_payload
             )
 
-        elif msg.topic == MqttTopics.mx_ts and mx_online:
-            self._mx_time = int(msg.payload.decode("ascii"))
-            self._mx_time = datetime.fromtimestamp(self._mx_time)
-            logging.debug(f"Received mx_time packet: {self._mx_time}")
-        elif msg.topic == MqttTopics.mx_raw and self._mx_time and mx_online:
-            mx_payload = PyMateDecoder.mx_decoder(msg.payload)
-            logging.debug("Loading mx_payload onto queue")
+        if msg.topic == MqttTopics.fx_data and fx_online:
+            logging.info(f"Received {MqttTopics.fx_name} data packet")
+            logging.debug(f"{MqttTopics.fx_name} payload: {msg.payload}")
+            # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
+            padding_at_end = 3
+            msg_time, msg_payload = PyMateDecoder.detach_time(
+                msg=msg.payload, padding_at_end=padding_at_end
+            )
+            fx_time = datetime.fromtimestamp(msg_time)
+            fx_payload = PyMateDecoder.fx_decoder(msg_payload)
+            logging.debug(f"Decoded and split {MqttTopics.fx_name} payload: {fx_payload} at {fx_time}")
             self._load_queue(
-                measurement=MqttTopics.mx_name, time_field=self._mx_time, payload=mx_payload
+                measurement=MqttTopics.fx_name, time_field=fx_time, payload=fx_payload
             )
 
-        elif msg.topic == MqttTopics.fx_ts and dc_online:
-            self._dc_time = int(msg.payload.decode("ascii"))
-            self._dc_time = datetime.fromtimestamp(self._dc_time)
-            logging.debug(f"Received dc_time packet: {self._dc_time}")
-        elif msg.topic == MqttTopics.fx_raw and self._dc_time and dc_online:
-            dc_payload = PyMateDecoder.dc_decoder(msg.payload)
-            logging.debug("Loading dc_payload onto queue")
+        if msg.topic == MqttTopics.mx_data and mx_online:
+            logging.info(f"Received {MqttTopics.mx_name} data packet")
+            logging.debug(f"{MqttTopics.mx_name} payload: {msg.payload}")
+            # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
+            padding_at_end = 3
+            msg_time, msg_payload = PyMateDecoder.detach_time(
+                msg=msg.payload, padding_at_end=padding_at_end
+            )
+            mx_time = datetime.fromtimestamp(msg_time)
+            mx_payload = PyMateDecoder.mx_decoder(msg_payload)
+            logging.debug(f"Decoded and split {MqttTopics.mx_name} payload: {mx_payload} at {mx_time}")
             self._load_queue(
-                measurement=MqttTopics.fx_name, time_field=self._dc_time, payload=dc_payload
+                measurement=MqttTopics.mx_name, time_field=mx_time, payload=mx_payload
             )
 
     def _on_message(self, _client, _userdata, msg: MQTTMessage) -> None:
@@ -222,7 +269,7 @@ class MqttConnector:
             else:
                 logging.warning(f"{MqttTopics.mate_status} is offline")
         except Exception as err:
-            logging.exception(f"MQTT on_message raised an exception:{err}")
+            logging.exception(f"MQTT on_message raised an exception:\n{err}")
 
     def get_mqtt_client(self) -> Client:
         """
@@ -242,7 +289,6 @@ class MqttConnector:
         self._mqtt_client.on_unsubscribe = self._on_unsubscribe
         self._mqtt_client.on_subscribe = self._on_subscribe
 
-        self._mqtt_client.subscribe(self._mqtt_secrets["mqtt_topic"])
         self._mqtt_client.connect(
             host=self._mqtt_secrets["mqtt_host"],
             port=self._mqtt_secrets["mqtt_port"],

@@ -16,7 +16,7 @@ To make installation easy there is a PowerShell file that will run the Docker pu
 
 Both `docker-compose.yml` and `solar-logger-build.ps1` can be customized to your personal preferences.
 
-**Note:** To run the SolarLogger you require a `solar.env` file in the same directory that you run the `solar-logger-build.ps1` file, otherwise change the `$EnvFile` variable to reflect the true path.
+**Note:** To run the SolarLogger you require a `.env` file in the same directory that you run the `solar-logger-build.ps1` file, otherwise change the `$EnvFile` variable to reflect the true path.
 
 ```powershell
 # NOTES
@@ -24,7 +24,7 @@ Both `docker-compose.yml` and `solar-logger-build.ps1` can be customized to your
 # ${pwd} - Expands to working directory on Windows IN POWERSHELL
 
 $CurrentDir = ${pwd}
-$EnvFile = "solar.env"
+$EnvFile = ".env"
 $IsFromDockerHub = $TRUE
 $VersionTag = "latest"
 $RestartMode = "unless-stopped"
@@ -103,7 +103,7 @@ All programs below are implemented with a file logger which can be configured th
 
 ### Setup
 
-To start, fill out the `solar.env` template file with personal secrets and copy them to the base directory. Then after running a Docker compose it will use the environmental variables to start the service and start writing data into Influx. You can run the Docker build commands either through the `docker-compose.yml` or `solar-logger-build.ps1` files and both will mount a config and output volume under `/docker-solar-logger/`.
+To start, fill out the `.env` template file with personal secrets and copy them to the base directory. Then after running a Docker compose it will use the environmental variables to start the service and start writing data into Influx. You can run the Docker build commands either through the `docker-compose.yml` or `solar-logger-build.ps1` files and both will mount a config and output volume under `/docker-solar-logger/`.
 
 ### Summary
 
