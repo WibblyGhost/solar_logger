@@ -222,7 +222,9 @@ class MqttConnector:
             )
             dc_time = datetime.fromtimestamp(msg_time)
             dc_payload = PyMateDecoder.dc_decoder(msg_payload)
-            logging.debug(f"Decoded and split {MqttTopics.dc_name} payload: {dc_payload} at {dc_time}")
+            logging.debug(
+                f"Decoded and split {MqttTopics.dc_name} payload: {dc_payload} at {dc_time}"
+            )
             self._load_queue(
                 measurement=MqttTopics.dc_name, time_field=dc_time, payload=dc_payload
             )
@@ -237,7 +239,9 @@ class MqttConnector:
             )
             fx_time = datetime.fromtimestamp(msg_time)
             fx_payload = PyMateDecoder.fx_decoder(msg_payload)
-            logging.debug(f"Decoded and split {MqttTopics.fx_name} payload: {fx_payload} at {fx_time}")
+            logging.debug(
+                f"Decoded and split {MqttTopics.fx_name} payload: {fx_payload} at {fx_time}"
+            )
             self._load_queue(
                 measurement=MqttTopics.fx_name, time_field=fx_time, payload=fx_payload
             )
@@ -252,7 +256,9 @@ class MqttConnector:
             )
             mx_time = datetime.fromtimestamp(msg_time)
             mx_payload = PyMateDecoder.mx_decoder(msg_payload)
-            logging.debug(f"Decoded and split {MqttTopics.mx_name} payload: {mx_payload} at {mx_time}")
+            logging.debug(
+                f"Decoded and split {MqttTopics.mx_name} payload: {mx_payload} at {mx_time}"
+            )
             self._load_queue(
                 measurement=MqttTopics.mx_name, time_field=mx_time, payload=mx_payload
             )
