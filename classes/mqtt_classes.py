@@ -152,7 +152,8 @@ class MqttConnector:
         }
         if return_code == 0:
             logging.info("Connecting to MQTT broker, _on_connect")
-            self._mqtt_client.subscribe(topic=self._mqtt_secrets["mqtt_topic"])
+            topic = f"{self._mqtt_secrets['mqtt_topic']}/#"
+            self._mqtt_client.subscribe(topic=topic)
         else:
             logging.error(
                 f"Couldn't connect to MQTT broker returned code: {return_code}\n"
@@ -274,8 +275,8 @@ class MqttConnector:
                 self._decode_message(msg=msg)
             else:
                 logging.warning(f"{MqttTopics.mate_status} is offline")
-        except Exception as err:
-            logging.exception(f"MQTT on_message raised an exception:\n{err}")
+        except Exception:
+            logging.exception("MQTT on_message raised an exception:")
 
     def get_mqtt_client(self) -> Client:
         """

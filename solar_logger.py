@@ -31,8 +31,8 @@ def run_threaded_influx_writer() -> None:
     try:
         influx_connector.health_check()
         logging.info("Influx health check succeeded")
-    except:
-        logging.exception(f"Failed to complete health check")
+    except Exception:
+        logging.exception("Failed to complete health check")
         thread_events.clear()
         raise
 
@@ -44,9 +44,9 @@ def run_threaded_influx_writer() -> None:
             )
             try:
                 influx_connector.write_points(queue_package=queue_package)
-            except:
+            except Exception:
                 logging.exception(
-                    f"Failed to run write to Influx server, returned error"
+                    "Failed to run write to Influx server, returned error"
                 )
                 time.sleep(1)
             if THREADED_QUEUE.empty():
@@ -71,8 +71,8 @@ def run_threaded_mqtt_client():
     logging.info("Creating MQTT listening service")
     try:
         mqtt_client = mqtt_connector.get_mqtt_client()
-    except:
-        logging.exception(f"Failed to create MQTT listening service")
+    except Exception:
+        logging.exception("Failed to create MQTT listening service")
         thread_events.clear()
         raise
 
@@ -84,8 +84,8 @@ def run_threaded_mqtt_client():
     # on_message() command, in our case we don't want the program to exit so we just log the error.
     try:
         mqtt_client.loop_start()
-    except:
-        logging.exception(f"MQTT listener exited with a fatal error")
+    except Exception:
+        logging.exception("MQTT listener exited with a fatal error")
         thread_events.clear()
         raise
 
