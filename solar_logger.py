@@ -31,9 +31,10 @@ def run_threaded_influx_writer() -> None:
     try:
         influx_connector.health_check()
         logging.info("Influx health check succeeded")
-    except Exception as err:
-        logging.critical(f"Failed to complete health check:\n{err}")
-        raise err
+    except:
+        logging.exception(f"Failed to complete health check")
+        thread_events.clear()
+        raise
 
     while thread_events.is_set():
         if not THREADED_QUEUE.empty():
@@ -43,9 +44,9 @@ def run_threaded_influx_writer() -> None:
             )
             try:
                 influx_connector.write_points(queue_package=queue_package)
-            except Exception as err:
+            except:
                 logging.exception(
-                    f"Failed to run write to Influx server, returned error: \n{err}"
+                    f"Failed to run write to Influx server, returned error"
                 )
                 time.sleep(1)
             if THREADED_QUEUE.empty():
@@ -70,8 +71,10 @@ def run_threaded_mqtt_client():
     logging.info("Creating MQTT listening service")
     try:
         mqtt_client = mqtt_connector.get_mqtt_client()
-    except Exception as err:
-        logging.critical(f"Failed to create MQTT listening service:\n{err}")
+    except:
+        logging.exception(f"Failed to create MQTT listening service")
+        thread_events.clear()
+        raise
 
     # Start MQTT-Listener thread to indefinitley listen to the broker
     # NOTE: This actually runs another thread as a Daemon due to the behavior of loop_start
@@ -81,8 +84,10 @@ def run_threaded_mqtt_client():
     # on_message() command, in our case we don't want the program to exit so we just log the error.
     try:
         mqtt_client.loop_start()
-    except Exception as err:
-        logging.critical(f"MQTT listener exited with a fatal error:\n{err}")
+    except:
+        logging.exception(f"MQTT listener exited with a fatal error")
+        thread_events.clear()
+        raise
 
     # Sleep Thread-MQTT
     while thread_events.is_set():
