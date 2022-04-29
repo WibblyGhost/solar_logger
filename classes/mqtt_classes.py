@@ -7,7 +7,6 @@ https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#que
 
 from dataclasses import dataclass
 import logging
-import ssl
 import struct
 import time
 from datetime import datetime
