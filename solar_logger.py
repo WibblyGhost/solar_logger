@@ -34,7 +34,7 @@ def run_threaded_influx_writer() -> None:
     except Exception:
         logging.exception("Failed to complete health check")
         thread_events.clear()
-        raise
+        return
 
     while thread_events.is_set():
         if not THREADED_QUEUE.empty():
@@ -74,7 +74,7 @@ def run_threaded_mqtt_client():
     except Exception:
         logging.exception("Failed to create MQTT listening service")
         thread_events.clear()
-        raise
+        return
 
     # Start MQTT-Listener thread to indefinitley listen to the broker
     # NOTE: This actually runs another thread as a Daemon due to the behavior of loop_start
@@ -87,7 +87,7 @@ def run_threaded_mqtt_client():
     except Exception:
         logging.exception("MQTT listener exited with a fatal error")
         thread_events.clear()
-        raise
+        return
 
     # Sleep Thread-MQTT
     while thread_events.is_set():
