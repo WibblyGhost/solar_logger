@@ -287,8 +287,6 @@ class MqttConnector:
             username=self._mqtt_secrets["mqtt_user"],
             password=self._mqtt_secrets["mqtt_token"],
         )
-        self._mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
-        self._mqtt_client.tls_insecure_set(True)
 
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_message = self._on_message

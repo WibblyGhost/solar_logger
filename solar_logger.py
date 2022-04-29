@@ -30,9 +30,9 @@ def run_threaded_influx_writer() -> None:
     logging.info("Attempting health check for InfluxDB")
     try:
         influx_connector.health_check()
-        logging.info("Influx health check succeeded")
+        logging.info("InfluxDB health check succeeded")
     except Exception:
-        logging.exception("Failed to complete health check")
+        logging.exception("Failed to complete InfluxDB health check")
         thread_events.clear()
         return
 
