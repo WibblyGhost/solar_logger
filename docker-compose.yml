@@ -13,7 +13,7 @@ services:
     container_name: SolarLogger
     build:
       context: ./
-      dockerfile: solar.dockerfile
+      dockerfile: solar-logger.dockerfile
     volumes:
       - ./docker-solar-logger/output:/app/output:rw
       - ./docker-solar-logger/config:/app/config:rw
