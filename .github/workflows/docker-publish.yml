@@ -68,6 +68,6 @@ jobs:
           context: .
           # push: ${{ github.event_name != 'pull_request' }}
           push: ${{ github.event_name == 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$(date +%s) latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ CI_COMMIT_SHORT_SHA }} latest
           labels: ${{ steps.meta.outputs.labels }}
           file: solar-logger.dockerfile
