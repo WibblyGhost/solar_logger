@@ -7,8 +7,6 @@ name: Docker
 # https://github.com/marketplace/actions/build-and-push-docker-images
 
 on:
-#   schedule:
-#     - cron: '34 4 * * *'
   push:
     branches: [ "main" ]
     # Publish semver tags as releases.
