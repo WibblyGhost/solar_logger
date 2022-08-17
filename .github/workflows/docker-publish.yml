@@ -23,7 +23,6 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,6 +32,10 @@ jobs:
       id-token: write
 
     steps:
+      - name: Downcase Repo Name
+        run: |
+          echo "BUILD_IMAGE_NAME=${github.repository,,}" >>${GITHUB_ENV}
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -68,6 +71,6 @@ jobs:
           context: .
           # push: ${{ github.event_name != 'pull_request' }}
           push: ${{ github.event_name == 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ env.REGISTRY }}/${{ env.BUILD_IMAGE_NAME }}:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           file: solar-logger.dockerfile
