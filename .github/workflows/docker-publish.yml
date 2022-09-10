@@ -21,7 +21,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     only:
-        changes:
+        paths:
           - **.{dockerfile,py,ps1,yml}
     permissions:
       contents: read
