@@ -20,9 +20,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    only:
-        paths:
-          - **.{dockerfile,py,ps1,yml}
+    # only:
+    #     paths:
+    #       - **.{dockerfile,py,ps1,yml}
     permissions:
       contents: read
       packages: write
