@@ -15,7 +15,6 @@ jobs:
         python-version: ["3.10"]
     steps:
     - uses: actions/checkout@v3
-    - uses: dorny/paths-filter@v2
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
@@ -32,6 +31,7 @@ jobs:
         pylint $(git ls-files '*.py')
 
     - name: Output file changes
+      uses: dorny/paths-filter@v2
       id: filter
       with:
         filters: |
