@@ -25,4 +25,5 @@ docker-influxdb/
 
 # Build Files
 *.egg-info/
-build/
+build
+dist

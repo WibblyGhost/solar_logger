@@ -6,10 +6,10 @@ from unittest import mock
 
 import pytest
 from pytest import LogCaptureFixture
-from tests.config.consts import FAKE, TEST_ENV_FULL, TEST_INFLUX_ENV, TEST_MQTT_ENV
 
 from classes.custom_exceptions import MissingCredentialsError
 from classes.py_functions import SecretStore, read_query_settings, write_results_to_csv
+from tests.config.consts import FAKE, TEST_ENV_FULL, TEST_INFLUX_ENV, TEST_MQTT_ENV
 
 
 @mock.patch("classes.py_functions.os.path.exists")
@@ -17,7 +17,6 @@ from classes.py_functions import SecretStore, read_query_settings, write_results
 def test_passes_write_to_csv(exists, caplog: LogCaptureFixture):
     exists.return_value = True
     caplog.set_level(logging.INFO)
-
     with mock.patch(
         "configparser.ConfigParser.read", return_value=FAKE.pystr()
     ) and mock.patch("configparser.ConfigParser.get", return_value=FAKE.pystr()):
@@ -27,10 +26,12 @@ def test_passes_write_to_csv(exists, caplog: LogCaptureFixture):
 
 
 def test_passes_read_query_settings():
-    result = read_query_settings("query_settings")
+    with mock.patch(
+        "configparser.ConfigParser.read", return_value=FAKE.pystr()
+    ) and mock.patch("configparser.ConfigParser.get", return_value=FAKE.pystr()):
+        result = read_query_settings("query_settings")
 
     assert result is not None
-    assert isinstance(result, str)
 
 
 def test_passes_secret_store_reads_env(caplog: LogCaptureFixture):

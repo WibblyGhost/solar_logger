@@ -1,11 +1,11 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
 
 from unittest import mock
-from pymate.value import Value
+
 from paho.mqtt.client import Client
+from pymate.value import Value
 
-from classes.mqtt_classes import PyMateDecoder, MqttConnector
-
+from classes.mqtt_classes import MqttConnector, PyMateDecoder
 from tests.config.consts import TestSecretStore
 
 

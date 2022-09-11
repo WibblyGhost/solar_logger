@@ -5,19 +5,19 @@ Check the Influx query documentation for write syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from dataclasses import dataclass
 import logging
 import struct
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Tuple
 
 from paho.mqtt.client import Client, MQTTMessage
 from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
 
-from classes.py_functions import SecretStore
 from classes.common_classes import QueuePackage
 from classes.consts import QUEUE_WAIT_TIME, THREADED_QUEUE, TIME_PACKET_SIZE
+from classes.py_functions import SecretStore
 
 
 class PyMateDecoder:

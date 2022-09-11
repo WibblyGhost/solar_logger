@@ -33,3 +33,13 @@ services:
       - ./docker-influx-query/output:/app/output:rw
     env_file:
       - .env
+
+  unit-tests:
+    container_name: UnitTests
+    build:
+      context: ./
+      dockerfile: solar-logger.dockerfile
+      target: unit-tests
+    env_file:
+      - .env
+  

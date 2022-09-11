@@ -3,13 +3,13 @@ Classes file, contains methods for the Influx database controller
 to do writes and queries to the database
 """
 
-from datetime import datetime
 import logging
+from datetime import datetime
 
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
-from classes.common_classes import QueuePackage
 
+from classes.common_classes import QueuePackage
 from classes.py_functions import SecretStore
 
 

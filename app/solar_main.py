@@ -7,15 +7,14 @@ import signal
 import threading
 import time
 
-from classes.common_classes import QueuePackage
-from classes.influx_classes import InfluxConnector
-from classes.mqtt_classes import MqttConnector
-from classes.py_functions import SecretStore
-from classes.py_logger import create_logger
-from classes.consts import (
-    SOLAR_DEBUG_CONFIG_TITLE,
-    THREADED_QUEUE,
-)
+from solarlogger.classes.common_classes import QueuePackage
+from solarlogger.classes.consts import SOLAR_DEBUG_CONFIG_TITLE, THREADED_QUEUE
+from solarlogger.classes.influx_classes import InfluxConnector
+from solarlogger.classes.mqtt_classes import MqttConnector
+from solarlogger.classes.py_functions import SecretStore
+from solarlogger.classes.py_logger import create_logger
+
+THREAD_EVENTS = threading.Event()
 
 
 def run_threaded_influx_writer() -> None:
@@ -33,10 +32,10 @@ def run_threaded_influx_writer() -> None:
         logging.info("InfluxDB health check succeeded")
     except Exception:
         logging.exception("Failed to complete InfluxDB health check")
-        thread_events.clear()
+        THREAD_EVENTS.clear()
         return
 
-    while thread_events.is_set():
+    while THREAD_EVENTS.is_set():
         if not THREADED_QUEUE.empty():
             queue_package: QueuePackage = THREADED_QUEUE.get(timeout=1.0)
             logging.debug(
@@ -53,7 +52,7 @@ def run_threaded_influx_writer() -> None:
                 logging.info("Popped all packets off queue and wrote to InfluxDB")
         else:
             time.sleep(0.5)
-    thread_events.clear()
+    THREAD_EVENTS.clear()
 
 
 def run_threaded_mqtt_client():
@@ -73,7 +72,7 @@ def run_threaded_mqtt_client():
         mqtt_client = mqtt_connector.get_mqtt_client()
     except Exception:
         logging.exception("Failed to create MQTT listening service")
-        thread_events.clear()
+        THREAD_EVENTS.clear()
         return
 
     # Start MQTT-Listener thread to indefinitley listen to the broker
@@ -86,18 +85,18 @@ def run_threaded_mqtt_client():
         mqtt_client.loop_start()
     except Exception:
         logging.exception("MQTT listener exited with a fatal error")
-        thread_events.clear()
+        THREAD_EVENTS.clear()
         return
 
     # Sleep Thread-MQTT
-    while thread_events.is_set():
+    while THREAD_EVENTS.is_set():
         time.sleep(1)
 
     # Stops the extra MQTT-Listener thread gracefully
     if mqtt_client:
         mqtt_client.loop_stop()
     logging.info("Joined thread: MQTT-Listener")
-    thread_events.clear()
+    THREAD_EVENTS.clear()
 
 
 def sigterm_handler(_signo, _stack_frame) -> None:
@@ -106,7 +105,7 @@ def sigterm_handler(_signo, _stack_frame) -> None:
     """
     logging.critical("Received SIGTERM, shutting down")
     time.sleep(1)
-    thread_events.clear()
+    THREAD_EVENTS.clear()
 
 
 def sigint_handler(_signo, _stack_frame) -> None:
@@ -115,7 +114,7 @@ def sigint_handler(_signo, _stack_frame) -> None:
     """
     logging.critical("Received SIGINT/CTRL+C quit code, shutting down")
     time.sleep(1)
-    thread_events.clear()
+    THREAD_EVENTS.clear()
 
 
 def main() -> None:
@@ -125,6 +124,20 @@ def main() -> None:
     NOTE: This program actually uses four threads not three due to the behavior
         of the MQTT loop_start() function
     """
+    logging = create_logger(SOLAR_DEBUG_CONFIG_TITLE)
+    logging.logThreads = True
+    THREAD_EVENTS.set()
+    logging.info("Created thread list")
+    thread_list = [
+        threading.Thread(
+            name="Thread-Influx",
+            target=run_threaded_influx_writer,
+        ),
+        threading.Thread(
+            name="Thread-MQTT", target=run_threaded_mqtt_client, daemon=True
+        ),
+    ]
+
     signal.signal(signal.SIGTERM, sigterm_handler)
     signal.signal(signal.SIGINT, sigint_handler)
 
@@ -136,13 +149,13 @@ def main() -> None:
 
     # Put main thread to sleep
     logging.info("Main thread entering blocking loop")
-    while thread_events.is_set():
+    while THREAD_EVENTS.is_set():
         time.sleep(1)
     logging.info("Main thread exited blocking loop")
 
     # Gracefull terminate all threads
     logging.info("Clearing thread events, gracefully terminating all threads")
-    thread_events.clear()
+    THREAD_EVENTS.clear()
 
     # Closing threads
     for thread in thread_list:
@@ -153,18 +166,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    logging = create_logger(SOLAR_DEBUG_CONFIG_TITLE)
-    logging.logThreads = True
-    thread_events = threading.Event()
-    thread_events.set()
-    logging.info("Created thread list")
-    thread_list = [
-        threading.Thread(
-            name="Thread-Influx",
-            target=run_threaded_influx_writer,
-        ),
-        threading.Thread(
-            name="Thread-MQTT", target=run_threaded_mqtt_client, daemon=True
-        ),
-    ]
     main()
