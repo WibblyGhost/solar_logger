@@ -1,25 +1,21 @@
 name: Docker
 
 on:
-  workflow_run:
-    workflows: ["PyLint"]
-    types:
-      - completed
-    push:
-      branches: [ "main" ]
-      tags: [ 'v*.*.*' ]
-      paths:
-        - '**.dockerfile'
-        - '**.py'
-        - '**.ps1'
-        - '**.yml'
-    pull_request:
-      branches: [ "main" ]
-      paths:
-        - '**.dockerfile'
-        - '**.py'
-        - '**.ps1'
-        - '**.yml'
+  push:
+    branches: [ "main" ]
+    tags: [ 'v*.*.*' ]
+    paths:
+      - '**.dockerfile'
+      - '**.py'
+      - '**.ps1'
+      - '**.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - '**.dockerfile'
+      - '**.py'
+      - '**.ps1'
+      - '**.yml'
 
 env:
   REGISTRY: ghcr.io
