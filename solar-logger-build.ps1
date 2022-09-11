@@ -36,7 +36,7 @@ docker volume create --driver local --opt type=none --opt device="${CurrentDir}/
 
 # Run the Docker image with an environment file, output folder and config folder
 if ($Development) {
-    docker build . -f solar.dockerfile -t wibblyghost/solar-logger
+    docker build . -f solar.dockerfile -t wibblyghost/solar-logger --target solar-logger
 } elseif (${IsFromDockerHub}) {
     # If the image is built from Docker hub
     docker run -d --name solar-logger --restart="${RestartMode}" --env-file "${EnvFile}" --volume "SolarLogger-Config:/app/config" --volume "SolarLogger-Output:/app/output" wibblyghost/solar-logger:"${VersionTag}"

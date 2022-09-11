@@ -5,3 +5,5 @@ black
 faker
 pytest
 pytest-coverage
+
+-r requirements.txt

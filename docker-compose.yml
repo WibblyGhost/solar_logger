@@ -14,6 +14,7 @@ services:
     build:
       context: ./
       dockerfile: solar-logger.dockerfile
+      target: solar-logger
     volumes:
       - ./docker-solar-logger/output:/app/output:rw
       - ./docker-solar-logger/config:/app/config:rw
@@ -26,7 +27,8 @@ services:
     tty: true
     build:
       context: ./
-      dockerfile: influx-query.dockerfile
+      dockerfile: solar-logger.dockerfile
+      target: influx-query
     volumes:
       - ./docker-influx-query/output:/app/output:rw
     env_file:
