@@ -4,6 +4,7 @@ __pycache__/
 .idea/
 .vscode/
 venv/
+*.venv/
 *.py[cod]
 
 # Secret files
