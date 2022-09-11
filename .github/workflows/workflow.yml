@@ -1,14 +1,6 @@
 name: Docker
 
-on:
-  push:
-    branches: [ "main" ]
-    tags: [ 'v*.*.*' ]
-    paths:
-      - '**.dockerfile'
-      - '**.py'
-      - '**.ps1'
-      - '**.yml'
+on: [push]
 
 env:
   REGISTRY: ghcr.io
@@ -48,6 +40,17 @@ jobs:
       id-token: write
 
     steps:
+      - uses: actions/checkout@v2
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            general:
+              - '**.dockerfile'
+              - '**.py'
+              - '**.ps1'
+              - '**.yml'
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
