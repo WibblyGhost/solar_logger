@@ -31,8 +31,9 @@ jobs:
         pylint $(git ls-files '*.py')
 
     - name: Output file changes
-      uses: actions/checkout@v2
-      uses: dorny/paths-filter@v2
+      uses: |
+        actions/checkout@v2
+        dorny/paths-filter@v2
       id: filter
       with:
         filters: |
