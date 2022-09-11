@@ -4,12 +4,16 @@ on:
   push:
     branches: [ "main" ]
     tags: [ 'v*.*.*' ]
+    paths:
+      - **.{dockerfile,py,ps1,yml}
   pull_request:
     branches: [ "main" ]
-  # workflow_run:
-  #   workflows: ["PyLint"]
-  #   types:
-  #     - completed
+    paths:
+      - **.{dockerfile,py,ps1,yml}
+  workflow_run:
+    workflows: ["PyLint"]
+    types:
+      - completed
 
 
 env:
@@ -20,9 +24,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # only:
-    #     paths:
-    #       - **.{dockerfile,py,ps1,yml}
     permissions:
       contents: read
       packages: write
