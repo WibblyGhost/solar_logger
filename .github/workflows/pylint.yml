@@ -1,4 +1,4 @@
-name: PyLint & Tests
+name: PyLint
 
 on: 
   push:
@@ -28,7 +28,3 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
-
-    # - name: Run Tests & Coverage
-    #   run: |
-    #     pytest --cov ./
