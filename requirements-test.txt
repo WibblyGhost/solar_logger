@@ -1,3 +1,7 @@
+# Formatting
+pylint
+black
+
 faker
 pytest
 pytest-coverage
