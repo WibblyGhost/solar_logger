@@ -71,6 +71,7 @@ jobs:
         uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
         with:
           context: .
+          push: true
           tags: ${{ env.REGISTRY }}/${{ steps.vars.outputs.image_path }}:${{ steps.vars.outputs.tag_name }}
           labels: ${{ steps.meta.outputs.labels }}
           file: solar-logger.dockerfile
