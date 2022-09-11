@@ -8,7 +8,7 @@ env:
 
 
 jobs:
-  code-lint:
+  job1:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -33,7 +33,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: code-lint
+    needs: job1
     on:
       push:
         branches: [ "main" ]
