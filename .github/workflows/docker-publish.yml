@@ -5,17 +5,17 @@ on:
     branches: [ "main" ]
     tags: [ 'v*.*.*' ]
     paths:
-      - **.dockerfile
-      - **.py
-      - **.ps1
-      - **.yml
+      - '**.dockerfile'
+      - '**.py'
+      - '**.ps1'
+      - '**.yml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - **.dockerfile
-      - **.py
-      - **.ps1
-      - **.yml
+      - '**.dockerfile'
+      - '**.py'
+      - '**.ps1'
+      - '**.yml'
   # workflow_run:
   #   workflows: ["PyLint"]
   #   types:
