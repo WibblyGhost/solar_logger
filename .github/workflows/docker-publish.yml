@@ -9,6 +9,10 @@ on:
       - '**.py'
       - '**.ps1'
       - '**.yml'
+    workflow_run:
+      workflows: ["PyLint"]
+      types:
+        - completed
   pull_request:
     branches: [ "main" ]
     paths:
@@ -16,7 +20,10 @@ on:
       - '**.py'
       - '**.ps1'
       - '**.yml'
-
+    workflow_run:
+      workflows: ["PyLint"]
+      types:
+        - completed
 
 env:
   REGISTRY: ghcr.io
