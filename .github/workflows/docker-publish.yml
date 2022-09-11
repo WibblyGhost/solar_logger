@@ -16,10 +16,6 @@ on:
       - '**.py'
       - '**.ps1'
       - '**.yml'
-  # workflow_run:
-  #   workflows: ["PyLint"]
-  #   types:
-  #     - completed
 
 
 env:
