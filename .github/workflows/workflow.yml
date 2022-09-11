@@ -8,7 +8,7 @@ env:
 
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -29,7 +29,6 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
-
 
   # build:
   #   runs-on: ubuntu-latest
