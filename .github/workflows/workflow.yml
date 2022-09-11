@@ -30,9 +30,23 @@ jobs:
       run: |
         pylint $(git ls-files '*.py')
 
+    - name: Output file changes
+      uses: actions/checkout@v2
+      uses: dorny/paths-filter@v2
+      id: filter
+      with:
+        filters: |
+          file-changes:
+            - '**.dockerfile'
+            - '**.py'
+            - '**.ps1'
+            - '**.yml'
+
+
   build:
     runs-on: ubuntu-latest
     needs: lint
+    if: jobs.lint.outputs.file-changes == 'true'
 
     permissions:
       contents: read
@@ -40,17 +54,6 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            general:
-              - '**.dockerfile'
-              - '**.py'
-              - '**.ps1'
-              - '**.yml'
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
