@@ -36,7 +36,7 @@ jobs:
         id: vars
         run: |
           echo "::set-output name=image_path::${IMAGE_NAME,,}"
-          [ ${{ github.event_name }} == 'pull_request'] && echo "::set-output name=tag_name::$(git rev-parse --short HEAD)" || echo "::set-output name=tag_name::latest"
+          [ ${{ github.event_name }} == 'pull_request' ] && echo "::set-output name=tag_name::$(git rev-parse --short HEAD)" || echo "::set-output name=tag_name::latest"
 
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@79abd3f86f79a9d68a23c75a09a9a85889262adf
