@@ -36,10 +36,10 @@ jobs:
       with:
         filters: |
           file-changes:
-            - '**.dockerfile'
-            - '**.py'
-            - '**.ps1'
-            - '**.yml'
+            - '*.dockerfile'
+            - '*.py'
+            - '*.ps1'
+            - '*.yml'
 
 
   build:
