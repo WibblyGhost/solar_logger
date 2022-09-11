@@ -38,7 +38,7 @@ jobs:
 
       - name: Set lower case owner name
         id: lowercase
-        run: echo "::set-output name=image_name_lc::$(IMAGE_NAME,,)"
+        run: echo "::set-output name=image_name_lc::$(${IMAGE_NAME,,})"
         env: 
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
         # run: |
