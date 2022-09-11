@@ -1,8 +1,10 @@
 # Solar Logger
+
 ![slice3](https://user-images.githubusercontent.com/47839859/161478218-66dbca5d-5277-479e-8144-1c017c92fbd3.png)
 
-[![Pylint](https://github.com/WibblyGhost/solar_logger/actions/workflows/pylint.yml/badge.svg)](https://github.com/WibblyGhost/solar_logger/actions/workflows/pylint.yml)
-[![Docker Image CI](https://github.com/WibblyGhost/solar_logger/actions/workflows/docker.yml/badge.svg)](https://github.com/WibblyGhost/solar_logger/actions/workflows/docker.yml)
+[![CI Deployment](https://github.com/WibblyGhost/solar_logger/actions/workflows/workflow.yml/badge.svg)](https://github.com/WibblyGhost/solar_logger/actions/workflows/workflow.yml)
+<!-- [![Pylint](https://github.com/WibblyGhost/solar_logger/actions/workflows/pylint.yml/badge.svg)](https://github.com/WibblyGhost/solar_logger/actions/workflows/pylint.yml) -->
+<!-- [![Docker Image CI](https://github.com/WibblyGhost/solar_logger/actions/workflows/docker.yml/badge.svg)](https://github.com/WibblyGhost/solar_logger/actions/workflows/docker.yml) -->
 
 ## Info
 
