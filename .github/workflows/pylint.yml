@@ -1,14 +1,15 @@
 name: PyLint
 
-on: [push]
+on: 
+  push:
+    changes:
+      - '**.py'
+      - '**.yml'
+
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    only:
-      changes:
-        - '**.py'
-        - '**.yml'
     strategy:
       matrix:
         python-version: ["3.10"]
