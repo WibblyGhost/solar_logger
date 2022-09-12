@@ -119,7 +119,9 @@ jobs:
         pip install build gitpython wheel
 
     - name: Tag Version File
-      run: echo VERSION = "'$(git describe --tags)'" > __version__.py
+      run:  |
+        git fetch --tags
+        echo VERSION = "'$(git describe --tags)'" > __version__.py
 
     - name: Build package
       run: python setup.py sdist
