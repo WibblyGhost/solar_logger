@@ -4,7 +4,6 @@ Setup instructions for package management
 import setuptools
 from git import Repo
 
-
 PACKAGE_NAME = "solar_logger"
 PACKAGE_DIR = "."
 EXCLUDED_PACKAGES = ["*tests*"]

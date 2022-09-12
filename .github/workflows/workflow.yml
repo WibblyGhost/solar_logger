@@ -41,6 +41,8 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
+        isort --check $(git ls-files '*.py')
+        black --check $(git ls-files '*.py')
 
   BuildDocker:
     runs-on: ubuntu-latest

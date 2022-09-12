@@ -4,16 +4,10 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from classes.consts import (
-    INFLUX_DEBUG_CONFIG_TITLE,
-    INFLUX_QUERY_CONFIG_TITLE,
-)
+from classes.common_classes import SecretStore
+from classes.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 from classes.influx_classes import InfluxConnector
-from classes.py_functions import (
-    SecretStore,
-    read_query_settings,
-    write_results_to_csv,
-)
+from classes.py_functions import read_query_settings, write_results_to_csv
 from classes.py_logger import create_logger
 from classes.query_classes import QueryBuilder
 

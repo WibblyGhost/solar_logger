@@ -1,7 +1,9 @@
 # Formatting
 pylint
 black
+isort
 
+gitpython
 faker
 pytest
 pytest-coverage

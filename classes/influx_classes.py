@@ -9,8 +9,7 @@ from datetime import datetime
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-from classes.common_classes import QueuePackage
-from classes.py_functions import SecretStore
+from classes.common_classes import QueuePackage, SecretStore
 
 
 class InfluxConnector:
