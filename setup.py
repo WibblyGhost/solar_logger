@@ -1,3 +1,4 @@
+# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
 """
 Setup instructions for package management
 """
@@ -17,6 +18,7 @@ def get_git_version():
     assert not repo.bare
     available_tags = repo.git.describe("--tags")
     return available_tags
+
 
 setuptools.setup(
     name=PACKAGE_NAME.lower(),
