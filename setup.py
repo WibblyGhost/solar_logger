@@ -16,7 +16,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 with open("__version__.py", "r") as fh:
     version = fh.read()
-    version = version.split("=")[1]
+    version = version.split(" = ")[1]
     VERSION = re.sub("[\"']", "", version)
 
 
