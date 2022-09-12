@@ -7,12 +7,12 @@ import signal
 import threading
 import time
 
-from solarlogger.classes.common_classes import QueuePackage
-from solarlogger.classes.consts import SOLAR_DEBUG_CONFIG_TITLE, THREADED_QUEUE
-from solarlogger.classes.influx_classes import InfluxConnector
-from solarlogger.classes.mqtt_classes import MqttConnector
-from solarlogger.classes.py_functions import SecretStore
-from solarlogger.classes.py_logger import create_logger
+from classes.common_classes import QueuePackage
+from classes.consts import SOLAR_DEBUG_CONFIG_TITLE, THREADED_QUEUE
+from classes.influx_classes import InfluxConnector
+from classes.mqtt_classes import MqttConnector
+from classes.py_functions import SecretStore
+from classes.py_logger import create_logger
 
 THREAD_EVENTS = threading.Event()
 

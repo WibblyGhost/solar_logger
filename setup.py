@@ -2,18 +2,28 @@
 Setup instructions for package management
 """
 import setuptools
+from git import Repo
+
+
 
 PACKAGE_NAME = "Solar-Logger"
 PACKAGE_DIR = "."
 EXCLUDED_PACKAGES = ["*tests*"]
-VERSION = "1.0.0"
+VERSION = "0.0.0"
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+
+def get_git_version():
+    repo = Repo()
+    assert not repo.bare
+    available_tags = repo.git.describe("--tags")
+    return available_tags[-1]
+
 setuptools.setup(
     name=PACKAGE_NAME,
-    version=VERSION,
+    version=get_git_version(),
     author="Zach Sanson",
     author_email="zac@sanson.co.nz",
     description="MQTT to Influx DB converter for Outback solar controller",

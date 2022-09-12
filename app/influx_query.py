@@ -4,18 +4,18 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from solarlogger.classes.consts import (
+from classes.consts import (
     INFLUX_DEBUG_CONFIG_TITLE,
     INFLUX_QUERY_CONFIG_TITLE,
 )
-from solarlogger.classes.influx_classes import InfluxConnector
-from solarlogger.classes.py_functions import (
+from classes.influx_classes import InfluxConnector
+from classes.py_functions import (
     SecretStore,
     read_query_settings,
     write_results_to_csv,
 )
-from solarlogger.classes.py_logger import create_logger
-from solarlogger.classes.query_classes import QueryBuilder
+from classes.py_logger import create_logger
+from classes.query_classes import QueryBuilder
 
 
 class ParseQuery:
