@@ -5,11 +5,9 @@ import setuptools
 from git import Repo
 
 
-
-PACKAGE_NAME = "Solar-Logger"
+PACKAGE_NAME = "solar_logger"
 PACKAGE_DIR = "."
 EXCLUDED_PACKAGES = ["*tests*"]
-VERSION = "0.0.0"
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -19,10 +17,10 @@ def get_git_version():
     repo = Repo()
     assert not repo.bare
     available_tags = repo.git.describe("--tags")
-    return available_tags[-1]
+    return available_tags
 
 setuptools.setup(
-    name=PACKAGE_NAME,
+    name=PACKAGE_NAME.lower(),
     version=get_git_version(),
     author="Zach Sanson",
     author_email="zac@sanson.co.nz",
