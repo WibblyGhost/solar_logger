@@ -2,19 +2,6 @@ name: Docker
 
 on: [push]
 
-# Unstable
-# on:
-#   push:
-#     branches: [ "main" ]
-#     tags: [ 'v*.*.*' ]
-#   pull_request:
-#     branches: [ "main" ]
-#     paths:
-#       - '**.dockerfile'
-#       - '**.py'
-#       - '**.ps1'
-#       - '**.yml'
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
