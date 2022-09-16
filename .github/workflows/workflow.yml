@@ -31,7 +31,7 @@ jobs:
         isort --check $(git ls-files '*.py')
         black --check $(git ls-files '*.py')
 
-  Publish Docker Image:
+  Publish-Docker-Image:
     runs-on: ubuntu-latest
     needs: PyLint
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
@@ -91,7 +91,7 @@ jobs:
           file: solar-logger.dockerfile
           target: solar-logger
 
-  Publish PyPi Package:
+  Publish-PyPi-Package:
     runs-on: ubuntu-latest
     needs: PyLint
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
