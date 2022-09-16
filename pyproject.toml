@@ -30,7 +30,7 @@ ignore=[
 
 [tool.pylint.main]
 # Specify a score threshold under which the program will exit with error.
-fail-under = 90
+fail-under = 10
 # Files or directories to be skipped. They should be base names, not paths.
 ignore = ["CVS"]
 # Files or directories matching the regular expression patterns are skipped. The
