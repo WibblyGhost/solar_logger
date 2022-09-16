@@ -49,8 +49,6 @@ jobs:
         id: vars
         run: |
           echo "::set-output name=image_path::${IMAGE_NAME,,}"
-          echo ${{ github.ref }}
-          echo "::set-output name=tag_name::$(git describe --tags -f)"
 
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@79abd3f86f79a9d68a23c75a09a9a85889262adf
@@ -105,8 +103,8 @@ jobs:
 
     - name: Tag Version File
       run:  |
-        git fetch --tags
-        echo VERSION = "'$(git describe --tags -f)'" > __version__.py
+        git fetch --tags -f
+        echo VERSION = "'$(git describe --tags)'" > __version__.py
 
     - name: Build package
       run: python setup.py sdist
