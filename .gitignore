@@ -22,3 +22,8 @@ htmlcov/
 # Docker Mappings
 docker-solar-logger/
 docker-influxdb/
+
+# Build Files
+*.egg-info/
+build
+dist

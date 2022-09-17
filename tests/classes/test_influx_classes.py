@@ -5,12 +5,12 @@ import logging
 from unittest import mock
 
 import pytest
-from influxdb_client import WriteApi, QueryApi
+from influxdb_client import QueryApi, WriteApi
 from pytest import LogCaptureFixture
-from tests.config.consts import FAKE, TestSecretStore
 
 from classes.common_classes import QueuePackage
 from classes.influx_classes import InfluxConnector
+from tests.config.consts import FAKE, TestSecretStore
 
 
 def test_passes_connector_init(caplog: LogCaptureFixture):

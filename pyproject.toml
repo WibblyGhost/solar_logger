@@ -1,0 +1,63 @@
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--cov-report=xml --cov-report=term --cov"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["app", "classes"]
+omit = [
+    "tests",
+    "config",
+    "*/py_logger.py",
+    "*/__init__.py",
+]
+
+[tool.isort]
+profile = "black"
+src_paths = ["classes", "app", "tests"]
+skip_glob = ["*.venv/*"]
+skip_gitignore = true
+multi_line_output = 5
+overwrite_in_place = true
+
+[tool.pylint.master]
+ignore=[
+    ".pytest_cache",
+    ".venv",
+    ".github",
+]
+# init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.append(os.path.dirname(find_pylintrc()))"
+
+[tool.pylint.main]
+# Specify a score threshold under which the program will exit with error.
+fail-under = 10
+# Files or directories to be skipped. They should be base names, not paths.
+ignore = ["CVS"]
+# Files or directories matching the regular expression patterns are skipped. The
+# regex matches against base names, not paths. The default value ignores Emacs
+# file locks
+ignore-patterns = ["^\\.#", "^.*\\.venv{1}"]
+# Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
+# number of processors available to use, and will cap the count on Windows to
+# avoid hangs.
+jobs = 0
+# Minimum Python version to use for version dependent checks. Will default to the
+# version used to run pylint.
+py-version = "3.10"
+# Discover python modules and packages in the file system subtree.
+recursive = true
+
+[tool.pylint."messages control"]
+# Disable the following warnings
+disable = [
+    "logging-fstring-interpolation",
+    "unspecified-encoding",
+    "too-many-instance-attributes",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "broad-except",
+]
+
+[tool.pylint.format]
+# Maximum number of characters on a single line.
+max-line-length = 120
