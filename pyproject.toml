@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--cov-report=xml --cov-report=term --cov-report=html --cov"
+addopts = "-r sxX --cov-report=xml --cov-report=term --cov-report=html --cov"
 testpaths = ["tests"]
 
 [tool.coverage.run]
@@ -17,7 +17,6 @@ profile = "black"
 src_paths = ["classes", "app", "tests"]
 skip_glob = ["*.venv/*"]
 skip_gitignore = true
-multi_line_output = 5
 overwrite_in_place = true
 
 [tool.pylint.master]

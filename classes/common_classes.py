@@ -74,7 +74,9 @@ class SecretStore:
         try:
             mqtt_port = int(os.environ.get("MQTT_PORT"))
             if mqtt_port not in range(0, MAX_PORT_RANGE):
-                logging.critical( f"MQTT port outside maximum port range, 0-{MAX_PORT_RANGE}")
+                logging.critical(
+                    f"MQTT port outside maximum port range, 0-{MAX_PORT_RANGE}"
+                )
                 raise MissingCredentialsError(
                     f"MQTT port outside maximum port range, 0-{MAX_PORT_RANGE}"
                 )

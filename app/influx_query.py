@@ -12,7 +12,7 @@ from classes.py_logger import create_logger
 from classes.query_classes import QueryBuilder
 
 
-class ParseQuery:
+class QueryParser:
     """
     Contains all subfunctions which parse the query results
     """
@@ -77,12 +77,12 @@ def execute_query(query: QueryBuilder) -> None:
         raise err
 
     if query_mode == "csv":
-        ParseQuery.parse_csv(query_result=query_result)
+        QueryParser.parse_csv(query_result=query_result)
     elif query_mode == "flux":
-        flux = ParseQuery.parse_flux(query_result=query_result)
+        flux = QueryParser.parse_flux(query_result=query_result)
         print(flux)
     else:
-        ParseQuery.parse_stream(query_result=query_result)
+        QueryParser.parse_stream(query_result=query_result)
 
 
 def run_example() -> None:

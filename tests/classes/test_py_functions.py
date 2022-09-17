@@ -3,7 +3,7 @@
 import logging
 from unittest import mock
 
-from pytest import LogCaptureFixture, raises, mark
+from pytest import LogCaptureFixture, mark, raises
 
 from classes.py_functions import read_query_settings, write_results_to_csv
 from tests.config.consts import FAKE
@@ -21,14 +21,16 @@ def test_passes_write_to_csv(_mock_exists, caplog: LogCaptureFixture):
     assert "Wrote rows into CSV file at:" in caplog.text
 
 
-@mark.xfail(reason="test_passes_makes_dir_when_not_existent currently isn't implemented")
+@mark.xfail(
+    reason="test_passes_makes_dir_when_not_existent currently isn't implemented"
+)
 @mock.patch("classes.py_functions.os.makedirs")
 @mock.patch("classes.py_functions.open", mock.mock_open())
 def test_passes_makes_dir_when_not_existent(mock_makedirs, caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     mock_makedirs.side_effect = mock.MagicMock()
     file_path = FAKE.pystr()
-    
+
     with mock.patch(
         "configparser.ConfigParser.read", return_value=FAKE.pystr()
     ) and mock.patch("configparser.ConfigParser.get", return_value=file_path):
@@ -42,7 +44,7 @@ def test_passes_makes_dir_when_not_existent(mock_makedirs, caplog: LogCaptureFix
 @mock.patch("classes.py_functions.open", side_effect=FileNotFoundError)
 def test_fails_write_to_csv(_mock_exists, _mock_open, caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
- 
+
     with mock.patch(
         "configparser.ConfigParser.read", return_value=FAKE.pystr()
     ) and mock.patch("configparser.ConfigParser.get", return_value=FAKE.pystr()):
