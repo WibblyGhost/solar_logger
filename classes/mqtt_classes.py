@@ -121,7 +121,7 @@ class MqttConnector:
         self._mqtt_client = Client()
 
     @staticmethod
-    def _on_subscribe(_client, _userdata, _mid, granted_qos) -> None:
+    def _on_subscribe(_client, _userdata, _mid, granted_qos) -> None:  # pragma: no cover
         """
         Logs when the MQTT client calls on_subscribe
         """
@@ -129,7 +129,7 @@ class MqttConnector:
         logging.info(f"MQTT topic returns QoS level of {granted_qos}")
 
     @staticmethod
-    def _on_unsubscribe(_client, _userdata, _mid) -> None:
+    def _on_unsubscribe(_client, _userdata, _mid) -> None:  # pragma: no cover
         """
         Logs when MQTT calls on_unsubscribe
         """

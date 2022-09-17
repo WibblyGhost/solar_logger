@@ -4,62 +4,65 @@ import os
 from sys import platform
 from unittest import mock
 
-import pytest
-from pytest import LogCaptureFixture
+from pytest import LogCaptureFixture, raises, mark
 
 from classes.common_classes import SecretStore
 from classes.custom_exceptions import MissingCredentialsError
-from tests.config.consts import TEST_ENV_FULL, TEST_INFLUX_ENV, TEST_MQTT_ENV
+from tests.config.consts import TEST_EMPTY_ENV, TEST_ENV_FULL, TEST_INFLUX_ENV, TEST_MQTT_ENV, TEST_MAX_PORT_RANGE
 
 
-@pytest.mark.skipif(
-    platform == "linux",
-    reason="test_passes_secret_store_reads_env currently doesn't work on Linux due to patching os.enviro",
-)
-def test_passes_secret_store_reads_env(caplog: LogCaptureFixture):
+def test_passes_secret_store_reads_full_env(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
+    full_env_copy = TEST_ENV_FULL.copy()
+    full_env_copy["MQTT_PORT"] = int(TEST_ENV_FULL["MQTT_PORT"])
+    full_env_copy = {key.lower(): value for key, value in full_env_copy.items()}
 
     with mock.patch.dict(os.environ, TEST_ENV_FULL):
         secret_store = SecretStore(has_mqtt_access=True, has_influx_access=True)
     joined_secret_store = dict(secret_store.influx_secrets, **secret_store.mqtt_secrets)
-    test_env_copy = TEST_ENV_FULL.copy()
-    test_env_copy["mqtt_port"] = int(TEST_ENV_FULL["mqtt_port"])
 
     assert "Reading MQTT environment variables" in caplog.text
     assert "Reading Influx environment variables" in caplog.text
-    assert joined_secret_store == test_env_copy
+    assert joined_secret_store == full_env_copy
 
 
-@pytest.mark.skipif(
-    platform == "linux",
-    reason="test_passes_secret_store_reads_mqtt_env currently doesn't work on Linux due to patching os.enviro",
-)
 def test_passes_secret_store_reads_mqtt_env(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
-
-    with mock.patch.dict(os.environ, TEST_ENV_FULL):
-        secret_store = SecretStore(has_mqtt_access=True)
     mqtt_env_copy = TEST_MQTT_ENV.copy()
-    mqtt_env_copy["mqtt_port"] = int(TEST_MQTT_ENV["mqtt_port"])
+    mqtt_env_copy["MQTT_PORT"] = int(TEST_MQTT_ENV["MQTT_PORT"])
+    mqtt_env_copy = {key.lower(): value for key, value in mqtt_env_copy.items()}
+
+    with mock.patch.dict(os.environ, TEST_MQTT_ENV):
+        secret_store = SecretStore(has_mqtt_access=True)
 
     assert "Reading MQTT environment variables" in caplog.text
     assert "Reading Influx environment variables" not in caplog.text
     assert secret_store.mqtt_secrets == mqtt_env_copy
 
 
-@pytest.mark.skipif(
-    platform == "linux",
-    reason="test_passes_secret_store_reads_influx_env currently doesn't work on Linux due to patching os.environ",
-)
 def test_passes_secret_store_reads_influx_env(caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
-
-    with mock.patch.dict(os.environ, TEST_ENV_FULL):
+    influx_env_copy = TEST_INFLUX_ENV.copy()
+    influx_env_copy = {key.lower(): value for key, value in influx_env_copy.items()}
+    
+    with mock.patch.dict(os.environ, TEST_INFLUX_ENV):
         secret_store = SecretStore(has_influx_access=True)
 
     assert "Reading MQTT environment variables" not in caplog.text
     assert "Reading Influx environment variables" in caplog.text
-    assert secret_store.influx_secrets == TEST_INFLUX_ENV
+    assert secret_store.influx_secrets == influx_env_copy
+
+
+def test_fails_mqtt_env_contains_bad_port(caplog: LogCaptureFixture):
+    caplog.set_level(logging.CRITICAL)
+    mqtt_env_copy = TEST_MQTT_ENV.copy()
+    mqtt_env_copy["MQTT_PORT"] = str(TEST_MAX_PORT_RANGE + 5)
+    
+    with mock.patch.dict(os.environ, mqtt_env_copy):
+        with raises(MissingCredentialsError):
+            _ = SecretStore(has_mqtt_access=True)
+
+    assert f"MQTT port outside maximum port range, 0-{TEST_MAX_PORT_RANGE}" in caplog.text
 
 
 def test_fails_secret_store_reads_none(caplog: LogCaptureFixture):
@@ -72,15 +75,34 @@ def test_fails_secret_store_reads_none(caplog: LogCaptureFixture):
     assert "Reading Influx environment variables" not in caplog.text
 
 
-def test_fails_secret_store_empty_values(caplog: LogCaptureFixture):
+def test_fails_secret_store_reads_empty_mqtt_env(caplog: LogCaptureFixture):
     caplog.set_level(logging.CRITICAL)
 
+    with mock.patch.dict(os.environ, TEST_EMPTY_ENV):
+        with raises(MissingCredentialsError):
+            _ = SecretStore(has_mqtt_access=True)
+
+    assert "Ran into error when reading environment variables" in caplog.text
+
+
+def test_fails_secret_store_reads_empty_influx_env(caplog: LogCaptureFixture):
+    caplog.set_level(logging.CRITICAL)
+
+    with mock.patch.dict(os.environ, TEST_EMPTY_ENV):
+        with raises(MissingCredentialsError):
+            _ = SecretStore(has_influx_access=True)
+
+    assert "Ran into error when reading environment variables" in caplog.text
+
+
+def test_fails_secret_store_empty_values(caplog: LogCaptureFixture):
+    caplog.set_level(logging.CRITICAL)
     mqtt_env_copy = TEST_ENV_FULL.copy()
-    mqtt_env_copy["mqtt_user"] = ""
-    mqtt_env_copy["influx_url"] = ""
+    mqtt_env_copy["MQTT_USER"] = ""
+    mqtt_env_copy["INFLUX_URL"] = ""
 
     with mock.patch.dict(os.environ, mqtt_env_copy):
-        with pytest.raises(MissingCredentialsError) as err:
+        with raises(MissingCredentialsError) as err:
             _ = SecretStore(has_mqtt_access=True, has_influx_access=True)
 
     assert "Ran into error when reading environment variables" in caplog.text

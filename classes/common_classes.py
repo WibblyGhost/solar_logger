@@ -74,7 +74,8 @@ class SecretStore:
         try:
             mqtt_port = int(os.environ.get("MQTT_PORT"))
             if mqtt_port not in range(0, MAX_PORT_RANGE):
-                raise ValueError(
+                logging.critical( f"MQTT port outside maximum port range, 0-{MAX_PORT_RANGE}")
+                raise MissingCredentialsError(
                     f"MQTT port outside maximum port range, 0-{MAX_PORT_RANGE}"
                 )
             self._mqtt_secrets = {
@@ -84,8 +85,9 @@ class SecretStore:
                 "mqtt_token": os.environ.get("MQTT_TOKEN"),
                 "mqtt_topic": os.environ.get("MQTT_TOPIC"),
             }
+            assert None not in self._mqtt_secrets.values()
             assert "" not in self._mqtt_secrets.values()
-        except Exception as err:
+        except (AssertionError, TypeError) as err:
             logging.critical("Ran into error when reading environment variables")
             raise MissingCredentialsError(
                 "Ran into error when reading environment variables"
@@ -103,8 +105,9 @@ class SecretStore:
                 "influx_bucket": os.environ.get("INFLUX_BUCKET"),
                 "influx_token": os.environ.get("INFLUX_TOKEN"),
             }
+            assert None not in self._influx_secrets.values()
             assert "" not in self._influx_secrets.values()
-        except Exception as err:
+        except AssertionError as err:
             logging.critical("Ran into error when reading environment variables")
             raise MissingCredentialsError(
                 "Ran into error when reading environment variables"

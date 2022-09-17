@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--cov-report=xml --cov-report=term --cov"
+addopts = "--cov-report=xml --cov-report=term --cov-report=html --cov"
 testpaths = ["tests"]
 
 [tool.coverage.run]

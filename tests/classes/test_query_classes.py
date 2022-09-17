@@ -17,6 +17,18 @@ def test_passes_help_string(capsys: CaptureFixture):
     assert captured.out != ""
 
 
+def test_passes_repr_format():
+    bucket = FAKE.pystr()
+    start_range = FAKE.date_between(start_date=-30)
+
+    query_builder = QueryBuilder(bucket=bucket, start_range=start_range)
+
+    assert (
+        repr(query_builder)
+        == f'\'from(bucket: "{bucket}")\\n\\t|> range(start: {start_range})\''
+    )
+
+
 def test_passes_basic_query_created():
     bucket = FAKE.pystr()
     start_range = FAKE.date_between(start_date=-30)

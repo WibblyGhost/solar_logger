@@ -31,16 +31,6 @@ def test_passes_health_check(caplog: LogCaptureFixture):
         influx_connector.health_check()
 
 
-def test_fails_health_check_raises_exception(caplog: LogCaptureFixture):
-    caplog.set_level(logging.ERROR)
-    influx_connector = InfluxConnector(secret_store=TestSecretStore)
-
-    with mock.patch(
-        "classes.influx_classes.InfluxDBClient.ready", side_effect=Exception
-    ) and pytest.raises(Exception):
-        influx_connector.health_check()
-
-
 @mock.patch("classes.influx_classes.InfluxDBClient.write_api")
 def test_passes_write_points(write_api, caplog: LogCaptureFixture):
     write_api.return_value = mock.MagicMock(WriteApi, return_value=None)

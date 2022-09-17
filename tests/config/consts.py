@@ -22,18 +22,30 @@ class TestSecretStore:
 
 
 TEST_MQTT_ENV = {
-    "mqtt_host": FAKE.pystr(),
-    "mqtt_port": str(FAKE.pyint(6)),
-    "mqtt_user": FAKE.pystr(),
-    "mqtt_token": FAKE.pystr(),
-    "mqtt_topic": FAKE.pystr(),
+    "MQTT_HOST": FAKE.pystr(),
+    "MQTT_PORT": str(FAKE.pyint(6)),
+    "MQTT_USER": FAKE.pystr(),
+    "MQTT_TOKEN": FAKE.pystr(),
+    "MQTT_TOPIC": FAKE.pystr(),
 }
 
 TEST_INFLUX_ENV = {
-    "influx_url": FAKE.url(),
-    "influx_org": FAKE.pystr(),
-    "influx_bucket": FAKE.pystr(),
-    "influx_token": FAKE.pystr(),
+    "INFLUX_URL": FAKE.url(),
+    "INFLUX_ORG": FAKE.pystr(),
+    "INFLUX_BUCKET": FAKE.pystr(),
+    "INFLUX_TOKEN": FAKE.pystr(),
+}
+
+TEST_EMPTY_ENV = {
+    "MQTT_HOST": "",
+    "MQTT_PORT": str(FAKE.pyint(6)),
+    "MQTT_USER": "",
+    "MQTT_TOKEN": "",
+    "MQTT_TOPIC": "",
+    "INFLUX_URL": "",
+    "INFLUX_ORG": "",
+    "INFLUX_BUCKET": "",
+    "INFLUX_TOKEN": "",
 }
 
 TEST_ENV_FULL = dict(TEST_MQTT_ENV, **TEST_INFLUX_ENV)
