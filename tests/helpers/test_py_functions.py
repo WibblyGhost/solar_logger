@@ -5,12 +5,12 @@ from unittest import mock
 
 from pytest import LogCaptureFixture, mark, raises
 
-from classes.py_functions import read_query_settings, write_results_to_csv
+from src.helpers.py_functions import read_query_settings, write_results_to_csv
 from tests.config.consts import FAKE
 
 
-@mock.patch("classes.py_functions.os.path.exists", return_value=True)
-@mock.patch("classes.py_functions.open", mock.mock_open())
+@mock.patch("src.helpers.py_functions.os.path.exists", return_value=True)
+@mock.patch("src.helpers.py_functions.open", mock.mock_open())
 def test_passes_write_to_csv(_mock_exists, caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     with mock.patch(
@@ -24,8 +24,8 @@ def test_passes_write_to_csv(_mock_exists, caplog: LogCaptureFixture):
 @mark.xfail(
     reason="test_passes_makes_dir_when_not_existent currently isn't implemented"
 )
-@mock.patch("classes.py_functions.os.makedirs")
-@mock.patch("classes.py_functions.open", mock.mock_open())
+@mock.patch("src.helpers.py_functions.os.makedirs")
+@mock.patch("src.helpers.py_functions.open", mock.mock_open())
 def test_passes_makes_dir_when_not_existent(mock_makedirs, caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
     mock_makedirs.side_effect = mock.MagicMock()
@@ -34,14 +34,14 @@ def test_passes_makes_dir_when_not_existent(mock_makedirs, caplog: LogCaptureFix
     with mock.patch(
         "configparser.ConfigParser.read", return_value=FAKE.pystr()
     ) and mock.patch("configparser.ConfigParser.get", return_value=file_path):
-        mock.patch("classes.py_functions.os.path.exists", return_value=True)
+        mock.patch("src.helpers.py_functions.os.path.exists", return_value=True)
         write_results_to_csv(FAKE.pystr(), FAKE.pydict())
 
     assert mock_makedirs.assert_called_once()
 
 
-@mock.patch("classes.py_functions.os.path.exists", return_value=True)
-@mock.patch("classes.py_functions.open", side_effect=FileNotFoundError)
+@mock.patch("src.helpers.py_functions.os.path.exists", return_value=True)
+@mock.patch("src.helpers.py_functions.open", side_effect=FileNotFoundError)
 def test_fails_write_to_csv(_mock_exists, _mock_open, caplog: LogCaptureFixture):
     caplog.set_level(logging.INFO)
 

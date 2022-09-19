@@ -7,11 +7,12 @@ import signal
 import threading
 import time
 
-from classes.common_classes import QueuePackage, SecretStore
+from classes.common_classes import SecretStore
+from classes.common_classes import QueuePackage
 from classes.consts import SOLAR_DEBUG_CONFIG_TITLE, THREADED_QUEUE
 from classes.influx_classes import InfluxConnector
 from classes.mqtt_classes import MqttConnector
-from classes.py_logger import create_logger
+from helpers.py_logger import create_logger
 
 
 class ThreadedRunner:

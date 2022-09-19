@@ -6,7 +6,7 @@ from paho.mqtt.client import Client
 from pymate.value import Value
 from pytest import LogCaptureFixture, mark
 
-from classes.mqtt_classes import MqttConnector, PyMateDecoder
+from src.classes.mqtt_classes import MqttConnector, PyMateDecoder
 from tests.config.consts import DC, FX, MX, TestSecretStore
 
 
@@ -91,7 +91,7 @@ class TestMqttConnector:
     def test_passes_get_mqtt_client(self):
         mqtt_connector = MqttConnector(TestSecretStore)
 
-        with mock.patch("classes.mqtt_classes.Client.connect"):
+        with mock.patch("src.classes.mqtt_classes.Client.connect"):
             result = mqtt_connector.get_mqtt_client()
 
         assert isinstance(result, Client)

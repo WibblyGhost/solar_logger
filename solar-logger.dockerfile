@@ -6,38 +6,40 @@ RUN apt-get update && pip install --upgrade pip
 ADD requirements.txt ./
 RUN pip install -r ./requirements.txt
 # /config -> /solarlogger/config
-ADD ./config/config.ini config/config.ini
+ADD ./src/config/config.ini src/config/config.ini
 
 FROM builder as solar-logger
 ARG BASE_DIR
 # /app -> /solarlogger/app
-ADD ./app/solar_main.py app/solar_main.py
+ADD ./src/solar_main.py solar_main.py
 # /classes -> /solarlogger/classes
-ADD ./classes/common_classes.py classes/common_classes.py
-ADD ./classes/consts.py classes/consts.py
-ADD ./classes/custom_exceptions.py classes/custom_exceptions.py
-ADD ./classes/influx_classes.py classes/influx_classes.py
-ADD ./classes/mqtt_classes.py classes/mqtt_classes.py
-ADD ./classes/py_functions.py classes/py_functions.py
-ADD ./classes/py_logger.py classes/py_logger.py
+ADD ./src/classes/common_classes.py src/classes/common_classes.py
+ADD ./src/classes/custom_exceptions.py src/classes/custom_exceptions.py
+ADD ./src/classes/influx_classes.py src/classes/influx_classes.py
+ADD ./src/classes/mqtt_classes.py src/classes/mqtt_classes.py
+# /helpers -> /solarlogger/helpers
+ADD ./src/helpers/consts.py src/helpers/consts.py
+ADD ./src/helpers/py_functions.py src/helpers/py_functions.py
+ADD ./src/helpers/py_logger.py src/helpers/py_logger.py
 # Run instance
-CMD [ "python", "app/solar_main.py" ]
+CMD [ "python", "./solar_main.py" ]
 
 FROM builder as influx-query
 ARG BASE_DIR
 # Add required modules
 # /app -> /solarlogger/app
-ADD ./app/influx_query.py app/influx_query.py
+ADD ./src/influx_query.py ./influx_query.py
 # /classes -> /solarlogger/classes
-ADD ./classes/common_classes.py classes/common_classes.py
-ADD ./classes/consts.py classes/consts.py
-ADD ./classes/custom_exceptions.py classes/custom_exceptions.py
-ADD ./classes/influx_classes.py classes/influx_classes.py
-ADD ./classes/py_functions.py classes/py_functions.py
-ADD ./classes/py_logger.py classes/py_logger.py
-ADD ./classes/query_classes.py classes/query_classes.py
+ADD ./src/classes/common_classes.py src/classes/common_classes.py
+ADD ./src/classes/custom_exceptions.py src/classes/custom_exceptions.py
+ADD ./src/classes/influx_classes.py src/classes/influx_classes.py
+ADD ./src/classes/query_classes.py src/classes/query_classes.py
+# /helpers -> /solarlogger/helpers
+ADD ./src/helpers/consts.py src/helpers/consts.py
+ADD ./src/helpers/py_functions.py src/helpers/py_functions.py
+ADD ./src/helpers/py_logger.py src/helpers/py_logger.py
 # Run instance
-CMD [ "python", "-i", "app/influx_query.py"]
+CMD [ "python", "-i", "./influx_query.py"]
 
 FROM python:3.10.2 as unit-tests
 ARG BASE_DIR="solar_logger"
@@ -47,8 +49,8 @@ RUN apt-get update && pip install --upgrade pip
 ADD requirements.txt ./requirements.txt
 ADD requirements-test.txt ./requirements-test.txt
 RUN pip install -r requirements-test.txt
-ADD ./app/ app/
-ADD ./classes/ classes/
+ADD ./src/ src/
 ADD ./tests/ tests/
+ADD pyproject.toml ./pyproject.toml
 # Run instance
-CMD [ "python", "-m", "pytest", "./tests"]
+CMD [ "python", "-m", "pytest"]

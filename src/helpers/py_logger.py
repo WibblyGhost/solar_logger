@@ -8,8 +8,8 @@ import os
 from logging import Logger
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
-from classes.consts import CONFIG_FILENAME
-from classes.custom_exceptions import MissingConfigurationError
+from src.helpers.consts import CONFIG_FILENAME
+from src.classes.custom_exceptions import MissingConfigurationError
 
 
 class LoggingTools:

@@ -4,24 +4,14 @@ This file should be minimal since both MQTT and Influx is independent.
 """
 
 
-import logging
-import os
 from dataclasses import dataclass
 from datetime import datetime
+import logging
+import os
 
-from classes.consts import MAX_PORT_RANGE
-from classes.custom_exceptions import MissingCredentialsError
 
-
-@dataclass
-class QueuePackage:
-    """
-    Data class which defines values that are pushed and popped off the global stack
-    """
-
-    measurement: str = None
-    time_field: datetime = None
-    field: str = None
+from src.classes.custom_exceptions import MissingCredentialsError
+from src.helpers.consts import MAX_PORT_RANGE
 
 
 class SecretStore:
@@ -114,3 +104,14 @@ class SecretStore:
             raise MissingCredentialsError(
                 "Ran into error when reading environment variables"
             ) from err
+
+
+@dataclass
+class QueuePackage:
+    """
+    Data class which defines values that are pushed and popped off the global stack
+    """
+
+    measurement: str = None
+    time_field: datetime = None
+    field: str = None

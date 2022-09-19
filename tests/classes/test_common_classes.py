@@ -5,8 +5,8 @@ from unittest import mock
 
 from pytest import LogCaptureFixture, raises
 
-from classes.common_classes import SecretStore
-from classes.custom_exceptions import MissingCredentialsError
+from src.classes.common_classes import SecretStore
+from src.classes.custom_exceptions import MissingCredentialsError
 from tests.config.consts import (
     TEST_EMPTY_ENV,
     TEST_ENV_FULL,

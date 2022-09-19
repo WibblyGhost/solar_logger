@@ -15,8 +15,8 @@ from typing import Tuple
 from paho.mqtt.client import Client, MQTTMessage
 from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
 
-from classes.common_classes import QueuePackage, SecretStore
-from classes.consts import QUEUE_WAIT_TIME, THREADED_QUEUE, TIME_PACKET_SIZE
+from src.classes.common_classes import QueuePackage, SecretStore
+from src.helpers.consts import QUEUE_WAIT_TIME, THREADED_QUEUE, TIME_PACKET_SIZE
 
 
 class PyMateDecoder:

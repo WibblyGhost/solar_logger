@@ -27,3 +27,6 @@ docker-influxdb/
 *.egg-info/
 build
 dist
+
+# Backup FIles
+backups/

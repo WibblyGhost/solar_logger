@@ -7,7 +7,7 @@ import csv
 import logging
 import os
 
-from classes.consts import CONFIG_FILENAME
+from src.helpers.consts import CONFIG_FILENAME
 
 
 def write_results_to_csv(config_name: str, table: dict) -> None:

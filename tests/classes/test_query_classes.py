@@ -2,7 +2,7 @@
 
 from pytest import CaptureFixture
 
-from classes.query_classes import QueryBuilder
+from src.classes.query_classes import QueryBuilder
 from tests.config.consts import FAKE
 
 
