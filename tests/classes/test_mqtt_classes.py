@@ -1,13 +1,12 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
-
+# pylint: disable=missing-function-docstring, missing-module-docstring, no-self-use
 from unittest import mock
 
 from paho.mqtt.client import Client
 from pymate.value import Value
 from pytest import LogCaptureFixture, mark
+from tests.config.consts import DC, FX, MX, TestSecretStore
 
 from src.classes.mqtt_classes import MqttConnector, PyMateDecoder
-from tests.config.consts import DC, FX, MX, TestSecretStore
 
 
 def dict_to_str(dictionary: dict):
@@ -55,6 +54,8 @@ class TestPyMateDecoder:
 
 
 class TestMqttConnector:
+    """Test class for MQTT Connector"""
+
     @mark.skip(reason="test_passes_on_subscribe needs to be implemented")
     def test_passes_on_subscribe(self, caplog: LogCaptureFixture):
         raise NotImplementedError

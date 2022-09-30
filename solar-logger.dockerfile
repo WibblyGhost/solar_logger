@@ -11,7 +11,8 @@ ADD ./src/config/config.ini src/config/config.ini
 FROM builder as solar-logger
 ARG BASE_DIR
 # /app -> /solarlogger/app
-ADD ./src/solar_main.py solar_main.py
+ADD ./src/solar_main.py src/solar_main.py
+ADD ./src/__init__.py src/__init__.py
 # /classes -> /solarlogger/classes
 ADD ./src/classes/common_classes.py src/classes/common_classes.py
 ADD ./src/classes/custom_exceptions.py src/classes/custom_exceptions.py
@@ -22,13 +23,13 @@ ADD ./src/helpers/consts.py src/helpers/consts.py
 ADD ./src/helpers/py_functions.py src/helpers/py_functions.py
 ADD ./src/helpers/py_logger.py src/helpers/py_logger.py
 # Run instance
-CMD [ "python", "./solar_main.py" ]
+CMD [ "python", "src/solar_main.py" ]
 
 FROM builder as influx-query
 ARG BASE_DIR
 # Add required modules
 # /app -> /solarlogger/app
-ADD ./src/influx_query.py ./influx_query.py
+ADD ./src/influx_query.py src/influx_query.py
 # /classes -> /solarlogger/classes
 ADD ./src/classes/common_classes.py src/classes/common_classes.py
 ADD ./src/classes/custom_exceptions.py src/classes/custom_exceptions.py
@@ -39,7 +40,7 @@ ADD ./src/helpers/consts.py src/helpers/consts.py
 ADD ./src/helpers/py_functions.py src/helpers/py_functions.py
 ADD ./src/helpers/py_logger.py src/helpers/py_logger.py
 # Run instance
-CMD [ "python", "-i", "./influx_query.py"]
+CMD [ "python", "-i", "src/influx_query.py"]
 
 FROM python:3.10.2 as unit-tests
 ARG BASE_DIR="solar_logger"

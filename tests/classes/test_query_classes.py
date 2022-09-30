@@ -1,9 +1,8 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring
-
+# pylint: disable=missing-function-docstring, missing-module-docstring, no-self-use
 from pytest import CaptureFixture
+from tests.config.consts import FAKE
 
 from src.classes.query_classes import QueryBuilder
-from tests.config.consts import FAKE
 
 
 class TestQueryBuilder:

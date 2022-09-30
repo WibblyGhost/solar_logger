@@ -8,7 +8,7 @@ source = ["src"]
 omit = [
     "*/tests/*",
     "*/config/*",
-    "*/py_logger.py",
+    # "*/py_logger.py",
     "*/__init__.py",
 ]
 

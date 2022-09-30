@@ -4,11 +4,10 @@ This file should be minimal since both MQTT and Influx is independent.
 """
 
 
-from dataclasses import dataclass
-from datetime import datetime
 import logging
 import os
-
+from dataclasses import dataclass
+from datetime import datetime
 
 from src.classes.custom_exceptions import MissingCredentialsError
 from src.helpers.consts import MAX_PORT_RANGE

@@ -1,16 +1,14 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
-
-
+# pylint: disable=missing-function-docstring, missing-module-docstring, no-self-use
 import logging
 from unittest import mock
 
 import pytest
 from influxdb_client import QueryApi, WriteApi
 from pytest import LogCaptureFixture
+from tests.config.consts import FAKE, TestSecretStore
 
 from src.classes.common_classes import QueuePackage
 from src.classes.influx_classes import InfluxConnector
-from tests.config.consts import FAKE, TestSecretStore
 
 
 class TestInfluxConnector:

@@ -6,6 +6,9 @@ from faker import Faker
 
 FAKE = Faker()
 
+APP_CONFIG = "src/config/config.ini"
+TEST_CONFIG = "tests/config/config.ini"
+
 
 class TestSecretStore:
     mqtt_secrets = {

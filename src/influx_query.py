@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 Program which creates and runs Influx database queries
 Check the Influx query documentation for query syntax:
@@ -5,11 +6,11 @@ https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#que
 """
 
 from src.classes.common_classes import SecretStore
-from src.helpers.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 from src.classes.influx_classes import InfluxConnector
+from src.classes.query_classes import QueryBuilder
+from src.helpers.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
 from src.helpers.py_functions import read_query_settings, write_results_to_csv
 from src.helpers.py_logger import create_logger
-from src.classes.query_classes import QueryBuilder
 
 
 class QueryParser:
