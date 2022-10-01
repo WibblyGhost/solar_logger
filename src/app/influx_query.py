@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """
 Program which creates and runs Influx database queries
 Check the Influx query documentation for query syntax:
@@ -101,6 +100,18 @@ def run_example() -> None:
     execute_query(query_builder)
 
 
+logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
+secret_store = SecretStore(has_mqtt_access=False, has_influx_access=True)
+influx_connector = InfluxConnector(secret_store.influx_secrets)
+logging.info("Attempting health check for InfluxDB")
+try:
+    influx_connector.health_check()
+    logging.info("Successfully connected to InfluxDB server")
+except Exception as error:
+    logging.critical("Failed to connect InfluxDB server")
+    raise error
+
+
 def main() -> None:
     """
     Classes runtime which creates a query to an Influx database to view the tables
@@ -113,17 +124,3 @@ def main() -> None:
         "Or run run_default() to run an example piece"
     )
     run_example()
-
-
-if __name__ == "__main__":
-    logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
-    secret_store = SecretStore(has_mqtt_access=False, has_influx_access=True)
-    influx_connector = InfluxConnector(secret_store.influx_secrets)
-    logging.info("Attempting health check for InfluxDB")
-    try:
-        influx_connector.health_check()
-        logging.info("Successfully connected to InfluxDB server")
-    except Exception as error:
-        logging.critical("Failed to connect InfluxDB server")
-        raise error
-    main()

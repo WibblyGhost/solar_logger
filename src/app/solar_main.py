@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """
 classes program which initializes and runs both the MQTT and InfluxDB controllers
 """
@@ -8,11 +7,11 @@ import signal
 import threading
 import time
 
-from classes.common_classes import QueuePackage, SecretStore
-from classes.influx_classes import InfluxConnector
-from classes.mqtt_classes import MqttConnector
-from helpers.consts import SOLAR_DEBUG_CONFIG_TITLE, THREADED_QUEUE
-from helpers.py_logger import create_logger
+from src.classes.common_classes import QueuePackage, SecretStore
+from src.classes.influx_classes import InfluxConnector
+from src.classes.mqtt_classes import MqttConnector
+from src.helpers.consts import SOLAR_DEBUG_CONFIG_TITLE, THREADED_QUEUE
+from src.helpers.py_logger import create_logger
 
 
 class ThreadedRunner:
@@ -41,7 +40,7 @@ class ThreadedRunner:
         time.sleep(1)
         self.thread_events.clear()
 
-    def main(self) -> None:
+    def start(self) -> None:
         """
         Calls both the Influx database connector and the MQTT connector
         and runs them in separate threads
@@ -93,9 +92,14 @@ class ThreadedRunner:
         NOTE: Since this program needs to indefinitely run all
         exceptions will just be logged instead of exiting the program.
         """
-        secret_store = SecretStore(has_influx_access=True)
-        influx_connector = InfluxConnector(secret_store=secret_store)
-        logging.info("Attempting health check for InfluxDB")
+        try:
+            secret_store = SecretStore(has_influx_access=True)
+            influx_connector = InfluxConnector(secret_store=secret_store)
+            logging.info("Attempting health check for InfluxDB")
+        except Exception:
+            logging.exception("Failed to setup environment")
+            self.thread_events.clear()
+            return
         try:
             influx_connector.health_check()
             logging.info("InfluxDB health check succeeded")
@@ -168,7 +172,6 @@ class ThreadedRunner:
         self.thread_events.clear()
 
 
-if __name__ == "__main__":
-    # THREAD_EVENTS = threading.Event()
+def main():
     TR = ThreadedRunner()
-    TR.main()
+    TR.start()

@@ -14,18 +14,19 @@ omit = [
 
 [tool.isort]
 profile = "black"
-src_paths = ["src"]
+src_paths = ["src", "tests"]
 skip_glob = ["*.venv/*"]
 skip_gitignore = true
 overwrite_in_place = true
 
 [tool.pylint.master]
+init-hook='import sys; sys.path.append("src")'
+# init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.append(os.path.dirname(find_pylintrc()))"
 ignore=[
     ".pytest_cache",
     ".venv",
     ".github",
 ]
-# init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.append(os.path.dirname(find_pylintrc()))"
 
 [tool.pylint.main]
 # Specify a score threshold under which the program will exit with error.

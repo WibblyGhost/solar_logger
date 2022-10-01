@@ -6,6 +6,7 @@ https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#que
 """
 
 import logging
+import ssl
 import struct
 import time
 from dataclasses import dataclass
@@ -121,21 +122,37 @@ class MqttConnector:
         self._mqtt_client = Client()
 
     @staticmethod
-    def _on_subscribe(_client, _userdata, _mid, granted_qos) -> None:
+    def _on_socket_open(_client, userdata, sock) -> None:
+        """
+        Debug function for logging socket openings from MQTT
+        """
+        logging.debug(f"Socket open debug args, {userdata}, {sock}")
+
+    @staticmethod
+    def _on_socket_close(_client, userdata, sock) -> None:
+        """
+        Debug function for logging socket closes from MQTT
+        """
+        logging.debug(f"Socket close debug args, {userdata}, {sock}")
+
+    @staticmethod
+    def _on_subscribe(_client, userdata, mid, granted_qos) -> None:
         """
         Logs when the MQTT client calls on_subscribe
         """
         logging.info("Subscribed to MQTT topic, _on_subscribe")
         logging.info(f"MQTT topic returns QoS level of {granted_qos}")
+        logging.debug(f"Subscribe debug args, {userdata}, {mid}, {granted_qos}")
 
     @staticmethod
-    def _on_unsubscribe(_client, _userdata, _mid) -> None:
+    def _on_unsubscribe(_client, userdata, mid) -> None:
         """
         Logs when MQTT calls on_unsubscribe
         """
         logging.info("Unsubscribed from MQTT topic, _on_unsubscribe")
+        logging.debug(f"Unsubscribe debug args, {userdata}, {mid}")
 
-    def _on_connect(self, _client, _userdata, _flags, return_code) -> None:
+    def _on_connect(self, _client, userdata, flags, return_code) -> None:
         """
         Logs when MQTT calls on_connect
         The value of rc indicates success or not
@@ -150,20 +167,22 @@ class MqttConnector:
         }
         if return_code == 0:
             logging.info("Connecting to MQTT broker, _on_connect")
-            topic = f"{self._mqtt_secrets['mqtt_topic']}/#"
+            topic = f"{self._mqtt_secrets['mqtt_topic']}"
             self._mqtt_client.subscribe(topic=topic)
         else:
             logging.error(
                 f"Couldn't connect to MQTT broker returned code: {return_code}\n"
                 f"{return_codes[return_code]}"
             )
+            logging.debug(f"Connect debug args, {userdata}, {flags}, {return_code}")
 
-    @staticmethod
-    def _on_disconnect(_client, _userdata, _rc) -> None:
+    # @staticmethod
+    def _on_disconnect(self, _client, userdata, return_code) -> None:
         """
         Logs when MQTT calls on_disconnect
         """
         logging.warning("Disconnected from MQTT broker, _on_disconnect")
+        logging.debug(f"Disconnect debug args, {userdata}, {return_code}")
 
     def _check_status(self, msg: MQTTMessage) -> None:
         """
@@ -291,8 +310,13 @@ class MqttConnector:
         self._mqtt_client.on_disconnect = self._on_disconnect
         self._mqtt_client.on_unsubscribe = self._on_unsubscribe
         self._mqtt_client.on_subscribe = self._on_subscribe
+        self._mqtt_client.on_socket_open = self._on_socket_open
+        self._mqtt_client.on_socket_close = self._on_socket_close
 
-        self._mqtt_client.connect(
+        self._mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
+        self._mqtt_client.tls_insecure_set(True)
+
+        _ = self._mqtt_client.connect(
             host=self._mqtt_secrets["mqtt_host"],
             port=self._mqtt_secrets["mqtt_port"],
         )
