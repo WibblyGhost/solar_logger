@@ -6,5 +6,6 @@ isort
 faker
 pytest
 pytest-coverage
+pytest-mock
 
 -r requirements.txt

@@ -3,9 +3,9 @@ import logging
 from unittest import mock
 
 from pytest import LogCaptureFixture, mark, raises
-from tests.config.consts import FAKE
 
 from src.helpers.py_functions import read_query_settings, write_results_to_csv
+from tests.config.consts import FAKE
 
 
 @mock.patch("src.helpers.py_functions.os.path.exists", return_value=True)

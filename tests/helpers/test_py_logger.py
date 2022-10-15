@@ -3,9 +3,9 @@ import logging
 
 import pytest
 from pytest import LogCaptureFixture
-from tests.config.consts import APP_CONFIG, TEST_CONFIG
 
 from src.helpers.py_logger import create_logger
+from tests.config.consts import APP_CONFIG, TEST_CONFIG
 
 
 class TestPyLogger:

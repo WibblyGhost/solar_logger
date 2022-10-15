@@ -4,6 +4,9 @@ import os
 from unittest import mock
 
 from pytest import LogCaptureFixture, raises
+
+from src.classes.common_classes import SecretStore
+from src.classes.custom_exceptions import MissingCredentialsError
 from tests.config.consts import (
     TEST_EMPTY_ENV,
     TEST_ENV_FULL,
@@ -11,9 +14,6 @@ from tests.config.consts import (
     TEST_MAX_PORT_RANGE,
     TEST_MQTT_ENV,
 )
-
-from src.classes.common_classes import SecretStore
-from src.classes.custom_exceptions import MissingCredentialsError
 
 
 class TestSecretStore:

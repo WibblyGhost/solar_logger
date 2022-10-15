@@ -58,7 +58,7 @@ TEST_MAX_PORT_RANGE = 65535
 
 
 @dataclass
-class FX:
+class TestFX:
     bytearray = b"\x00\x00\x00\x04t\x00\x04\x00\x02\x01\x12\t\x00"
     array = {
         "ac_mode": 2,
@@ -79,7 +79,7 @@ class FX:
 
 
 @dataclass
-class MX:
+class TestMX:
     bytearray = b"\x87\x85\x8b\x00t\x08\x02\x00 \x01\x0f\x02\xa4"
     array = {
         "amp_hours": "116Ah",
@@ -96,7 +96,7 @@ class MX:
 
 
 @dataclass
-class DC:
+class TestDC:
     bytearray = (
         b"\xff\xe8\x00l\x00\x00\x01\x11d\xff\xf9\x00\x1d\x00\x00\x00!\x00l"
         b"\x00\x18\x00T\x00\x1d\x00\x07\x00\x16\x00\x1b\x00\x0e\x00\r\x00J\x00\x1f\x00+"
@@ -136,3 +136,47 @@ class DC:
         "shuntc_power": "0.00kW",
         "state_of_charge": "100%",
     }
+
+
+@dataclass
+class TestMqttTopics:
+    """
+    Object which is a model of all the different MQTT topics
+    """
+
+    mate_status = "mate/status"
+
+    dc_name = "dc-1"
+    dc_status = "mate/dc-1/status"
+    dc_data = "mate/dc-1/dc-status"
+    dc_raw = "mate/dc-1/stat/raw"
+    dc_ts = "mate/dc-1/stat/ts"
+
+    fx_name = "fx-1"
+    fx_status = "mate/fx-1/status"
+    fx_data = "mate/fx-1/fx-status"
+    fx_raw = "mate/fx-1/stat/raw"
+    fx_ts = "mate/fx-1/stat/ts"
+
+    mx_name = "mx-1"
+    mx_status = "mate/mx-1/status"
+    mx_data = "mate/mx-1/mx-status"
+    mx_raw = "mate/mx-1/stat/raw"
+    mx_ts = "mate/mx-1/stat/ts"
+
+
+# Configs
+TEST_CONFIG_FILENAME = "src/config/config.ini"  # Py Functions
+TEST_INFLUX_QUERY_CONFIG_TITLE = "query_settings"  # Influx Query
+TEST_INFLUX_DEBUG_CONFIG_TITLE = "influx_debugger"  # Influx Query
+TEST_SOLAR_DEBUG_CONFIG_TITLE = "solar_debugger"  # Solar Runtime
+
+# Additional Consts
+TEST_MAX_PORT_RANGE = 65535
+TEST_TIME_PACKET_SIZE = 4  # Measured in bytes
+
+# Multi-Threading Processing
+# Size of queue, needs to be quite large for the volume of data
+TEST_MAX_QUEUE_LENGTH = 150
+# Time to wait when queue is full
+TEST_QUEUE_WAIT_TIME = 1

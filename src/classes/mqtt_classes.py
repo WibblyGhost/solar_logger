@@ -176,8 +176,8 @@ class MqttConnector:
             )
             logging.debug(f"Connect debug args, {userdata}, {flags}, {return_code}")
 
-    # @staticmethod
-    def _on_disconnect(self, _client, userdata, return_code) -> None:
+    @staticmethod
+    def _on_disconnect(_client, userdata, return_code) -> None:
         """
         Logs when MQTT calls on_disconnect
         """

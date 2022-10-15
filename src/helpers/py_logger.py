@@ -9,7 +9,7 @@ from logging import Logger
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 from src.classes.custom_exceptions import MissingConfigurationError
-from src.helpers.consts import CONFIG_FILENAME
+from src.helpers.consts import CONFIG_FILENAME, SOLAR_DEBUG_CONFIG_TITLE
 
 
 class LoggingTools:
@@ -30,6 +30,7 @@ class LoggingTools:
         self._file_path = None
         self._max_file_bytes = None
         self._max_file_no = None
+        self._mode = None
         self._read_configs(config_name)
 
         self._create_stdout_logger(logger=logger)
@@ -75,13 +76,15 @@ class LoggingTools:
                     config_parser.get(config_name, "max_file_bytes")
                 )
                 self._max_file_no = int(config_parser.get(config_name, "max_file_no"))
+                if config_name == SOLAR_DEBUG_CONFIG_TITLE:
+                    self._mode = str(config_parser.get(config_name, "mode"))
 
                 if None in [
                     self._file_location,
                     self._file_path,
                     self._max_file_bytes,
                     self._max_file_no,
-                ]:
+                ] or (config_name == SOLAR_DEBUG_CONFIG_TITLE and self._mode is None):
                     logging.critical("Failed to read file logger settings in configs")
                     raise MissingConfigurationError(
                         "Failed to read file logger settings in configs"
@@ -116,6 +119,7 @@ class LoggingTools:
             filename=self._file_path,
             maxBytes=self._max_file_bytes,
             backupCount=self._max_file_no,
+            mode=self._mode,
         )
         rotating_handler.setLevel(self._debug_level)
         log_formatter = logging.Formatter(
@@ -140,7 +144,8 @@ class LoggingTools:
         rotating_time_handler.suffix = "%Y-%m-%d"
         rotating_time_handler.setLevel(self._debug_level)
         log_formatter = logging.Formatter(
-            fmt=self._file_format, datefmt=self._date_format
+            fmt=self._file_format,
+            datefmt=self._date_format,
         )
         rotating_time_handler.setFormatter(log_formatter)
         logger.addHandler(rotating_time_handler)
