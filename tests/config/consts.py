@@ -1,4 +1,4 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring
+# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring, duplicate-code
 
 from dataclasses import dataclass
 

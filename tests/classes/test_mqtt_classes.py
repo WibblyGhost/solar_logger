@@ -1,7 +1,6 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring, redefined-outer-name, protected-access
 import logging
 from datetime import datetime
-from unittest import mock
 
 from paho.mqtt.client import Client, MQTTMessage
 from pymate.value import Value
@@ -294,7 +293,7 @@ class TestMqttConnector:
         ) == THREADED_QUEUE.get(timeout=5)
         assert "Pushed items onto queue, queue now has 1 items" in caplog.text
 
-    def test_waits_when_exceeding_max_queue_load(
+    def test_waits_on_max_queue(
         self,
         mocker: MockerFixture,
         mqtt_fixture: MqttConnector,
@@ -493,7 +492,7 @@ class TestMqttConnector:
 
         check_status.assert_called_once_with(msg=mqtt_message)
         decode_messages.assert_called_once_with(msg=mqtt_message)
-        assert caplog.text is ""
+        assert caplog.text == ""
 
     def test_on_message_warns_when_offline(
         self,
@@ -552,10 +551,10 @@ class TestMqttConnector:
         assert "MQTT on_message raised an exception:" in caplog.text
         assert error_message in caplog.text
 
-    def test_passes_get_mqtt_client(self):
+    def test_passes_get_mqtt_client(self, mocker: MockerFixture):
         mqtt_connector = MqttConnector(TestSecretStore)
+        mocker.patch("src.classes.mqtt_classes.Client.connect")
 
-        with mock.patch("src.classes.mqtt_classes.Client.connect"):
-            result = mqtt_connector.get_mqtt_client()
+        result = mqtt_connector.get_mqtt_client()
 
         assert isinstance(result, Client)
