@@ -469,15 +469,88 @@ class TestMqttConnector:
             payload=payload,
         )
 
-    @mark.skip(reason="test_passes_on_message needs to be implemented")
-    def test_passes_on_message(self):
-        raise NotImplementedError
+    def test_on_message_calls_decode(
+        self,
+        mocker: MockerFixture,
+        mqtt_fixture: MqttConnector,
+        caplog: LogCaptureFixture,
+    ):
+        caplog.set_level(logging.INFO)
+        check_status = mocker.patch(
+            "src.classes.mqtt_classes.MqttConnector._check_status"
+        )
+        decode_messages = mocker.patch(
+            "src.classes.mqtt_classes.MqttConnector._decode_message"
+        )
+        setup_service_status(mqtt_fixture=mqtt_fixture, status="online")
+        mqtt_message = create_mqtt_message(
+            mocker=mocker, topic=TestMqttTopics.dc_name, payload=FAKE.pystr()
+        )
 
-    @mark.skip(
-        reason="test_on_message_doesnt_raise_on_exception needs to be implemented"
-    )
-    def test_on_message_doesnt_raise_on_exception(self):
-        raise NotImplementedError
+        mqtt_fixture._on_message(
+            _client=FAKE.pystr(), _userdata=FAKE.pystr(), msg=mqtt_message
+        )
+
+        check_status.assert_called_once_with(msg=mqtt_message)
+        decode_messages.assert_called_once_with(msg=mqtt_message)
+        assert caplog.text is ""
+
+    def test_on_message_warns_when_offline(
+        self,
+        mocker: MockerFixture,
+        mqtt_fixture: MqttConnector,
+        caplog: LogCaptureFixture,
+    ):
+        caplog.set_level(logging.INFO)
+        check_status = mocker.patch(
+            "src.classes.mqtt_classes.MqttConnector._check_status"
+        )
+        decode_messages = mocker.patch(
+            "src.classes.mqtt_classes.MqttConnector._decode_message"
+        )
+        error_message = "Testing error"
+        decode_messages.side_effect = AssertionError(error_message)
+        setup_service_status(mqtt_fixture=mqtt_fixture, status="offline")
+        mqtt_message = create_mqtt_message(
+            mocker=mocker, topic=TestMqttTopics.dc_name, payload=FAKE.pystr()
+        )
+
+        mqtt_fixture._on_message(
+            _client=FAKE.pystr(), _userdata=FAKE.pystr(), msg=mqtt_message
+        )
+
+        check_status.assert_called_once_with(msg=mqtt_message)
+        decode_messages.assert_not_called()
+        assert f"{TestMqttTopics.mate_status} is offline" in caplog.text
+
+    def test_on_message_skips_exceptions(
+        self,
+        mocker: MockerFixture,
+        mqtt_fixture: MqttConnector,
+        caplog: LogCaptureFixture,
+    ):
+        caplog.set_level(logging.INFO)
+        check_status = mocker.patch(
+            "src.classes.mqtt_classes.MqttConnector._check_status"
+        )
+        decode_messages = mocker.patch(
+            "src.classes.mqtt_classes.MqttConnector._decode_message"
+        )
+        error_message = "Testing error"
+        decode_messages.side_effect = AssertionError(error_message)
+        setup_service_status(mqtt_fixture=mqtt_fixture, status="online")
+        mqtt_message = create_mqtt_message(
+            mocker=mocker, topic=TestMqttTopics.dc_name, payload=FAKE.pystr()
+        )
+
+        mqtt_fixture._on_message(
+            _client=FAKE.pystr(), _userdata=FAKE.pystr(), msg=mqtt_message
+        )
+
+        check_status.assert_called_once_with(msg=mqtt_message)
+        decode_messages.assert_called_once_with(msg=mqtt_message)
+        assert "MQTT on_message raised an exception:" in caplog.text
+        assert error_message in caplog.text
 
     def test_passes_get_mqtt_client(self):
         mqtt_connector = MqttConnector(TestSecretStore)
