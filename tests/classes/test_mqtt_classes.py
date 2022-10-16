@@ -1,13 +1,14 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring, no-self-use, redefined-outer-name, protected-access
+# pylint: disable=missing-function-docstring, missing-module-docstring, redefined-outer-name, protected-access
 import logging
+from datetime import datetime
 from unittest import mock
 
 from paho.mqtt.client import Client, MQTTMessage
 from pymate.value import Value
 from pytest import LogCaptureFixture, fixture, mark, raises
-from pytest_mock import MockerFixture, mocker
-from src.classes.common_classes import QueuePackage
+from pytest_mock import MockerFixture
 
+from src.classes.common_classes import QueuePackage
 from src.classes.mqtt_classes import MqttConnector, MqttTopics, PyMateDecoder
 from src.helpers.consts import THREADED_QUEUE
 from tests.config.consts import (
@@ -30,6 +31,30 @@ def dict_to_str(dictionary: dict):
     for key, value in dictionary.items():
         result[key] = str(value)
     return result
+
+
+@fixture
+def mqtt_fixture():
+    mqtt_connector = MqttConnector(secret_store=TestSecretStore)
+    return mqtt_connector
+
+
+def create_mqtt_message(mocker: MockerFixture, topic: str, payload: str) -> MQTTMessage:
+    mqtt_message = mocker.MagicMock(MQTTMessage)
+    mqtt_message.topic = topic
+    mqtt_message.payload = bytes(payload, "ascii")
+    return mqtt_message
+
+
+def setup_service_status(mqtt_fixture: MqttConnector, status: str) -> None:
+    status_values = [
+        TestMqttTopics.mate_status,
+        TestMqttTopics.dc_status,
+        TestMqttTopics.fx_status,
+        TestMqttTopics.mx_status,
+    ]
+    for value in status_values:
+        mqtt_fixture._status[value] = status
 
 
 class TestPyMateDecoder:
@@ -76,12 +101,6 @@ def test_mqtt_topics_consistent():
     defined_vars = get_custom_attributes(MqttTopics)
     test_dict = get_custom_attributes(TestMqttTopics)
     assert defined_vars == test_dict
-
-
-@fixture
-def mqtt_fixture():
-    mqtt_connector = MqttConnector(secret_store=TestSecretStore)
-    return mqtt_connector
 
 
 class TestMqttConnector:
@@ -209,14 +228,21 @@ class TestMqttConnector:
         assert "Disconnected from MQTT broker" in caplog.text
         assert f"Disconnect debug args, {userdata}, {return_code}" in caplog.text
 
-    @mark.parametrize("status", ["online", "offline",])
     @mark.parametrize(
-        "topic", [
+        "status",
+        [
+            "online",
+            "offline",
+        ],
+    )
+    @mark.parametrize(
+        "topic",
+        [
             TestMqttTopics.mate_status,
             TestMqttTopics.dc_status,
             TestMqttTopics.fx_status,
             TestMqttTopics.mx_status,
-        ]
+        ],
     )
     def test_check_status_goes_offline(
         self,
@@ -229,26 +255,18 @@ class TestMqttConnector:
         caplog.set_level(logging.INFO)
         # Force everything online and test the change to offline
         if status == "online":
-            current_service_status = "offline"
+            setup_service_status(mqtt_fixture=mqtt_fixture, status="offline")
         else:
-            current_service_status = "online"
-        status_values = [
-            TestMqttTopics.mate_status,
-            TestMqttTopics.dc_status,
-            TestMqttTopics.fx_status,
-            TestMqttTopics.mx_status,
-        ]
-        for value in status_values:
-            mqtt_fixture._status[value] = current_service_status
-        mqtt_message = mocker.MagicMock(MQTTMessage)
-        mqtt_message.topic = topic
-        mqtt_message.payload = bytes(status, "ascii")
+            setup_service_status(mqtt_fixture=mqtt_fixture, status="online")
+        mqtt_message = create_mqtt_message(mocker=mocker, topic=topic, payload=status)
 
         mqtt_fixture._check_status(msg=mqtt_message)
 
         if status == "online":
             assert f"{topic} is now {status}" in caplog.text
+            assert f"{topic} has gone {status}" not in caplog.text
         else:
+            assert f"{topic} is now {status}" not in caplog.text
             assert f"{topic} has gone {status}" in caplog.text
         assert mqtt_fixture._status[topic] == status
 
@@ -319,17 +337,137 @@ class TestMqttConnector:
             in caplog.text
         )
 
-    @mark.skip(reason="test_passes_decode_message_dc needs to be implemented")
-    def test_passes_decode_message_dc(self):
-        raise NotImplementedError
+    @mark.parametrize(
+        "message_type",
+        [TestMqttTopics.dc_data, TestMqttTopics.fx_data, TestMqttTopics.mx_data],
+    )
+    def test_no_messsage_decoding_when_offline(
+        self,
+        mocker: MockerFixture,
+        mqtt_fixture: MqttConnector,
+        message_type: str,
+    ):
+        payload = FAKE.pystr()
+        detach_time = mocker.patch("src.classes.mqtt_classes.PyMateDecoder.detach_time")
+        detach_time.side_effect = AssertionError
+        setup_service_status(mqtt_fixture=mqtt_fixture, status="offline")
+        mqtt_message = create_mqtt_message(
+            mocker=mocker, topic=message_type, payload=payload
+        )
 
-    @mark.skip(reason="test_passes_decode_message_fx needs to be implemented")
-    def test_passes_decode_message_fx(self):
-        raise NotImplementedError
+        mqtt_fixture._decode_message(msg=mqtt_message)
 
-    @mark.skip(reason="test_passes_decode_message_mx needs to be implemented")
-    def test_passes_decode_message_mx(self):
-        raise NotImplementedError
+        detach_time.assert_not_called()
+
+    def test_passes_decode_message_dc(
+        self,
+        mocker: MockerFixture,
+        mqtt_fixture: MqttConnector,
+        caplog: LogCaptureFixture,
+    ):
+        caplog.set_level(logging.DEBUG)
+        msg_time = FAKE.unix_time()
+        msg_timestamp = datetime.fromtimestamp(msg_time)
+        payload = FAKE.pystr()
+        detach_time = mocker.patch("src.classes.mqtt_classes.PyMateDecoder.detach_time")
+        load_queue = mocker.patch("src.classes.mqtt_classes.MqttConnector._load_queue")
+        detach_time.return_value = (msg_time, FAKE.pystr())
+        dc_decoder = mocker.patch("src.classes.mqtt_classes.PyMateDecoder.dc_decoder")
+        dc_decoder.return_value = payload
+        setup_service_status(mqtt_fixture=mqtt_fixture, status="online")
+        mqtt_message = create_mqtt_message(
+            mocker=mocker, topic=TestMqttTopics.dc_data, payload=payload
+        )
+
+        mqtt_fixture._decode_message(msg=mqtt_message)
+
+        detach_time.assert_called_once()
+        dc_decoder.assert_called_once()
+        assert f"Received {TestMqttTopics.dc_name} data packet" in caplog.text
+        assert f"{TestMqttTopics.dc_name} payload: {payload}" in caplog.text
+        assert (
+            f"Decoded and split {TestMqttTopics.dc_name} payload: {payload} at {msg_timestamp}"
+            in caplog.text
+        )
+        load_queue.assert_called_with(
+            measurement=TestMqttTopics.dc_name,
+            time_field=msg_timestamp,
+            payload=payload,
+        )
+
+    def test_passes_decode_message_fx(
+        self,
+        mocker: MockerFixture,
+        mqtt_fixture: MqttConnector,
+        caplog: LogCaptureFixture,
+    ):
+        caplog.set_level(logging.DEBUG)
+
+        msg_time = FAKE.unix_time()
+        msg_timestamp = datetime.fromtimestamp(msg_time)
+        payload = FAKE.pystr()
+        detach_time = mocker.patch("src.classes.mqtt_classes.PyMateDecoder.detach_time")
+        load_queue = mocker.patch("src.classes.mqtt_classes.MqttConnector._load_queue")
+        detach_time.return_value = (msg_time, FAKE.pystr())
+        fx_decoder = mocker.patch("src.classes.mqtt_classes.PyMateDecoder.fx_decoder")
+        fx_decoder.return_value = payload
+        setup_service_status(mqtt_fixture=mqtt_fixture, status="online")
+        mqtt_message = create_mqtt_message(
+            mocker=mocker, topic=TestMqttTopics.fx_data, payload=payload
+        )
+
+        mqtt_fixture._decode_message(msg=mqtt_message)
+
+        detach_time.assert_called_once()
+        fx_decoder.assert_called_once()
+        assert f"Received {TestMqttTopics.fx_name} data packet" in caplog.text
+        assert f"{TestMqttTopics.fx_name} payload: {payload}" in caplog.text
+        assert (
+            f"Decoded and split {TestMqttTopics.fx_name} payload: {payload} at {msg_timestamp}"
+            in caplog.text
+        )
+        load_queue.assert_called_with(
+            measurement=TestMqttTopics.fx_name,
+            time_field=msg_timestamp,
+            payload=payload,
+        )
+
+    def test_passes_decode_message_mx(
+        self,
+        mocker: MockerFixture,
+        mqtt_fixture: MqttConnector,
+        caplog: LogCaptureFixture,
+    ):
+        caplog.set_level(logging.DEBUG)
+
+        msg_time = FAKE.unix_time()
+        msg_timestamp = datetime.fromtimestamp(msg_time)
+        payload = FAKE.pystr()
+        detach_time = mocker.patch("src.classes.mqtt_classes.PyMateDecoder.detach_time")
+        load_queue = mocker.patch("src.classes.mqtt_classes.MqttConnector._load_queue")
+        detach_time.return_value = (msg_time, FAKE.pystr())
+        mx_decoder = mocker.patch("src.classes.mqtt_classes.PyMateDecoder.mx_decoder")
+        mx_decoder.return_value = payload
+        setup_service_status(mqtt_fixture=mqtt_fixture, status="online")
+        mqtt_message = create_mqtt_message(
+            mocker=mocker, topic=TestMqttTopics.mx_data, payload=payload
+        )
+
+        mqtt_fixture._decode_message(msg=mqtt_message)
+
+        detach_time.assert_called_once()
+        mx_decoder.assert_called_once()
+        assert f"Received {TestMqttTopics.mx_name} data packet" in caplog.text
+        assert f"{TestMqttTopics.mx_name} payload: {payload}" in caplog.text
+        assert (
+            f"Decoded and split {TestMqttTopics.mx_name} payload: {payload} at {msg_timestamp}"
+            in caplog.text
+        )
+        load_queue.assert_called_with(
+            measurement=TestMqttTopics.mx_name,
+            time_field=msg_timestamp,
+            payload=payload,
+        )
 
     @mark.skip(reason="test_passes_on_message needs to be implemented")
     def test_passes_on_message(self):

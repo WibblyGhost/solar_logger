@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 """
-classes program which initializes and runs both the MQTT and InfluxDB controllers
+Main run file for Solar Logger
 """
 from src.app.solar_main import main
 

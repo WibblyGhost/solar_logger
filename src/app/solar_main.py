@@ -173,5 +173,8 @@ class ThreadedRunner:
 
 
 def main():
-    TR = ThreadedRunner()
-    TR.start()
+    """
+    Main runtime for solar logger, called from start_logger.py
+    """
+    thread_runner = ThreadedRunner()
+    thread_runner.start()

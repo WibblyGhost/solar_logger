@@ -230,7 +230,7 @@ class MqttConnector:
         fx_online = self._status[MqttTopics.fx_status]
         mx_online = self._status[MqttTopics.mx_status]
 
-        if msg.topic == MqttTopics.dc_data and dc_online:
+        if msg.topic == MqttTopics.dc_data and dc_online == "online":
             logging.info(f"Received {MqttTopics.dc_name} data packet")
             logging.debug(f"{MqttTopics.dc_name} payload: {msg.payload}")
             # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
@@ -247,7 +247,7 @@ class MqttConnector:
                 measurement=MqttTopics.dc_name, time_field=dc_time, payload=dc_payload
             )
 
-        if msg.topic == MqttTopics.fx_data and fx_online:
+        if msg.topic == MqttTopics.fx_data and fx_online == "online":
             logging.info(f"Received {MqttTopics.fx_name} data packet")
             logging.debug(f"{MqttTopics.fx_name} payload: {msg.payload}")
             # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
@@ -264,7 +264,7 @@ class MqttConnector:
                 measurement=MqttTopics.fx_name, time_field=fx_time, payload=fx_payload
             )
 
-        if msg.topic == MqttTopics.mx_data and mx_online:
+        if msg.topic == MqttTopics.mx_data and mx_online == "online":
             logging.info(f"Received {MqttTopics.mx_name} data packet")
             logging.debug(f"{MqttTopics.mx_name} payload: {msg.payload}")
             # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
