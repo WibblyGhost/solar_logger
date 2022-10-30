@@ -16,8 +16,8 @@ services:
       dockerfile: solar-logger.dockerfile
       target: solar-logger
     volumes:
-      - ./docker-solar-logger/output:/app/output:rw
-      - ./docker-solar-logger/config:/app/config:rw
+      - ./output:/solarlogger/output:rw
+      - ./config:/solarlogger/config:rw
     env_file:
       - .env
   
@@ -30,7 +30,7 @@ services:
       dockerfile: solar-logger.dockerfile
       target: influx-query
     volumes:
-      - ./docker-influx-query/output:/app/output:rw
+      - ./output:/solarlogger/output:rw
     env_file:
       - .env
 
