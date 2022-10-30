@@ -1,8 +1,6 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring, protected-access
+# pylint: disable=missing-function-docstring, missing-module-docstring, protected-access, redefined-outer-name
 import logging
-from configparser import NoSectionError
 from logging import Logger, StreamHandler
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 import pytest
 from pytest import LogCaptureFixture, fixture, mark, raises
@@ -10,7 +8,7 @@ from pytest_mock import MockerFixture
 
 from src.classes.custom_exceptions import MissingConfigurationError
 from src.helpers.consts import SOLAR_DEBUG_CONFIG_TITLE
-from src.helpers.py_logger import LoggingTools, create_logger
+from src.helpers.py_logger import LoggingTools
 from tests.config.consts import FAKE, TEST_CONFIG
 
 
@@ -124,7 +122,7 @@ class TestLoggingTools:
         log_tools._config_name = SOLAR_DEBUG_CONFIG_TITLE
         log_tools._config_parser.read(TEST_CONFIG)
 
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(MissingConfigurationError):
             log_tools._read_extra_configs()
 
         assert "Failed to read file logger settings in configs" in caplog.messages
