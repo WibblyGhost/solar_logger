@@ -6,6 +6,7 @@ https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#que
 """
 
 import logging
+import ssl
 import struct
 import time
 from dataclasses import dataclass
@@ -15,8 +16,8 @@ from typing import Tuple
 from paho.mqtt.client import Client, MQTTMessage
 from pymate.matenet import DCStatusPacket, FXStatusPacket, MXStatusPacket
 
-from classes.common_classes import QueuePackage, SecretStore
-from classes.consts import QUEUE_WAIT_TIME, THREADED_QUEUE, TIME_PACKET_SIZE
+from src.classes.common_classes import QueuePackage, SecretStore
+from src.helpers.consts import QUEUE_WAIT_TIME, THREADED_QUEUE, TIME_PACKET_SIZE
 
 
 class PyMateDecoder:
@@ -121,21 +122,37 @@ class MqttConnector:
         self._mqtt_client = Client()
 
     @staticmethod
-    def _on_subscribe(_client, _userdata, _mid, granted_qos) -> None:
+    def _on_socket_open(_client, userdata, sock) -> None:
+        """
+        Debug function for logging socket openings from MQTT
+        """
+        logging.debug(f"Socket open debug args, {userdata}, {sock}")
+
+    @staticmethod
+    def _on_socket_close(_client, userdata, sock) -> None:
+        """
+        Debug function for logging socket closes from MQTT
+        """
+        logging.debug(f"Socket close debug args, {userdata}, {sock}")
+
+    @staticmethod
+    def _on_subscribe(_client, userdata, mid, granted_qos) -> None:
         """
         Logs when the MQTT client calls on_subscribe
         """
         logging.info("Subscribed to MQTT topic, _on_subscribe")
         logging.info(f"MQTT topic returns QoS level of {granted_qos}")
+        logging.debug(f"Subscribe debug args, {userdata}, {mid}, {granted_qos}")
 
     @staticmethod
-    def _on_unsubscribe(_client, _userdata, _mid) -> None:
+    def _on_unsubscribe(_client, userdata, mid) -> None:
         """
         Logs when MQTT calls on_unsubscribe
         """
         logging.info("Unsubscribed from MQTT topic, _on_unsubscribe")
+        logging.debug(f"Unsubscribe debug args, {userdata}, {mid}")
 
-    def _on_connect(self, _client, _userdata, _flags, return_code) -> None:
+    def _on_connect(self, _client, userdata, flags, return_code) -> None:
         """
         Logs when MQTT calls on_connect
         The value of rc indicates success or not
@@ -150,20 +167,22 @@ class MqttConnector:
         }
         if return_code == 0:
             logging.info("Connecting to MQTT broker, _on_connect")
-            topic = f"{self._mqtt_secrets['mqtt_topic']}/#"
+            topic = f"{self._mqtt_secrets['mqtt_topic']}"
             self._mqtt_client.subscribe(topic=topic)
         else:
             logging.error(
                 f"Couldn't connect to MQTT broker returned code: {return_code}\n"
                 f"{return_codes[return_code]}"
             )
+            logging.debug(f"Connect debug args, {userdata}, {flags}, {return_code}")
 
     @staticmethod
-    def _on_disconnect(_client, _userdata, _rc) -> None:
+    def _on_disconnect(_client, userdata, return_code) -> None:
         """
         Logs when MQTT calls on_disconnect
         """
         logging.warning("Disconnected from MQTT broker, _on_disconnect")
+        logging.debug(f"Disconnect debug args, {userdata}, {return_code}")
 
     def _check_status(self, msg: MQTTMessage) -> None:
         """
@@ -211,7 +230,7 @@ class MqttConnector:
         fx_online = self._status[MqttTopics.fx_status]
         mx_online = self._status[MqttTopics.mx_status]
 
-        if msg.topic == MqttTopics.dc_data and dc_online:
+        if msg.topic == MqttTopics.dc_data and dc_online == "online":
             logging.info(f"Received {MqttTopics.dc_name} data packet")
             logging.debug(f"{MqttTopics.dc_name} payload: {msg.payload}")
             # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
@@ -228,7 +247,7 @@ class MqttConnector:
                 measurement=MqttTopics.dc_name, time_field=dc_time, payload=dc_payload
             )
 
-        if msg.topic == MqttTopics.fx_data and fx_online:
+        if msg.topic == MqttTopics.fx_data and fx_online == "online":
             logging.info(f"Received {MqttTopics.fx_name} data packet")
             logging.debug(f"{MqttTopics.fx_name} payload: {msg.payload}")
             # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
@@ -245,7 +264,7 @@ class MqttConnector:
                 measurement=MqttTopics.fx_name, time_field=fx_time, payload=fx_payload
             )
 
-        if msg.topic == MqttTopics.mx_data and mx_online:
+        if msg.topic == MqttTopics.mx_data and mx_online == "online":
             logging.info(f"Received {MqttTopics.mx_name} data packet")
             logging.debug(f"{MqttTopics.mx_name} payload: {msg.payload}")
             # NOTE: Due to errors in our packet packing, it introduces a random buffer at the end
@@ -291,8 +310,13 @@ class MqttConnector:
         self._mqtt_client.on_disconnect = self._on_disconnect
         self._mqtt_client.on_unsubscribe = self._on_unsubscribe
         self._mqtt_client.on_subscribe = self._on_subscribe
+        self._mqtt_client.on_socket_open = self._on_socket_open
+        self._mqtt_client.on_socket_close = self._on_socket_close
 
-        self._mqtt_client.connect(
+        self._mqtt_client.tls_set(cert_reqs=ssl.CERT_NONE)
+        self._mqtt_client.tls_insecure_set(True)
+
+        _ = self._mqtt_client.connect(
             host=self._mqtt_secrets["mqtt_host"],
             port=self._mqtt_secrets["mqtt_port"],
         )

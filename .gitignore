@@ -3,7 +3,6 @@ __pycache__/
 .pytest_cache/
 .idea/
 .vscode/
-venv/
 *.venv/
 *.py[cod]
 
@@ -27,3 +26,6 @@ docker-influxdb/
 *.egg-info/
 build
 dist
+
+# Backup FIles
+backups/

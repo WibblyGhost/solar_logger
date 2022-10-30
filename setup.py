@@ -7,19 +7,22 @@ import re
 import setuptools
 
 PACKAGE_NAME = "solar_logger"
-PACKAGE_DIR = "."
+PACKAGE_DIR = "src"
 EXCLUDED_PACKAGES = ["*tests*"]
-VERSION = "0.0.0"
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+with open("README.md", "r", encoding="utf-8") as open_readme_file:
+    long_description = open_readme_file.read()
 
-with open("__version__.py", "r") as fh:
-    version = fh.read()
-    version = version.strip().split(" = ")[1]
-    version = re.sub("[\"']", "", version)
-    VERSION = re.sub("[-*]", "_", version)
 
+def get_version():
+    with open("src/__version__.py", "r") as open_version_file:
+        version = open_version_file.read()
+        version = version.strip().split(" = ")[1]
+        version = re.sub("[\"']", "", version)
+        return re.sub("[-*]", "_", version)
+
+
+VERSION = get_version()
 
 setuptools.setup(
     name=PACKAGE_NAME.lower(),

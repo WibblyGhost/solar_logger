@@ -3,9 +3,9 @@ pylint
 black
 isort
 
-gitpython
 faker
 pytest
 pytest-coverage
+pytest-mock
 
 -r requirements.txt

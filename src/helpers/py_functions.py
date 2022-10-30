@@ -2,12 +2,12 @@
 Contains all functions that aren't directly correlated to Influx, MQTT, or logging
 """
 
-import configparser
 import csv
 import logging
 import os
+from configparser import ConfigParser
 
-from classes.consts import CONFIG_FILENAME
+from src.helpers.consts import CONFIG_FILENAME
 
 
 def write_results_to_csv(config_name: str, table: dict) -> None:
@@ -17,7 +17,7 @@ def write_results_to_csv(config_name: str, table: dict) -> None:
     :param table: Resultant CSV query from the Influx database
     """
     try:
-        config_parser = configparser.ConfigParser()
+        config_parser = ConfigParser()
         config_parser.read(CONFIG_FILENAME)
         file_location = config_parser.get(config_name, "csv_location")
         filename = config_parser.get(config_name, "csv_name")
@@ -40,6 +40,6 @@ def read_query_settings(config_name: str) -> any:
     :param config_name: Section under the config for the configuration to pull data from
     :return: Query variables
     """
-    config_parser = configparser.ConfigParser()
+    config_parser = ConfigParser()
     config_parser.read(CONFIG_FILENAME)
     return config_parser.get(section=config_name, option="query_mode")

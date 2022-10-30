@@ -4,15 +4,15 @@ Check the Influx query documentation for query syntax:
 https://docs.influxdata.com/influxdb/v2.0/api-guide/client-libraries/python/#query-data-from-influxdb-with-python
 """
 
-from classes.common_classes import SecretStore
-from classes.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
-from classes.influx_classes import InfluxConnector
-from classes.py_functions import read_query_settings, write_results_to_csv
-from classes.py_logger import create_logger
-from classes.query_classes import QueryBuilder
+from src.classes.common_classes import SecretStore
+from src.classes.influx_classes import InfluxConnector
+from src.classes.query_classes import QueryBuilder
+from src.helpers.consts import INFLUX_DEBUG_CONFIG_TITLE, INFLUX_QUERY_CONFIG_TITLE
+from src.helpers.py_functions import read_query_settings, write_results_to_csv
+from src.helpers.py_logger import create_logger
 
 
-class ParseQuery:
+class QueryParser:
     """
     Contains all subfunctions which parse the query results
     """
@@ -77,12 +77,12 @@ def execute_query(query: QueryBuilder) -> None:
         raise err
 
     if query_mode == "csv":
-        ParseQuery.parse_csv(query_result=query_result)
+        QueryParser.parse_csv(query_result=query_result)
     elif query_mode == "flux":
-        flux = ParseQuery.parse_flux(query_result=query_result)
+        flux = QueryParser.parse_flux(query_result=query_result)
         print(flux)
     else:
-        ParseQuery.parse_stream(query_result=query_result)
+        QueryParser.parse_stream(query_result=query_result)
 
 
 def run_example() -> None:
@@ -100,6 +100,18 @@ def run_example() -> None:
     execute_query(query_builder)
 
 
+logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
+secret_store = SecretStore(has_mqtt_access=False, has_influx_access=True)
+influx_connector = InfluxConnector(secret_store.influx_secrets)
+logging.info("Attempting health check for InfluxDB")
+try:
+    influx_connector.health_check()
+    logging.info("Successfully connected to InfluxDB server")
+except Exception as error:
+    logging.critical("Failed to connect InfluxDB server")
+    raise error
+
+
 def main() -> None:
     """
     Classes runtime which creates a query to an Influx database to view the tables
@@ -112,17 +124,3 @@ def main() -> None:
         "Or run run_default() to run an example piece"
     )
     run_example()
-
-
-if __name__ == "__main__":
-    logging = create_logger(INFLUX_DEBUG_CONFIG_TITLE)
-    secret_store = SecretStore(has_mqtt_access=False, has_influx_access=True)
-    influx_connector = InfluxConnector(secret_store.influx_secrets)
-    logging.info("Attempting health check for InfluxDB")
-    try:
-        influx_connector.health_check()
-        logging.info("Successfully connected to InfluxDB server")
-    except Exception as error:
-        logging.critical("Failed to connect InfluxDB server")
-        raise error
-    main()
