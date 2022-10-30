@@ -1,4 +1,4 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring, redefined-outer-name, protected-access
+# pylint: disable=missing-function-docstring, missing-module-docstring, redefined-outer-name, protected-access, duplicate-code
 import logging
 from datetime import datetime
 
