@@ -126,7 +126,7 @@ jobs:
     - name: Tag Version File
       run:  |
         git fetch --tags -f
-        echo VERSION = "'$(git describe --tags)'" > __version__.py
+        echo VERSION = "'$(git describe --tags)'" > src/__version__.py
 
     - name: Build package
       run: python setup.py sdist
