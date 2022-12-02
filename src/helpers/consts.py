@@ -9,6 +9,7 @@ CONFIG_FILENAME = "src/config/config.ini"  # Py Functions
 INFLUX_QUERY_CONFIG_TITLE = "query_settings"  # Influx Query
 INFLUX_DEBUG_CONFIG_TITLE = "influx_debugger"  # Influx Query
 SOLAR_DEBUG_CONFIG_TITLE = "solar_debugger"  # Solar Runtime
+BACKUP_READER_CONFIG_TITLE = "backup_reader"
 
 # Additional Consts
 MAX_PORT_RANGE = 65535

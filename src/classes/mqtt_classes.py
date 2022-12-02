@@ -198,7 +198,9 @@ class MqttConnector:
                 logging.info(f"{msg.topic} is now online")
 
     @staticmethod
-    def _load_queue(measurement: str, time_field: datetime, payload: dict) -> None:
+    def load_queue(
+        measurement: str, time_field: datetime, payload: dict, log=True
+    ) -> None:
         """
         Unpacks the payload and assigns a new message with each item in the payload,
         this sets all messages in the packet with the same time and measurement field
@@ -208,7 +210,9 @@ class MqttConnector:
             # We don't like a queue building up since it means our program isn't
             # handling the volume of data or a service is offline
             while THREADED_QUEUE.full():
-                logging.error(f"Queue is full, sleeping for {QUEUE_WAIT_TIME} seconds")
+                logging.error(
+                    f"Queue is full at {THREADED_QUEUE.maxsize} items, sleeping for {QUEUE_WAIT_TIME} seconds"
+                )
                 time.sleep(QUEUE_WAIT_TIME)
             THREADED_QUEUE.put(
                 QueuePackage(
@@ -217,9 +221,11 @@ class MqttConnector:
                     field={key: float(value)},
                 )
             )
-        logging.info(
-            f"Pushed items onto queue, queue now has {THREADED_QUEUE.qsize()} items"
-        )
+        if log:
+            # NOTE: Data imported shouldn't be logged due to the mass amounts of data
+            logging.info(
+                f"Pushed items onto queue, queue now has {THREADED_QUEUE.qsize()} items"
+            )
 
     def _decode_message(self, msg: MQTTMessage) -> None:
         """
@@ -243,7 +249,7 @@ class MqttConnector:
             logging.debug(
                 f"Decoded and split {MqttTopics.dc_name} payload: {dc_payload} at {dc_time}"
             )
-            self._load_queue(
+            self.load_queue(
                 measurement=MqttTopics.dc_name, time_field=dc_time, payload=dc_payload
             )
 
@@ -260,7 +266,7 @@ class MqttConnector:
             logging.debug(
                 f"Decoded and split {MqttTopics.fx_name} payload: {fx_payload} at {fx_time}"
             )
-            self._load_queue(
+            self.load_queue(
                 measurement=MqttTopics.fx_name, time_field=fx_time, payload=fx_payload
             )
 
@@ -277,7 +283,7 @@ class MqttConnector:
             logging.debug(
                 f"Decoded and split {MqttTopics.mx_name} payload: {mx_payload} at {mx_time}"
             )
-            self._load_queue(
+            self.load_queue(
                 measurement=MqttTopics.mx_name, time_field=mx_time, payload=mx_payload
             )
 
