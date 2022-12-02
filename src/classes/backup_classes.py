@@ -1,3 +1,8 @@
+"""
+Classes file, contains methods for the Backup Reader which will read
+and decode 'xz' compresses backup files and upload the decoded rows
+to a INfluxDB server
+"""
 import logging
 import lzma
 import re
@@ -7,23 +12,29 @@ from datetime import datetime, timedelta
 
 from dateutil import tz
 
-from src.helpers.py_logger import create_logger
-from src.helpers.consts import BACKUP_READER_CONFIG_TITLE
+from src.classes.mqtt_classes import MqttConnector, MqttTopics, PyMateDecoder
+
+LOG_INTERVAL_QUEUE = 50
+LOG_INTERVAL_TABLE = 100000
 
 
 class BackupReader:
-    """TODO"""
+    """
+    Class which handles reading 'xz' compressed backup files and uploading
+    the decoded rows into an InfluxDB Server
+    """
 
-    def __init__(self, print_lines: bool = False):
-        """TODO"""
-        self.print_lines = print_lines
+    def __init__(self):
+        """
+        Initialization for the Backup Reader
+        """
         self.g_col_raw = None
         self.g_col_timestamp = None
         self.g_col_tzoffset = None
         self.g_lines_read = 0
         self.g_read_rows = False
         self.g_table_name = None
-            
+
     @staticmethod
     def _start_table(table_name: str):
         """
@@ -34,7 +45,7 @@ class BackupReader:
 
     @staticmethod
     def _column_in(
-        table_name: str, _row_num: int, _timestamp: datetime, _raw_packet: bytes
+        table_name: str, row_num: int, timestamp: datetime, raw_packet: bytes
     ):
         """
         Called for each row of table data
@@ -43,14 +54,41 @@ class BackupReader:
         :param timestamp: datetime with timezone encoded
         :param raw_packet: bytes() to be passed to pymate decoder
         """
+        # TODO: Look into disabling other loggers when this functions runs
+        # Create unique handler names so we can later disable them
+        # This is due to load_queue and offloading queues logging
         if table_name == "dc_status":  # 4,337,643 rows
-            pass
+            # NOTE: Don't log here since it severely slows down the reading
+            dc_payload = PyMateDecoder.dc_decoder(raw_packet)
+            MqttConnector.load_queue(
+                measurement=MqttTopics.dc_name,
+                time_field=timestamp,
+                payload=dc_payload,
+                log=(row_num % LOG_INTERVAL_QUEUE == 0),
+            )
+
         elif table_name == "mx_status":  # 9,224,620 rows
-            pass
+            # NOTE: Don't log here since it severely slows down the reading
+            mx_payload = PyMateDecoder.mx_decoder(raw_packet)
+            MqttConnector.load_queue(
+                measurement=MqttTopics.dc_name,
+                time_field=timestamp,
+                payload=mx_payload,
+                log=(row_num % LOG_INTERVAL_QUEUE == 0),
+            )
+
         elif table_name == "mx_logpage":  # 1762 rows
             pass
+
         elif table_name == "fx_status":  # 664,359 rows
-            pass
+            # NOTE: Don't log here since it severely slows down the reading
+            fx_payload = PyMateDecoder.fx_decoder(raw_packet)
+            MqttConnector.load_queue(
+                measurement=MqttTopics.dc_name,
+                time_field=timestamp,
+                payload=fx_payload,
+                log=(row_num % LOG_INTERVAL_QUEUE == 0),
+            )
 
     @staticmethod
     def _end_table(table_name: str):
@@ -90,10 +128,15 @@ class BackupReader:
 
         # logging.info() will slow things down if you do it for every line,
         # so be selective about what you print here...
-        if self.g_lines_read % 100000 == 0:
-            logging.info(f"{self.g_lines_read} \t{timestamp}")
+        if self.g_lines_read % LOG_INTERVAL_TABLE == 0:
+            logging.info(f"Read {self.g_lines_read} lines \t{timestamp}")
 
-        self._column_in(self.g_table_name, self.g_lines_read, timestamp, raw_packet)
+        self._column_in(
+            table_name=self.g_table_name,
+            row_num=self.g_lines_read,
+            timestamp=timestamp,
+            raw_packet=raw_packet,
+        )
 
     def _extract_start_table(self, matched_line: str) -> bool:
         self.g_table_name = matched_line[1]
@@ -113,7 +156,7 @@ class BackupReader:
             self.g_col_timestamp = g_columns_map["timestamp"]
             self.g_col_tzoffset = g_columns_map["tzoffset"]
             self.g_col_raw = g_columns_map["raw_packet"]
-        except Exception as err:  # TODO: Find exception
+        except Exception as err:
             logging.info(f"Skipping table - missing one or more required columns {err}")
             raise
 
@@ -127,18 +170,12 @@ class BackupReader:
         'xz' compressed format.
         :param file_path: path of the compressed 'xz' backup
         """
-        # NOTE: Don't need to modify anything below this point ###
-        # Don't need to modify anything below this point ###
-
         # The backup is just a text file containing SQL commands compressed
         # with LZMA compression. The lzma module allows you to open it and
         # stream the file without decompressing the whole thing...
         # Which is just as well, as the full text size is about 3GB!
         with lzma.open(file_path, "r") as open_file:
-            # for i in range(5000):
-            while True:
-                line_raw = open_file.readline()
-
+            for line_raw in open_file:
                 # Lines will be bytestrings, but we know the text file is ASCII-encoded
                 line = line_raw.decode("ascii").strip()
 
@@ -170,15 +207,3 @@ class BackupReader:
                 elif line.startswith("-- Completed"):
                     logging.info("End of backup")
                     break
-
-
-def main():
-    """TODO"""
-    create_logger(config_name=BACKUP_READER_CONFIG_TITLE)
-    logging.info("START")
-    backup_reader = BackupReader(print_lines=True)
-    backup_reader.read_compressed_xz(file_path="backups/clearwater.backup.xz")
-
-
-if __name__ == "__main__":
-    main()

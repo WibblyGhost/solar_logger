@@ -278,7 +278,7 @@ class TestMqttConnector:
         payload_key = FAKE.pystr()
         payload_value = FAKE.pyfloat()
 
-        mqtt_fixture._load_queue(
+        mqtt_fixture.load_queue(
             measurement=measurement,
             time_field=time_field,
             payload={
@@ -309,7 +309,7 @@ class TestMqttConnector:
         mocker.patch("src.classes.mqtt_classes.time.sleep", side_effect=TestError)
         with raises(TestError):
             for _ in range(0, TEST_MAX_QUEUE_LENGTH + 1):
-                mqtt_fixture._load_queue(
+                mqtt_fixture.load_queue(
                     measurement=measurement,
                     time_field=time_field,
                     payload={
